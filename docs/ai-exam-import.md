@@ -30,8 +30,8 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 4. Validate against existing types `mc`, `ms`, `tf`, `num`, `dnd`.
 5. Store drafts, source page ranges, confidence and validation flags.
 6. Review question cards with a time-limited private source-file link and editable JSON for the question, options, answer key and explanation.
-7. Admin approves selected questions and maps them into the existing question/version model.
-8. Save as exam draft using existing Admin RPCs. Publishing remains a separate explicit action.
+7. Admin approves selected questions and transfers them into the existing exam editor.
+8. Save as an exam draft using the existing Admin RPC. The import staging rows are then linked to the canonical question and question-version IDs by matching the saved content. Publishing remains a separate explicit action.
 
 ## Format strategy
 
@@ -62,5 +62,5 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - [ ] Add bounded PDF page batching, Edge Function runtime/type checks and representative file tests; deploy after migration and secrets are configured.
 - [x] Add a time-limited signed link to the private source file and editable JSON review controls.
 - [ ] Improve review with field-level controls and embedded page navigation.
-- [x] Transfer approved drafts into the existing exam editor (saving/publishing still uses the existing Admin RPC flow).
+- [x] Transfer approved drafts into the existing exam editor and link successfully saved drafts to canonical question/version IDs.
 - [ ] Test representative documents end-to-end.
