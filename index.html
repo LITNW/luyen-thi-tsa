@@ -447,5 +447,116 @@
     A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
     A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
     A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});
+
+    /* ---- Admin AI Import Center: private Storage + reviewed staging drafts ---- */
+    let importJobs=[],importQuestions=[],activeImportJob=null,importUiMessage='';
+    function importCenter(){
+      return '<h1>Trung tâm nhập đề bằng AI</h1><div class="c"><p>Đưa PDF, ảnh hoặc tệp văn bản lên khu vực riêng tư. AI chỉ tạo bản nháp; quản trị viên phải kiểm tra và duyệt trước khi đưa câu hỏi vào trình soạn đề.</p><p class="m">Giới hạn hiện tại: 25 MB/tệp. Hỗ trợ PDF, PNG, JPEG, WEBP, GIF, TXT, Markdown và CSV. DOCX/XLSX/PPTX sẽ được bổ sung sau khi có bộ chuyển đổi và kiểm thử.</p><label>Chọn tài liệu</label><input id="import-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,application/pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv"><button class="b bp" data-a="importUpload">Tải lên và trích xuất</button><p id="import-msg" class="m">'+esc(importUiMessage)+'</p></div><h3>Các lần nhập gần đây</h3>'+(importJobs.length?importJobs.map(j=>'<div class="c"><b>'+esc(j.original_filename)+'</b><p class="m">'+esc(j.status)+' · '+new Date(j.created_at).toLocaleString('vi-VN')+' · '+Number(j.progress_percent||0)+'%</p>'+(j.error_message?'<p class="m no">'+esc(j.error_message)+'</p>':'')+'<div class="row"><button class="b" data-a="importOpen" data-i="'+esc(j.id)+'">Mở bản nhập</button>'+(['uploaded','queued','failed'].includes(j.status)?'<button class="b bp" data-a="importRun" data-i="'+esc(j.id)+'">Chạy trích xuất</button>':'')+'</div></div>').join(''):'<div class="c m">Chưa có lần nhập nào. Nếu bảng nhập đề chưa được cài đặt, hãy chờ migration được áp dụng.</div>')+'<button class="b" data-a="home">Quay lại</button>';
+    }
+    async function loadImportJobs(){
+      const {data,error}=await sb.from('import_jobs').select('id,original_filename,status,progress_percent,error_message,created_at').order('created_at',{ascending:false}).limit(50);
+      if(error)throw error;importJobs=data||[];importUiMessage='';view={n:'imports'};render();
+    }
+    async function uploadImportFile(){
+      const el=document.getElementById('import-file'),msg=document.getElementById('import-msg'),file=el?.files?.[0];
+      if(!file){if(msg)msg.textContent='Hãy chọn một tệp.';return}
+      if(file.size<=0||file.size>25*1024*1024){if(msg)msg.textContent='Tệp phải có dung lượng từ 1 byte đến 25 MB.';return}
+      const name=file.name.toLowerCase(),allowed=/\.(pdf|png|jpe?g|webp|gif|txt|md|csv)$/.test(name);
+      if(!allowed){if(msg)msg.textContent='Định dạng này chưa được hỗ trợ ở phiên bản hiện tại.';return}
+      if(!profile?.id||!me)throw new Error('Chỉ Admin đang hoạt động mới được nhập đề.');
+      if(msg)msg.textContent='Đang tạo phiên nhập…';
+      const jobId=crypto.randomUUID(),safeName=file.name.replace(/[^\p{L}\p{N}._-]+/gu,'_').slice(-120)||'source-file';
+      const ext=name.split('.').pop(),path=profile.id+'/'+jobId+'/'+safeName;
+      const mime=file.type||({pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',txt:'text/plain',md:'text/markdown',csv:'text/csv'}[ext]||'application/octet-stream');
+      const {error:jobError}=await sb.from('import_jobs').insert({id:jobId,created_by:profile.id,original_filename:file.name,mime_type:mime,file_size_bytes:file.size,storage_bucket:'tsa-imports',storage_path:path,source_format:ext,status:'uploaded'});
+      if(jobError)throw jobError;
+      if(msg)msg.textContent='Đang tải tệp lên kho riêng tư…';
+      const {error:uploadError}=await sb.storage.from('tsa-imports').upload(path,file,{contentType:mime,upsert:false});
+      if(uploadError){await sb.from('import_jobs').update({status:'failed',error_code:'upload_failed',error_message:uploadError.message}).eq('id',jobId);throw uploadError}
+      await sb.from('import_events').insert({job_id:jobId,actor_id:profile.id,event_type:'source_uploaded',details:{filename:file.name,size_bytes:file.size,format:ext}});
+      if(msg)msg.textContent='Đã tải lên. Đang gửi yêu cầu trích xuất AI…';
+      const {data,error}=await sb.functions.invoke('tsa-import-process',{body:{job_id:jobId}});
+      if(error)throw error;
+      if(data?.error)throw new Error(data.message||data.error);
+      await loadImportJobs();
+      importUiMessage='Đã trích xuất '+Number(data?.question_count||0)+' câu. Mở bản nhập để rà soát.';
+      render();
+    }
+    async function runImport(jobId){
+      importUiMessage='Đang xử lý tài liệu…';render();
+      const {data,error}=await sb.functions.invoke('tsa-import-process',{body:{job_id:jobId}});
+      if(error)throw error;
+      if(data?.error)throw new Error(data.message||data.error);
+      await loadImportJobs();importUiMessage='Đã trích xuất '+Number(data?.question_count||0)+' câu.';render();
+    }
+    async function openImportJob(jobId){
+      const [{data:job,error:je},{data:qs,error:qe}]=await Promise.all([
+        sb.from('import_jobs').select('*').eq('id',jobId).single(),
+        sb.from('import_questions').select('*').eq('job_id',jobId).order('ordinal')
+      ]);
+      if(je)throw je;if(qe)throw qe;activeImportJob=job;importQuestions=qs||[];view={n:'importReview'};render();
+    }
+    function importReviewPage(){
+      const rows=importQuestions.map(q=>{
+        const editable={question_type:q.question_type,content:q.content,answer_key:q.answer_key,explanation:q.explanation,points:q.points};
+        return '<div class="c"><div class="row"><b>Câu '+q.ordinal+'</b><span class="m">'+esc(q.status)+'</span></div><p class="m">Trang '+esc(q.source_page_start||'?')+(q.source_page_end&&q.source_page_end!==q.source_page_start?'–'+esc(q.source_page_end):'')+' · Độ tin cậy: '+esc(JSON.stringify(q.confidence||{}))+'</p><p class="re">'+esc(q.content?.q||'(Chưa nhận diện được nội dung câu hỏi)')+'</p><p class="m">Cờ kiểm tra: '+esc((q.validation_flags||[]).join(', ')||'Không có')+'</p><label>Dữ liệu có thể chỉnh sửa (JSON)</label><textarea id="draft-json-'+esc(q.id)+'" style="min-height:220px">'+esc(JSON.stringify(editable,null,2))+'</textarea><div class="row"><button class="b" data-a="importSaveQuestion" data-i="'+esc(q.id)+'">Lưu sửa đổi</button><button class="b bp" data-a="importApprove" data-i="'+esc(q.id)+'">Duyệt câu này</button><button class="b" data-a="importReject" data-i="'+esc(q.id)+'">Loại câu</button></div></div>'
+      }).join('');
+      return '<h1>Rà soát bản nhập</h1><div class="c"><b>'+esc(activeImportJob?.original_filename||'Tài liệu')+'</b><p class="m">'+esc(activeImportJob?.status||'')+' · '+importQuestions.length+' câu được trích xuất</p><p class="m">Đáp án do AI không xác minh được phải để null và tự kiểm tra từ tài liệu gốc. Không duyệt câu có nội dung, phương án hoặc đáp án chưa rõ.</p><button class="b" data-a="imports">Quay lại danh sách</button> <button class="b bp" data-a="importToEditor">Đưa các câu đã duyệt vào trình soạn đề</button></div>'+(rows||'<div class="c m">Không có câu hỏi nào được trích xuất.</div>');
+    }
+    async function saveImportQuestion(id,approve){
+      const el=document.getElementById('draft-json-'+id);if(!el)throw new Error('Không tìm thấy dữ liệu câu hỏi.');
+      let v;try{v=JSON.parse(el.value)}catch(e){throw new Error('JSON không hợp lệ: '+e.message)}
+      if(!v||typeof v!=='object'||Array.isArray(v)||!v.content||typeof v.content!=='object')throw new Error('Cấu trúc câu hỏi không hợp lệ.');
+      if(typeof v.content.q!=='string'||!v.content.q.trim())throw new Error('Câu hỏi cần có nội dung.');
+      const type=['mc','ms','tf','num','dnd'].includes(v.question_type)?v.question_type:null;
+      if(approve&&!type)throw new Error('Cần xác định loại câu hỏi trước khi duyệt.');
+      if(approve&&v.answer_key==null)throw new Error('Chưa có đáp án được xác minh. Không thể duyệt để chuyển vào đề.');
+      const status=approve?'approved':undefined,patch={question_type:type,content:v.content,answer_key:v.answer_key??null,explanation:v.explanation||null,points:Number(v.points)>0?Number(v.points):1,updated_at:new Date().toISOString()};
+      if(status)patch.status=status;
+      const {error}=await sb.from('import_questions').update(patch).eq('id',id).eq('job_id',activeImportJob.id);if(error)throw error;
+      await openImportJob(activeImportJob.id);
+    }
+    function importAnswerText(q){
+      const a=q.answer_key,k=q.question_type;
+      if(a==null)return null;
+      if(k==='mc'){if(typeof a==='string'&&/^[A-F]$/i.test(a.trim()))return a.trim().toUpperCase();if(Number.isInteger(a)&&a>=0&&a<6)return 'ABCDEF'[a];return null}
+      if(k==='ms'){const arr=Array.isArray(a)?a:null;if(!arr)return null;const letters=arr.map(x=>typeof x==='string'&&/^[A-F]$/i.test(x.trim())?x.trim().toUpperCase():Number.isInteger(x)&&x>=0&&x<6?'ABCDEF'[x]:null);return letters.every(Boolean)?letters.join(', '):null}
+      if(k==='tf'){if(!Array.isArray(a))return null;const vals=a.map(x=>typeof x==='boolean'?x:/^(đ|d|đúng|true)$/i.test(String(x))?true:/^(s|sai|false)$/i.test(String(x))?false:null);return vals.every(x=>x!==null)?vals.map(x=>x?'Đ':'S').join(', '):null}
+      if(k==='num')return typeof a==='number'||typeof a==='string'?String(a).replace('.',','):null;
+      if(k==='dnd'&&a&&typeof a==='object'&&!Array.isArray(a))return Object.entries(a).map(([key,value])=>key+': '+String(value)).join(' | ');
+      return null;
+    }
+    async function importToEditor(){
+      const approved=importQuestions.filter(q=>q.status==='approved');
+      if(!approved.length)throw new Error('Chưa có câu nào được duyệt.');
+      const qs=[];
+      for(const q of approved){
+        const answer=importAnswerText(q);if(answer==null)throw new Error('Câu '+q.ordinal+': định dạng đáp án chưa tương thích. Hãy mở câu và chuẩn hóa đáp án trước.');
+        qs.push({k:q.question_type,q:q.content.q,o:Array.isArray(q.content.o)?q.content.o:[],a:q.question_type==='mc'?'ABCDEF'.indexOf(answer):q.question_type==='ms'?answer.split(',').map(x=>'ABCDEF'.indexOf(x.trim())):q.question_type==='tf'?answer.split(',').map(x=>/^Đ/.test(x.trim())):q.question_type==='num'?Number(answer.replace(',','.')):answer,e:q.explanation||'',t:q.content.t||'',p:Number(q.points)||1,once:!!q.content.once});
+      }
+      const title='Đề nhập từ '+String(activeImportJob.original_filename||'tài liệu').replace(/\.[^.]+$/,'').slice(0,180);
+      view={n:'edit',id:null,exam_id:null,exam:{title,desc:'Bản nháp được tạo từ AI; cần rà soát trước khi lưu.',minutes:60,qs},questions:[]};
+      go(view);
+      notify('Đã đưa '+qs.length+' câu đã duyệt vào trình soạn đề. Hãy kiểm tra lại rồi lưu bản nháp.');
+    }
+    const _homeImport=home;
+    home=function(){let s=_homeImport();return me?s.replace('<h3>Khu vực quản trị</h3>','<h3>Khu vực quản trị</h3><div class="row"><button class="b" data-a="imports">Trung tâm nhập đề bằng AI</button></div>'):s};
+    const _renderImport=render;
+    render=function(){const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage,imports:importCenter,importReview:importReviewPage};clearInterval(T);A.innerHTML=(pages[view.n]||auth)();if(view.n==='take'){T=setInterval(tick,1000);tick()}mj()};
+    A.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-a]');if(!b)return;const k=b.dataset.a,id=b.dataset.i;
+      try{
+        if(k==='imports'){await loadImportJobs()}
+        else if(k==='importUpload')await uploadImportFile();
+        else if(k==='importRun')await runImport(id);
+        else if(k==='importOpen')await openImportJob(id);
+        else if(k==='importSaveQuestion')await saveImportQuestion(id,false);
+        else if(k==='importApprove')await saveImportQuestion(id,true);
+        else if(k==='importReject'){const {error}=await sb.from('import_questions').update({status:'rejected',updated_at:new Date().toISOString()}).eq('id',id).eq('job_id',activeImportJob.id);if(error)throw error;await openImportJob(activeImportJob.id)}
+        else if(k==='importToEditor')await importToEditor();
+        else return;
+      }catch(err){importUiMessage=err.message||String(err);notify('Trung tâm nhập đề: '+importUiMessage);const m=document.getElementById('import-msg');if(m)m.textContent=importUiMessage}
+    });
+
     boot();
     </script></body></html>
