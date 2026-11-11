@@ -50,8 +50,8 @@ Return ONLY a JSON object: {"questions":[...],"warnings":[...]}.
 Each question must have:
 - ordinal: integer starting at 1
 - type: one of "mc","ms","tf","num","dnd", or null if uncertain
-- content: object with "q" (question stem), "o" (array of options when applicable), and optional "t" (topic)
-- answer_key: JSON value or null. NEVER infer or invent a key. Only use an explicitly supported answer in the source.
+- content: object with "q" (question stem), "o" (array of options when applicable), optional "t" (topic), and optional "once" (true only when the source explicitly says each option is used once)
+- answer_key: use a type-specific canonical form or null. mc = one uppercase option letter (A-F); ms = array of uppercase option letters; tf = array of booleans in the same order as content.o; num = numeric value or numeric string; dnd = object mapping each slot number as a string to the exact option text. NEVER infer or invent a key. Only use an explicitly supported answer in the source.
 - explanation: string or null
 - points: positive number, default 1 if not specified
 - page_start/page_end: page numbers if visible, else null
