@@ -246,13 +246,17 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "unexpected_error";
     if (adminForFailure && activeJobId) {
-      await adminForFailure.from("import_jobs").update({
-        status: "failed",
-        processing_stage: "failed",
-        error_code: "processing_failed",
-        error_message: message.slice(0, 500),
-        updated_at: new Date().toISOString(),
-      }).eq("id", activeJobId).in("status", ["processing", "uploaded", "queued"]).then(() => undefined).catch(() => undefined);
+      try {
+        await adminForFailure.from("import_jobs").update({
+          status: "failed",
+          processing_stage: "failed",
+          error_code: "processing_failed",
+          error_message: message.slice(0, 500),
+          updated_at: new Date().toISOString(),
+        }).eq("id", activeJobId).in("status", ["processing", "uploaded", "queued"]);
+      } catch {
+        // Preserve the original processing error if status recording also fails.
+      }
     }
     // Do not expose stack traces or provider credentials.
     return json(500, { error: "import_processing_failed", message: message.slice(0, 500) });
