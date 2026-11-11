@@ -517,9 +517,9 @@
       const a=q.answer_key,k=q.question_type,opts=Array.isArray(q.content?.o)?q.content.o:[];
       if(a==null)return null;
       if(k==='mc'){if(typeof a==='string'&&/^[A-F]$/i.test(a.trim()))return 'ABCDEF'.indexOf(a.trim().toUpperCase());if(Number.isInteger(a)&&a>=0&&a<opts.length)return a;return null}
-      if(k==='ms'){const arr=Array.isArray(a)?a:null;if(!arr)return null;const vals=arr.map(x=>typeof x==='string'&&/^[A-F]$/i.test(x.trim())?'ABCDEF'.indexOf(x.trim().toUpperCase()):Number.isInteger(x)&&x>=0&&x<opts.length?x:null);return vals.every(x=>x!==null)?[...new Set(vals)].sort((x,y)=>x-y):null}
+      if(k==='ms'){const arr=Array.isArray(a)?a:null;if(!arr)return null;const vals=arr.map(x=>typeof x==='string'&&/^[A-F]$/i.test(x.trim())?'ABCDEF'.indexOf(x.trim().toUpperCase()):Number.isInteger(x)&&x>=0&&x<opts.length?x:null);return vals.length>0&&vals.every(x=>x!==null)?[...new Set(vals)].sort((x,y)=>x-y):null}
       if(k==='tf'){if(!Array.isArray(a)||opts.length<2||a.length!==opts.length)return null;const vals=a.map(x=>typeof x==='boolean'?x:/^(đ|d|đúng|true)$/i.test(String(x))?true:/^(s|sai|false)$/i.test(String(x))?false:null);return vals.every(x=>x!==null)?vals:null}
-      if(k==='num'){const n=Number(String(a).replace(',','.'));return Number.isFinite(n)?n:null}
+      if(k==='num'){const raw=String(a).trim();if(!raw)return null;const n=Number(raw.replace(',','.'));return Number.isFinite(n)?n:null}
       if(k==='dnd'){
         let pairs=a;
         if(typeof a==='string'){const parsed=pairsX(a);if(!parsed)return null;pairs=parsed.mp}
