@@ -12,6 +12,8 @@ create table public.import_jobs (
   file_size_bytes bigint not null check (file_size_bytes > 0),
   storage_bucket text not null default 'tsa-imports',
   storage_path text not null,
+  preprocessed_storage_path text null,
+  preprocessed_file_size_bytes bigint null check (preprocessed_file_size_bytes is null or preprocessed_file_size_bytes > 0),
   sha256 text null check (sha256 is null or sha256 ~ '^[0-9a-f]{64}$'),
   source_format text not null,
   status text not null default 'uploaded'
