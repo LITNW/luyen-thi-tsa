@@ -79,11 +79,29 @@
       render();
     }
     async function boot(){
-      if(!sb){A.innerHTML='<div class="c">Không tải được thư viện kết nối Supabase. Hãy làm mới trang.</div>';return}
-      const {data:{session}}=await sb.auth.getSession();
-      await refreshData(session?.user||null);
-      sb.auth.onAuthStateChange((event,next)=>{if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED','PASSWORD_RECOVERY'].includes(event))setTimeout(()=>refreshData(next?.user||null),0)});
+      profile=null;me=false;view={n:'auth'};
+      try{render()}catch(renderError){A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Không thể khởi tạo giao diện. Hãy tải lại trang.</p><pre>'+esc(renderError.message||renderError)+'</pre></div>';return}
+      if(!sb){notify('Không tải được thư viện kết nối Supabase. Kiểm tra kết nối mạng rồi tải lại trang.');return}
+      try{
+        const {data,error}=await sb.auth.getSession();
+        if(error)throw error;
+        await refreshData(data?.session?.user||null);
+        sb.auth.onAuthStateChange((event,next)=>{
+          if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED','PASSWORD_RECOVERY'].includes(event))
+            setTimeout(()=>refreshData(next?.user||null).catch(err=>notify('Không cập nhật được phiên đăng nhập: '+err.message)),0);
+        });
+      }catch(e){
+        profile=null;me=false;D.exams=[];view={n:'auth'};
+        try{render()}catch(_){}
+        notify('Không kết nối được Supabase: '+(e.message||String(e))+' Bạn vẫn có thể xem trang đăng nhập; hãy thử tải lại sau.');
+      }
     }
+    window.addEventListener('error',e=>{
+      if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi JavaScript khi khởi động.</p><pre>'+esc(e.message||'Lỗi không xác định')+'</pre></div>';
+    });
+    window.addEventListener('unhandledrejection',e=>{
+      if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi khi tải dữ liệu.</p><pre>'+esc(e.reason?.message||e.reason||'Lỗi không xác định')+'</pre></div>';
+    });
     function home(){
       if(!profile)return auth();
       let out='<div class="bar"><b>Luyện đề thi TSA</b><span>'+esc(profile.display_name)+' · '+esc(profile.user_code)+'</span></div><div class="row"><button class="b" data-a="history">Lịch sử làm bài</button><button class="b" data-a="profile">Tài khoản</button></div>';
@@ -106,13 +124,7 @@
     }
     function edit(){
       const x=view.exam||{title:'',desc:'',minutes:60,qs:[]};
-      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'"><label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.
-Một đáp án: A. B. C. D. và dòng Đáp án: B
-Nhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C
-Đúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S
-Điền số: Đáp án: 3,5
-Ghép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.
-Có thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
+      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'"><label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
     function take(){
       const x=ex(view.id),a=view.at,n=x.qs.length,q=x.qs[a.cur];
