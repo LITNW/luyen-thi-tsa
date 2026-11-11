@@ -54,6 +54,9 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - [x] Rollback verified: no staging tables, bucket or staging policies remain.
 - [x] Feature branch created.
 - [ ] Apply migration after backup and final validation.
-- [ ] Build server-side extraction/OCR and configure Claude secret.
-- [ ] Build Import Center and review editor.
+- [x] Add initial Admin-gated Edge Function source for PDF, common image formats, TXT, Markdown and CSV extraction.
+- [ ] Complete preprocessing adapters for DOCX, XLSX, PPTX, TIFF, Moodle XML, GIFT and QTI.
+- [ ] Harden page batching, retry/idempotency and error-state handling; deploy the Edge Function after migration and secrets are configured.
+- [ ] Build upload UI, Import Center and source-linked review editor.
+- [ ] Connect approved drafts to the existing exam-version RPC flow.
 - [ ] Test representative documents end-to-end.
