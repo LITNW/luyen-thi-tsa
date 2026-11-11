@@ -45,6 +45,8 @@ Do not output solutions or answer keys that are not present in the source.
 `;
 
 Deno.serve(async (req) => {
+  let adminForFailure: any = null;
+  let activeJobId: string | null = null;
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
@@ -79,6 +81,7 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    adminForFailure = admin;
     const { data: profile, error: profileError } = await admin
       .from("profiles")
       .select("role,status")
@@ -90,6 +93,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     const jobId = typeof body?.job_id === "string" ? body.job_id : "";
+    activeJobId = jobId || null;
     if (!/^[0-9a-f-]{36}$/i.test(jobId)) return json(400, { error: "invalid_job_id" });
 
     const { data: job, error: jobError } = await admin
@@ -241,6 +245,15 @@ Deno.serve(async (req) => {
     return json(200, { ok: true, job_id: jobId, question_count: rows.length });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unexpected_error";
+    if (adminForFailure && activeJobId) {
+      await adminForFailure.from("import_jobs").update({
+        status: "failed",
+        processing_stage: "failed",
+        error_code: "processing_failed",
+        error_message: message.slice(0, 500),
+        updated_at: new Date().toISOString(),
+      }).eq("id", activeJobId).in("status", ["processing", "uploaded", "queued"]).then(() => undefined).catch(() => undefined);
+    }
     // Do not expose stack traces or provider credentials.
     return json(500, { error: "import_processing_failed", message: message.slice(0, 500) });
   }
