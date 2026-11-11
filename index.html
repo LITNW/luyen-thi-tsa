@@ -451,7 +451,7 @@
     /* ---- Admin AI Import Center: private Storage + reviewed staging drafts ---- */
     let importJobs=[],importQuestions=[],activeImportJob=null,activeImportSignedUrl='',importUiMessage='';
     function importCenter(){
-      return '<h1>Trung tâm nhập đề bằng AI</h1><div class="c"><p>Đưa PDF, ảnh hoặc tệp văn bản lên khu vực riêng tư. AI chỉ tạo bản nháp; quản trị viên phải kiểm tra và duyệt trước khi đưa câu hỏi vào trình soạn đề.</p><p class="m">Giới hạn hiện tại: 25 MB/tệp. Hỗ trợ PDF, PNG, JPEG, WEBP, GIF, TXT, Markdown và CSV. DOCX/XLSX/PPTX sẽ được bổ sung sau khi có bộ chuyển đổi và kiểm thử. Tải tệp lên chưa gọi AI. Nhấn “Chạy AI” sẽ gửi tài liệu đến Anthropic Claude API và có thể phát sinh phí theo mức sử dụng.</p><label>Chọn tài liệu</label><input id="import-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,application/pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv"><button class="b bp" data-a="importUpload">Tải tệp lên kho riêng tư</button><p id="import-msg" class="m">'+esc(importUiMessage)+'</p></div><h3>Các lần nhập gần đây</h3>'+(importJobs.length?importJobs.map(j=>'<div class="c"><b>'+esc(j.original_filename)+'</b><p class="m">'+esc(j.status)+' · '+new Date(j.created_at).toLocaleString('vi-VN')+' · '+Number(j.progress_percent||0)+'%</p>'+(j.error_message?'<p class="m no">'+esc(j.error_message)+'</p>':'')+'<div class="row"><button class="b" data-a="importOpen" data-i="'+esc(j.id)+'">Mở bản nhập</button>'+(['uploaded','queued','failed'].includes(j.status)?'<button class="b bp" data-a="importRun" data-i="'+esc(j.id)+'">Chạy AI (có thể tính phí)</button>':'')+'</div></div>').join(''):'<div class="c m">Chưa có lần nhập nào. Nếu bảng nhập đề chưa được cài đặt, hãy chờ migration được áp dụng.</div>')+'<button class="b" data-a="home">Quay lại</button>';
+      return '<h1>Trung tâm nhập đề bằng AI</h1><div class="c"><p>Đưa PDF, ảnh hoặc tệp văn bản lên khu vực riêng tư. AI chỉ tạo bản nháp; quản trị viên phải kiểm tra và duyệt trước khi đưa câu hỏi vào trình soạn đề.</p><p class="m">Giới hạn hiện tại: 25 MB/tệp. Hỗ trợ PDF, PNG, JPEG, WEBP, GIF, TXT, Markdown, CSV và DOCX. DOCX được chuyển văn bản/công thức Word ở trình duyệt; hình nhúng có thể chưa được đưa vào, nên phải đối chiếu bản gốc. XLSX/PPTX/TIFF/Moodle XML/GIFT/QTI sẽ được bổ sung sau. Tải tệp lên chưa gọi AI. Nhấn “Chạy AI” sẽ gửi tài liệu đến Anthropic Claude API và có thể phát sinh phí theo mức sử dụng.</p><label>Chọn tài liệu</label><input id="import-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.md,.csv,.docx,application/pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv"><button class="b bp" data-a="importUpload">Tải tệp lên kho riêng tư</button><p id="import-msg" class="m">'+esc(importUiMessage)+'</p></div><h3>Các lần nhập gần đây</h3>'+(importJobs.length?importJobs.map(j=>'<div class="c"><b>'+esc(j.original_filename)+'</b><p class="m">'+esc(j.status)+' · '+new Date(j.created_at).toLocaleString('vi-VN')+' · '+Number(j.progress_percent||0)+'%</p>'+(j.error_message?'<p class="m no">'+esc(j.error_message)+'</p>':'')+'<div class="row"><button class="b" data-a="importOpen" data-i="'+esc(j.id)+'">Mở bản nhập</button>'+(['uploaded','queued','failed'].includes(j.status)?'<button class="b bp" data-a="importRun" data-i="'+esc(j.id)+'">Chạy AI (có thể tính phí)</button>':'')+'</div></div>').join(''):'<div class="c m">Chưa có lần nhập nào. Nếu bảng nhập đề chưa được cài đặt, hãy chờ migration được áp dụng.</div>')+'<button class="b" data-a="home">Quay lại</button>';
     }
     async function loadImportJobs(){
       const {data,error}=await sb.from('import_jobs').select('id,original_filename,status,progress_percent,error_message,created_at').order('created_at',{ascending:false}).limit(50);
@@ -461,21 +461,36 @@
       const el=document.getElementById('import-file'),msg=document.getElementById('import-msg'),file=el?.files?.[0];
       if(!file){if(msg)msg.textContent='Hãy chọn một tệp.';return}
       if(file.size<=0||file.size>25*1024*1024){if(msg)msg.textContent='Tệp phải có dung lượng từ 1 byte đến 25 MB.';return}
-      const name=file.name.toLowerCase(),allowed=/\.(pdf|png|jpe?g|webp|gif|txt|md|csv)$/.test(name);
+      const name=file.name.toLowerCase(),allowed=/\.(pdf|png|jpe?g|webp|gif|txt|md|csv|docx)$/.test(name);
       if(!allowed){if(msg)msg.textContent='Định dạng này chưa được hỗ trợ ở phiên bản hiện tại.';return}
       if(!profile?.id||!me)throw new Error('Chỉ Admin đang hoạt động mới được nhập đề.');
+      const ext=name.split('.').pop();let preText=null,preWarnings=[];
+      if(ext==='docx'){
+        if(msg)msg.textContent='Đang đọc DOCX và chuyển nội dung/công thức Word sang văn bản…';
+        IW=[];preText=await docxText(file);preWarnings=[...IW];
+        if(!preText.trim())throw new Error('DOCX không có nội dung văn bản để trích xuất.');
+        if(preText.length>120000)throw new Error('Văn bản DOCX vượt giới hạn 120.000 ký tự của phiên bản hiện tại.');
+      }
       if(msg)msg.textContent='Đang tạo phiên nhập…';
       const jobId=crypto.randomUUID(),safeName=file.name.replace(/[^\p{L}\p{N}._-]+/gu,'_').slice(-120)||'source-file';
-      const ext=name.split('.').pop(),path=profile.id+'/'+jobId+'/'+safeName;
-      const mime=file.type||({pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',txt:'text/plain',md:'text/markdown',csv:'text/csv'}[ext]||'application/octet-stream');
-      const {error:jobError}=await sb.from('import_jobs').insert({id:jobId,created_by:profile.id,original_filename:file.name,mime_type:mime,file_size_bytes:file.size,storage_bucket:'tsa-imports',storage_path:path,source_format:ext,status:'uploaded'});
+      const path=profile.id+'/'+jobId+'/'+safeName,prePath=profile.id+'/'+jobId+'/_preprocessed.txt';
+      const mime=file.type||({pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',txt:'text/plain',md:'text/markdown',csv:'text/csv',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}[ext]||'application/octet-stream');
+      const preBlob=preText==null?null:new Blob([preText],{type:'text/plain;charset=utf-8'});
+      const {error:jobError}=await sb.from('import_jobs').insert({id:jobId,created_by:profile.id,original_filename:file.name,mime_type:mime,file_size_bytes:file.size,preprocessed_file_size_bytes:preBlob?.size||null,storage_bucket:'tsa-imports',storage_path:path,source_format:ext,status:'uploaded',metadata:{preprocessing_warnings:preWarnings}});
       if(jobError)throw jobError;
-      if(msg)msg.textContent='Đang tải tệp lên kho riêng tư…';
+      if(msg)msg.textContent='Đang tải tệp gốc lên kho riêng tư…';
       const {error:uploadError}=await sb.storage.from('tsa-imports').upload(path,file,{contentType:mime,upsert:false});
       if(uploadError){await sb.from('import_jobs').update({status:'failed',error_code:'upload_failed',error_message:uploadError.message}).eq('id',jobId);throw uploadError}
-      await sb.from('import_events').insert({job_id:jobId,actor_id:profile.id,event_type:'source_uploaded',details:{filename:file.name,size_bytes:file.size,format:ext}});
+      if(preBlob){
+        if(msg)msg.textContent='Đang tải bản văn bản đã chuyển đổi…';
+        const {error:preError}=await sb.storage.from('tsa-imports').upload(prePath,preBlob,{contentType:'text/plain;charset=utf-8',upsert:false});
+        if(preError){await sb.from('import_jobs').update({status:'failed',error_code:'preprocessing_upload_failed',error_message:preError.message}).eq('id',jobId);throw preError}
+        const {error:updateError}=await sb.from('import_jobs').update({preprocessed_storage_path:prePath}).eq('id',jobId);
+        if(updateError)throw updateError;
+      }
+      await sb.from('import_events').insert({job_id:jobId,actor_id:profile.id,event_type:'source_uploaded',details:{filename:file.name,size_bytes:file.size,format:ext,preprocessed:!!preBlob,preprocessing_warnings:preWarnings}});
       await loadImportJobs();
-      importUiMessage='Đã tải tệp lên kho riêng tư. Chưa gọi Claude API và chưa phát sinh phí xử lý AI. Khi sẵn sàng, nhấn “Chạy AI” tại lần nhập tương ứng.';
+      importUiMessage='Đã tải tệp gốc lên kho riêng tư. Chưa gọi Claude API và chưa phát sinh phí xử lý AI. Khi sẵn sàng, nhấn “Chạy AI” tại lần nhập tương ứng.';
       render();
     }
     async function runImport(jobId){
