@@ -269,6 +269,9 @@ Deno.serve(async (req) => {
         .upsert(rows, { onConflict: "job_id,ordinal" });
       if (upsertError) throw new Error("draft_upsert_failed");
     }
+    const { error: staleDeleteError } = await admin.from("import_questions")
+      .delete().eq("job_id", jobId).gt("ordinal", rows.length);
+    if (staleDeleteError) throw new Error("stale_draft_cleanup_failed");
     const { error: eventError } = await admin.from("import_events").insert({
       job_id: jobId,
       actor_id: userData.user.id,
@@ -277,7 +280,7 @@ Deno.serve(async (req) => {
     });
     if (eventError) throw new Error("event_record_failed");
 
-    const { error: finishError } = await admin.from("import_jobs").update({
+    const { data: finalized, error: finishError } = await admin.from("import_jobs").update({
       status: "needs_review",
       processing_stage: "review",
       progress_percent: 100,
@@ -286,8 +289,8 @@ Deno.serve(async (req) => {
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       metadata: { warnings: Array.isArray(parsed.warnings) ? parsed.warnings.slice(0, 50) : [] },
-    }).eq("id", jobId).eq("status", "processing");
-    if (finishError) throw new Error("job_finalize_failed");
+    }).eq("id", jobId).eq("status", "processing").select("id").maybeSingle();
+    if (finishError || !finalized) throw new Error("job_finalize_failed");
 
     return json(200, { ok: true, job_id: jobId, question_count: rows.length });
   } catch (error) {
