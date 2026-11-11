@@ -26,7 +26,7 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 
 1. Admin uploads a source file to private Storage.
 2. Create an `import_jobs` row and upload event.
-3. The server-side worker sends PDFs/images to Claude for visual extraction and passes TXT/Markdown/CSV as text; never expose Claude API credentials in browser code.
+3. The server-side worker sends PDFs/images to Claude for visual extraction and passes TXT/Markdown/CSV plus preprocessed DOCX text as text; DOCX originals remain in private Storage and the browser-side converter preserves supported Word math (OMML). Never expose Claude API credentials in browser code.
 4. Validate against existing types `mc`, `ms`, `tf`, `num`, `dnd`.
 5. Store drafts, source page ranges, confidence and validation flags.
 6. Review question cards with a time-limited private source-file link and editable JSON for the question, options, answer key and explanation.
@@ -55,8 +55,9 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - [x] Feature branch created.
 - [x] Admin Import Center UI added: upload without invoking AI, list jobs, explicit cost confirmation before Claude processing, edit JSON drafts, approve/reject and transfer approved questions into the existing exam editor.
 - [ ] Apply migration after backup and final validation.
-- [x] Add initial Admin-gated Edge Function source for PDF, common image formats, TXT, Markdown and CSV extraction.
-- [ ] Complete preprocessing adapters for DOCX, XLSX, PPTX, TIFF, Moodle XML, GIFT and QTI.
+- [x] Add initial Admin-gated Edge Function source for PDF, common image formats, TXT, Markdown, CSV and preprocessed DOCX extraction.
+- [x] Add DOCX preprocessing through the existing Word/OMML parser; retain the original DOCX and store extracted text as a private sidecar. Embedded images are flagged for manual source review.
+- [ ] Complete preprocessing adapters for XLSX, PPTX, TIFF, Moodle XML, GIFT and QTI.
 - [x] Harden Admin authorization, job ownership, private-bucket path checks, MIME signature checks, atomic job claiming, timeout and idempotent question upserts.
 - [ ] Add bounded PDF page batching, Edge Function runtime/type checks and representative file tests; deploy after migration and secrets are configured.
 - [x] Add a time-limited signed link to the private source file and editable JSON review controls.
