@@ -167,18 +167,23 @@
       m.textContent='Đang lưu bản nháp trên máy chủ…';
       try{const {data,error}=await sb.rpc('admin_save_exam_content',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_publish:!!publishNow});if(error)throw error;
         let importLinkWarning='';
-        const importIds=view.importQuestionIds||[];
-        if(importIds.length){
+        const importMeta=view.importQuestionMeta||[];
+        if(importMeta.length){
           try{
             const {data:importedExam,error:ie}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(ie)throw ie;
             const savedQuestions=importedExam.questions||[];
-            if(savedQuestions.length!==importIds.length)throw new Error('Số câu đã lưu không khớp số câu nhập.');
-            const updates=await Promise.all(importIds.map((id,index)=>sb.from('import_questions').update({status:'imported',imported_question_id:savedQuestions[index].question_id,imported_question_version_id:savedQuestions[index].question_version_id,updated_at:new Date().toISOString()}).eq('id',id)));
+            const remaining=[...savedQuestions],links=[];
+            for(const item of importMeta){
+              const index=remaining.findIndex(x=>x.type===item.type&&x.content?.q===item.content?.q&&JSON.stringify(x.content?.o||[])===JSON.stringify(item.content?.o||[]));
+              if(index<0)throw new Error('Không đối chiếu được câu đã nhập với nội dung sau khi chỉnh sửa.');
+              links.push({id:item.id,question:remaining.splice(index,1)[0]});
+            }
+            const updates=await Promise.all(links.map(link=>sb.from('import_questions').update({status:'imported',imported_question_id:link.question.question_id,imported_question_version_id:link.question.question_version_id,updated_at:new Date().toISOString()}).eq('id',link.id)));
             const failed=updates.find(x=>x.error);if(failed)throw failed.error;
           }catch(linkError){importLinkWarning=' Đề đã lưu nhưng trạng thái liên kết bản nhập chưa đồng bộ: '+(linkError.message||String(linkError))}
         }
         if(publishNow){await refreshData((await sb.auth.getSession()).data.session?.user);go({n:'home'});notify('Đã xuất bản phiên bản đề thi.'+importLinkWarning)}
-        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionIds:importIds};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
+        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
       }catch(e){m.textContent='Không lưu được: '+e.message}
     }
     function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf')return {method:'all_or_nothing'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'partial_mapping',no_option_reuse:true,allow_unused_options:true}}
@@ -572,7 +577,7 @@
         qs.push({k:q.question_type,q:q.content.q,o:Array.isArray(q.content.o)?q.content.o:[],a:answer,e:q.explanation||'',t:q.content.t||'',p:Number(q.points)||1,once:!!q.content.once});
       }
       const title='Đề nhập từ '+String(activeImportJob.original_filename||'tài liệu').replace(/\.[^.]+$/,'').slice(0,180);
-      view={n:'edit',id:null,exam_id:null,exam:{title,desc:'Bản nháp được tạo từ AI; cần rà soát trước khi lưu.',minutes:60,qs},questions:[],importQuestionIds:approved.map(q=>q.id)};
+      view={n:'edit',id:null,exam_id:null,exam:{title,desc:'Bản nháp được tạo từ AI; cần rà soát trước khi lưu.',minutes:60,qs},questions:[],importQuestionMeta:approved.map(q=>({id:q.id,type:q.question_type,content:q.content}))};
       go(view);
       notify('Đã đưa '+qs.length+' câu đã duyệt vào trình soạn đề. Hãy kiểm tra lại rồi lưu bản nháp.');
     }
