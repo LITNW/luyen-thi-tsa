@@ -115,16 +115,22 @@ Deno.serve(async (req) => {
 
     const { data: job, error: jobError } = await admin
       .from("import_jobs")
-      .select("id,created_by,storage_bucket,storage_path,mime_type,file_size_bytes,status,original_filename")
+      .select("id,created_by,storage_bucket,storage_path,preprocessed_storage_path,preprocessed_file_size_bytes,mime_type,file_size_bytes,status,original_filename,source_format,metadata")
       .eq("id", jobId)
       .maybeSingle();
     if (jobError || !job) return json(404, { error: "import_job_not_found" });
     if (job.created_by !== userData.user.id) return json(403, { error: "job_owner_mismatch" });
+    const sourcePath = job.preprocessed_storage_path || job.storage_path;
+    const sourceSize = job.preprocessed_storage_path
+      ? Number(job.preprocessed_file_size_bytes)
+      : Number(job.file_size_bytes);
     if (job.storage_bucket !== "tsa-imports" ||
-        !String(job.storage_path || "").startsWith(`${userData.user.id}/`)) {
+        !String(job.storage_path || "").startsWith(`${userData.user.id}/`) ||
+        !String(sourcePath || "").startsWith(`${userData.user.id}/`)) {
       return json(400, { error: "invalid_storage_location" });
     }
-    if (Number(job.file_size_bytes) <= 0 || Number(job.file_size_bytes) > MAX_BYTES) {
+    if (Number(job.file_size_bytes) <= 0 || Number(job.file_size_bytes) > MAX_BYTES ||
+        !Number.isFinite(sourceSize) || sourceSize <= 0 || sourceSize > MAX_BYTES) {
       return json(413, { error: "file_size_out_of_range", max_bytes: MAX_BYTES });
     }
 
@@ -151,14 +157,18 @@ Deno.serve(async (req) => {
 
     const { data: file, error: downloadError } = await admin.storage
       .from("tsa-imports")
-      .download(job.storage_path);
+      .download(sourcePath);
     if (downloadError || !file) throw new Error("source_file_download_failed");
     const bytes = new Uint8Array(await file.arrayBuffer());
-    if (bytes.byteLength !== Number(job.file_size_bytes) || bytes.byteLength > MAX_BYTES) {
+    if (bytes.byteLength !== sourceSize || bytes.byteLength > MAX_BYTES) {
       throw new Error("source_file_size_mismatch");
     }
 
-    const format = detectFormat(bytes, job.original_filename, job.mime_type || file.type || "");
+    const format = detectFormat(
+      bytes,
+      job.preprocessed_storage_path ? "preprocessed.txt" : job.original_filename,
+      job.preprocessed_storage_path ? "text/plain" : (job.mime_type || file.type || ""),
+    );
     let sourceBlock: Record<string, unknown>;
     if (format === "pdf") {
       sourceBlock = {
@@ -204,6 +214,9 @@ Deno.serve(async (req) => {
             role: "user",
             content: [
               sourceBlock,
+              ...(Array.isArray(job.metadata?.preprocessing_warnings) && job.metadata.preprocessing_warnings.length
+                ? [{ type: "text", text: "Preprocessing warnings from the original file: " + job.metadata.preprocessing_warnings.slice(0, 20).join("; ") + ". Some embedded images or structures may not be present in the extracted text; flag affected questions for source review." }]
+                : []),
               { type: "text", text: "Extract every assessment question from this source. Return the required JSON only." },
             ],
           }],
@@ -258,7 +271,7 @@ Deno.serve(async (req) => {
         source_page_end: end,
         confidence,
         validation_flags: [...new Set(flags)],
-        source_metadata: { extractor: "claude", model, filename: job.original_filename, format },
+        source_metadata: { extractor: "claude", model, filename: job.original_filename, format: job.source_format || format },
       };
     });
 
