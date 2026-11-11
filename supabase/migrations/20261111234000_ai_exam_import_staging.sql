@@ -81,8 +81,10 @@ create policy import_jobs_admin_all on public.import_jobs for all to authenticat
   using ((select public.is_admin())) with check ((select public.is_admin()));
 create policy import_questions_admin_all on public.import_questions for all to authenticated
   using ((select public.is_admin())) with check ((select public.is_admin()));
-create policy import_events_admin_all on public.import_events for all to authenticated
-  using ((select public.is_admin())) with check ((select public.is_admin()));
+create policy import_events_admin_select on public.import_events for select to authenticated
+  using ((select public.is_admin()));
+create policy import_events_admin_insert on public.import_events for insert to authenticated
+  with check ((select public.is_admin()) and (actor_id is null or actor_id = (select auth.uid())));
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('tsa-imports', 'tsa-imports', false, 26214400, null)
