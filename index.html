@@ -82,7 +82,7 @@
       if(!sb){A.innerHTML='<div class="c">Không tải được thư viện kết nối Supabase. Hãy làm mới trang.</div>';return}
       const {data:{session}}=await sb.auth.getSession();
       await refreshData(session?.user||null);
-      sb.auth.onAuthStateChange((_event,next)=>{setTimeout(()=>refreshData(next?.user||null),0)});
+      sb.auth.onAuthStateChange((event,next)=>{if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED','PASSWORD_RECOVERY'].includes(event))setTimeout(()=>refreshData(next?.user||null),0)});
     }
     function home(){
       if(!profile)return auth();
@@ -144,7 +144,14 @@ Có thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q"
       if(!title||!(mi>0)||mi>600){m.textContent='Cần nhập tên đề và thời lượng từ 1 đến 600 phút.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
       if(fe.length){m.textContent='Chưa lưu được: '+fe.length+' lỗi công thức. '+fe.slice(0,4).join(' | ');fpanel();return}
-      const payload=qs.map((q,i)=>{const old=view.questions?.[i]||{};return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{fm:q.fm||[]},points:q.p||1}});
+      const usedOld=new Set(),oldList=view.questions||[];
+      const payload=qs.map((q,i)=>{
+        let oldIndex=oldList.findIndex((old,j)=>!usedOld.has(j)&&old.q===q.q&&old.k===q.k);
+        if(oldIndex<0&&qs.length===oldList.length&&!usedOld.has(i))oldIndex=i;
+        const old=oldIndex>=0?oldList[oldIndex]:{};
+        if(oldIndex>=0)usedOld.add(oldIndex);
+        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{fm:q.fm||[]},points:q.p||1};
+      });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
       try{const {data,error}=await sb.rpc('admin_save_exam_content',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_publish:!!publishNow});if(error)throw error;
         if(publishNow){await refreshData((await sb.auth.getSession()).data.session?.user);go({n:'home'});notify('Đã xuất bản phiên bản đề thi.')}
