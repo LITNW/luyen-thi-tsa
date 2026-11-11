@@ -19,7 +19,7 @@
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
     const SB_URL='https://hwqtsopvpucadgpkigqz.supabase.co';
-    const SB_KEY='sb_publishable_DOgS6q2neojJmmaoBi64SQ_pv0HMOVL';
+    const SB_KEY='sb_publishable_DOgS6q2neojjMmaoBi64SQ_pv0HMOVL';
     const sb=window.supabase?.createClient?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
     const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const st={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
