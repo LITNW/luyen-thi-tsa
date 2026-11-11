@@ -39,8 +39,7 @@ function detectFormat(bytes: Uint8Array, filename: string, declaredMime: string)
   if (/\.(png|jpe?g|gif|webp)$/.test(name) || mime.startsWith("image/")) {
     throw new Error("file_signature_mismatch_image");
   }
-  if (/\.(txt|md|csv)$/.test(name) || mime.startsWith("text/") ||
-      mime === "application/vnd.ms-excel") return "text";
+  if (/\.(txt|md|csv)$/.test(name) || mime.startsWith("text/")) return "text";
   throw new Error("unsupported_file_format");
 }
 
