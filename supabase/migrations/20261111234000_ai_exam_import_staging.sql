@@ -12,6 +12,8 @@ create table public.import_jobs (
   file_size_bytes bigint not null check (file_size_bytes > 0),
   storage_bucket text not null default 'tsa-imports',
   storage_path text not null,
+  preprocessed_storage_path text null,
+  preprocessed_file_size_bytes bigint null check (preprocessed_file_size_bytes is null or preprocessed_file_size_bytes > 0),
   sha256 text null check (sha256 is null or sha256 ~ '^[0-9a-f]{64}$'),
   source_format text not null,
   status text not null default 'uploaded'
@@ -31,6 +33,7 @@ create table public.import_jobs (
   approved_at timestamptz null,
   approved_by uuid null references public.profiles(id) on delete set null,
   constraint import_jobs_storage_path_unique unique (storage_bucket, storage_path),
+  constraint import_jobs_preprocessed_pair_check check ((preprocessed_storage_path is null) = (preprocessed_file_size_bytes is null)),
   constraint import_jobs_target_version_exam_check check (target_exam_version_id is null or target_exam_id is not null)
 );
 create index import_jobs_created_by_created_at_idx on public.import_jobs (created_by, created_at desc);
@@ -81,8 +84,10 @@ create policy import_jobs_admin_all on public.import_jobs for all to authenticat
   using ((select public.is_admin())) with check ((select public.is_admin()));
 create policy import_questions_admin_all on public.import_questions for all to authenticated
   using ((select public.is_admin())) with check ((select public.is_admin()));
-create policy import_events_admin_all on public.import_events for all to authenticated
-  using ((select public.is_admin())) with check ((select public.is_admin()));
+create policy import_events_admin_select on public.import_events for select to authenticated
+  using ((select public.is_admin()));
+create policy import_events_admin_insert on public.import_events for insert to authenticated
+  with check ((select public.is_admin()) and (actor_id is null or actor_id = (select auth.uid())));
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('tsa-imports', 'tsa-imports', false, 26214400, null)
