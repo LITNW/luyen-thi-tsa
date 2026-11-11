@@ -476,7 +476,7 @@
       const path=profile.id+'/'+jobId+'/'+safeName,prePath=profile.id+'/'+jobId+'/_preprocessed.txt';
       const mime=file.type||({pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',txt:'text/plain',md:'text/markdown',csv:'text/csv',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}[ext]||'application/octet-stream');
       const preBlob=preText==null?null:new Blob([preText],{type:'text/plain;charset=utf-8'});
-      const {error:jobError}=await sb.from('import_jobs').insert({id:jobId,created_by:profile.id,original_filename:file.name,mime_type:mime,file_size_bytes:file.size,preprocessed_file_size_bytes:preBlob?.size||null,storage_bucket:'tsa-imports',storage_path:path,source_format:ext,status:'uploaded',metadata:{preprocessing_warnings:preWarnings}});
+      const {error:jobError}=await sb.from('import_jobs').insert({id:jobId,created_by:profile.id,original_filename:file.name,mime_type:mime,file_size_bytes:file.size,storage_bucket:'tsa-imports',storage_path:path,source_format:ext,status:'uploaded',metadata:{preprocessing_warnings:preWarnings}});
       if(jobError)throw jobError;
       if(msg)msg.textContent='Đang tải tệp gốc lên kho riêng tư…';
       const {error:uploadError}=await sb.storage.from('tsa-imports').upload(path,file,{contentType:mime,upsert:false});
@@ -485,7 +485,7 @@
         if(msg)msg.textContent='Đang tải bản văn bản đã chuyển đổi…';
         const {error:preError}=await sb.storage.from('tsa-imports').upload(prePath,preBlob,{contentType:'text/plain;charset=utf-8',upsert:false});
         if(preError){await sb.from('import_jobs').update({status:'failed',error_code:'preprocessing_upload_failed',error_message:preError.message}).eq('id',jobId);throw preError}
-        const {error:updateError}=await sb.from('import_jobs').update({preprocessed_storage_path:prePath}).eq('id',jobId);
+        const {error:updateError}=await sb.from('import_jobs').update({preprocessed_storage_path:prePath,preprocessed_file_size_bytes:preBlob.size}).eq('id',jobId);
         if(updateError)throw updateError;
       }
       await sb.from('import_events').insert({job_id:jobId,actor_id:profile.id,event_type:'source_uploaded',details:{filename:file.name,size_bytes:file.size,format:ext,preprocessed:!!preBlob,preprocessing_warnings:preWarnings}});
