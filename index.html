@@ -516,14 +516,27 @@
       const {error}=await sb.from('import_questions').update(patch).eq('id',id).eq('job_id',activeImportJob.id);if(error)throw error;
       await openImportJob(activeImportJob.id);
     }
-    function importAnswerText(q){
-      const a=q.answer_key,k=q.question_type;
+    function importAnswerValue(q){
+      const a=q.answer_key,k=q.question_type,opts=Array.isArray(q.content?.o)?q.content.o:[];
       if(a==null)return null;
-      if(k==='mc'){if(typeof a==='string'&&/^[A-F]$/i.test(a.trim()))return a.trim().toUpperCase();if(Number.isInteger(a)&&a>=0&&a<6)return 'ABCDEF'[a];return null}
-      if(k==='ms'){const arr=Array.isArray(a)?a:null;if(!arr)return null;const letters=arr.map(x=>typeof x==='string'&&/^[A-F]$/i.test(x.trim())?x.trim().toUpperCase():Number.isInteger(x)&&x>=0&&x<6?'ABCDEF'[x]:null);return letters.every(Boolean)?letters.join(', '):null}
-      if(k==='tf'){if(!Array.isArray(a))return null;const vals=a.map(x=>typeof x==='boolean'?x:/^(đ|d|đúng|true)$/i.test(String(x))?true:/^(s|sai|false)$/i.test(String(x))?false:null);return vals.every(x=>x!==null)?vals.map(x=>x?'Đ':'S').join(', '):null}
-      if(k==='num')return typeof a==='number'||typeof a==='string'?String(a).replace('.',','):null;
-      if(k==='dnd'&&a&&typeof a==='object'&&!Array.isArray(a))return Object.entries(a).map(([key,value])=>key+': '+String(value)).join(' | ');
+      if(k==='mc'){if(typeof a==='string'&&/^[A-F]$/i.test(a.trim()))return 'ABCDEF'.indexOf(a.trim().toUpperCase());if(Number.isInteger(a)&&a>=0&&a<opts.length)return a;return null}
+      if(k==='ms'){const arr=Array.isArray(a)?a:null;if(!arr)return null;const vals=arr.map(x=>typeof x==='string'&&/^[A-F]$/i.test(x.trim())?'ABCDEF'.indexOf(x.trim().toUpperCase()):Number.isInteger(x)&&x>=0&&x<opts.length?x:null);return vals.every(x=>x!==null)?[...new Set(vals)].sort((x,y)=>x-y):null}
+      if(k==='tf'){if(!Array.isArray(a)||a.length!==(opts.length||a.length))return null;const vals=a.map(x=>typeof x==='boolean'?x:/^(đ|d|đúng|true)$/i.test(String(x))?true:/^(s|sai|false)$/i.test(String(x))?false:null);return vals.every(x=>x!==null)?vals:null}
+      if(k==='num'){const n=Number(String(a).replace(',','.'));return Number.isFinite(n)?n:null}
+      if(k==='dnd'){
+        let pairs=a;
+        if(typeof a==='string'){const parsed=pairsX(a);if(!parsed)return null;pairs=parsed.mp}
+        if(!pairs||typeof pairs!=='object'||Array.isArray(pairs))return null;
+        const mapped={};
+        for(const [slot,value] of Object.entries(pairs)){
+          const raw=String(value).trim();
+          let hits=opts.map((o,i)=>normAns(o)===normAns(raw)?i+1:null).filter(x=>x!==null);
+          if(hits.length===0&&/^\\d+$/.test(raw)&&Number(raw)>=1&&Number(raw)<=opts.length)hits=[Number(raw)];
+          if(hits.length!==1||!/^\\d+$/.test(slot)||Number(slot)<1)return null;
+          mapped[slot]=hits[0];
+        }
+        return Object.keys(mapped).length?mapped:null;
+      }
       return null;
     }
     async function importToEditor(){
@@ -531,10 +544,11 @@
       if(!approved.length)throw new Error('Chưa có câu nào được duyệt.');
       const qs=[];
       for(const q of approved){
-        const answer=importAnswerText(q);if(answer==null)throw new Error('Câu '+q.ordinal+': định dạng đáp án chưa tương thích. Hãy mở câu và chuẩn hóa đáp án trước.');
-        qs.push({k:q.question_type,q:q.content.q,o:Array.isArray(q.content.o)?q.content.o:[],a:q.question_type==='mc'?'ABCDEF'.indexOf(answer):q.question_type==='ms'?answer.split(',').map(x=>'ABCDEF'.indexOf(x.trim())):q.question_type==='tf'?answer.split(',').map(x=>/^Đ/.test(x.trim())):q.question_type==='num'?Number(answer.replace(',','.')):answer,e:q.explanation||'',t:q.content.t||'',p:Number(q.points)||1,once:!!q.content.once});
+        const answer=importAnswerValue(q);
+        if(answer==null)throw new Error('Câu '+q.ordinal+': định dạng đáp án chưa tương thích hoặc chưa đủ căn cứ. Hãy chuẩn hóa đáp án trước.');
+        qs.push({k:q.question_type,q:q.content.q,o:Array.isArray(q.content.o)?q.content.o:[],a:answer,e:q.explanation||'',t:q.content.t||'',p:Number(q.points)||1,once:!!q.content.once});
       }
-      const title='Đề nhập từ '+String(activeImportJob.original_filename||'tài liệu').replace(/\.[^.]+$/,'').slice(0,180);
+      const title='Đề nhập từ '+String(activeImportJob.original_filename||'tài liệu').replace(/\\.[^.]+$/,'').slice(0,180);
       view={n:'edit',id:null,exam_id:null,exam:{title,desc:'Bản nháp được tạo từ AI; cần rà soát trước khi lưu.',minutes:60,qs},questions:[]};
       go(view);
       notify('Đã đưa '+qs.length+' câu đã duyệt vào trình soạn đề. Hãy kiểm tra lại rồi lưu bản nháp.');
