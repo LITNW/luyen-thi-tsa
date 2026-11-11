@@ -26,10 +26,10 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 
 1. Admin uploads a source file to private Storage.
 2. Create an `import_jobs` row and upload event.
-3. Extract text/OCR on a server-side worker; never expose Claude API credentials in browser code.
+3. The server-side worker sends PDFs/images to Claude for visual extraction and passes TXT/Markdown/CSV as text; never expose Claude API credentials in browser code.
 4. Validate against existing types `mc`, `ms`, `tf`, `num`, `dnd`.
 5. Store drafts, source page ranges, confidence and validation flags.
-6. Review in a three-pane workspace: question list, source preview, editable question/answer.
+6. Review question cards with a time-limited private source-file link and editable JSON for the question, options, answer key and explanation.
 7. Admin approves selected questions and maps them into the existing question/version model.
 8. Save as exam draft using existing Admin RPCs. Publishing remains a separate explicit action.
 
@@ -43,7 +43,7 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - The Storage bucket is private with Admin-only object policies.
 - Any Edge Function must validate the caller JWT and active Admin role before using server credentials.
 - Store model secrets in Supabase Function Secrets, never in `index.html`, public Vercel variables, or committed files.
-- Enforce file-size/page limits, MIME sniffing, timeouts, rate limits and idempotency.
+- Current safeguards: 25 MB file-size limit, MIME signature checks, job-ownership checks, timeout and retry-safe draft upserts. Page batching and rate limiting are still outstanding.
 - Record failures and allow safe retries without duplicating canonical questions.
 
 ## Status
@@ -53,12 +53,13 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - [x] Additive migration tested with transaction rollback.
 - [x] Rollback verified: no staging tables, bucket or staging policies remain.
 - [x] Feature branch created.
-- [x] Admin Import Center UI added: upload, invoke extraction, list jobs, edit JSON drafts, approve/reject and transfer approved questions into the existing exam editor.
+- [x] Admin Import Center UI added: upload without invoking AI, list jobs, explicit cost confirmation before Claude processing, edit JSON drafts, approve/reject and transfer approved questions into the existing exam editor.
 - [ ] Apply migration after backup and final validation.
 - [x] Add initial Admin-gated Edge Function source for PDF, common image formats, TXT, Markdown and CSV extraction.
 - [ ] Complete preprocessing adapters for DOCX, XLSX, PPTX, TIFF, Moodle XML, GIFT and QTI.
 - [x] Harden Admin authorization, job ownership, private-bucket path checks, MIME signature checks, atomic job claiming, timeout and idempotent question upserts.
-- [ ] Add bounded PDF page batching and runtime tests; deploy the Edge Function after migration and secrets are configured.
-- [ ] Add signed source-file preview and richer field-level review controls.
+- [ ] Add bounded PDF page batching, Edge Function runtime/type checks and representative file tests; deploy after migration and secrets are configured.
+- [x] Add a time-limited signed link to the private source file and editable JSON review controls.
+- [ ] Improve review with field-level controls and embedded page navigation.
 - [x] Transfer approved drafts into the existing exam editor (saving/publishing still uses the existing Admin RPC flow).
 - [ ] Test representative documents end-to-end.
