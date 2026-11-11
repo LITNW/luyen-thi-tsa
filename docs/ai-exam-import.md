@@ -2,10 +2,10 @@
 
 ## Zero-additional-infrastructure-cost development path
 
-- Develop on GitHub branch `feature/ai-exam-import`.
+- Develop on GitHub branch `feature/ai-import-center` (the initial foundation PR #5 has already been merged).
 - Use the Vercel Preview Deployment for this branch; do not deploy to Production.
 - Do not create a Supabase Development Branch (it can incur separate compute charges).
-- The additive SQL migration was transaction-tested against the current Supabase project using `BEGIN ... ROLLBACK`; a follow-up catalog check confirmed no staging tables, bucket, or policies were left behind.
+- The additive SQL migration was transaction-tested against the current Supabase project using `BEGIN ... ROLLBACK`; a follow-up catalog check confirmed no staging tables, bucket, or policies were left behind. Its filename was corrected to sort after the current production migration history.
 - Keep the migration in GitHub for review. Apply it to the existing Supabase project only after a current backup and final validation.
 - Reuse the existing Supabase project and Edge Functions rather than adding another hosted service.
 
@@ -53,10 +53,12 @@ This avoids the additional Supabase branch compute charge. Claude API usage may 
 - [x] Additive migration tested with transaction rollback.
 - [x] Rollback verified: no staging tables, bucket or staging policies remain.
 - [x] Feature branch created.
+- [x] Admin Import Center UI added: upload, invoke extraction, list jobs, edit JSON drafts, approve/reject and transfer approved questions into the existing exam editor.
 - [ ] Apply migration after backup and final validation.
 - [x] Add initial Admin-gated Edge Function source for PDF, common image formats, TXT, Markdown and CSV extraction.
 - [ ] Complete preprocessing adapters for DOCX, XLSX, PPTX, TIFF, Moodle XML, GIFT and QTI.
-- [ ] Harden page batching, retry/idempotency and error-state handling; deploy the Edge Function after migration and secrets are configured.
-- [ ] Build upload UI, Import Center and source-linked review editor.
-- [ ] Connect approved drafts to the existing exam-version RPC flow.
+- [x] Harden Admin authorization, job ownership, private-bucket path checks, MIME signature checks, atomic job claiming, timeout and idempotent question upserts.
+- [ ] Add bounded PDF page batching and runtime tests; deploy the Edge Function after migration and secrets are configured.
+- [ ] Add signed source-file preview and richer field-level review controls.
+- [x] Transfer approved drafts into the existing exam editor (saving/publishing still uses the existing Admin RPC flow).
 - [ ] Test representative documents end-to-end.
