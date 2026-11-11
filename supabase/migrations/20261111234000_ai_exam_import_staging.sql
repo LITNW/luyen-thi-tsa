@@ -33,6 +33,7 @@ create table public.import_jobs (
   approved_at timestamptz null,
   approved_by uuid null references public.profiles(id) on delete set null,
   constraint import_jobs_storage_path_unique unique (storage_bucket, storage_path),
+  constraint import_jobs_preprocessed_pair_check check ((preprocessed_storage_path is null) = (preprocessed_file_size_bytes is null)),
   constraint import_jobs_target_version_exam_check check (target_exam_version_id is null or target_exam_id is not null)
 );
 create index import_jobs_created_by_created_at_idx on public.import_jobs (created_by, created_at desc);
