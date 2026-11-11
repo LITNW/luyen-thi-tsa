@@ -79,11 +79,29 @@
       render();
     }
     async function boot(){
-      if(!sb){A.innerHTML='<div class="c">Không tải được thư viện kết nối Supabase. Hãy làm mới trang.</div>';return}
-      const {data:{session}}=await sb.auth.getSession();
-      await refreshData(session?.user||null);
-      sb.auth.onAuthStateChange((event,next)=>{if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED','PASSWORD_RECOVERY'].includes(event))setTimeout(()=>refreshData(next?.user||null),0)});
+      profile=null;me=false;view={n:'auth'};
+      try{render()}catch(renderError){A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Không thể khởi tạo giao diện. Hãy tải lại trang.</p><pre>'+esc(renderError.message||renderError)+'</pre></div>';return}
+      if(!sb){notify('Không tải được thư viện kết nối Supabase. Kiểm tra kết nối mạng rồi tải lại trang.');return}
+      try{
+        const {data,error}=await sb.auth.getSession();
+        if(error)throw error;
+        await refreshData(data?.session?.user||null);
+        sb.auth.onAuthStateChange((event,next)=>{
+          if(['SIGNED_IN','SIGNED_OUT','USER_UPDATED','PASSWORD_RECOVERY'].includes(event))
+            setTimeout(()=>refreshData(next?.user||null).catch(err=>notify('Không cập nhật được phiên đăng nhập: '+err.message)),0);
+        });
+      }catch(e){
+        profile=null;me=false;D.exams=[];view={n:'auth'};
+        try{render()}catch(_){}
+        notify('Không kết nối được Supabase: '+(e.message||String(e))+' Bạn vẫn có thể xem trang đăng nhập; hãy thử tải lại sau.');
+      }
     }
+    window.addEventListener('error',e=>{
+      if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi JavaScript khi khởi động.</p><pre>'+esc(e.message||'Lỗi không xác định')+'</pre></div>';
+    });
+    window.addEventListener('unhandledrejection',e=>{
+      if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi khi tải dữ liệu.</p><pre>'+esc(e.reason?.message||e.reason||'Lỗi không xác định')+'</pre></div>';
+    });
     function home(){
       if(!profile)return auth();
       let out='<div class="bar"><b>Luyện đề thi TSA</b><span>'+esc(profile.display_name)+' · '+esc(profile.user_code)+'</span></div><div class="row"><button class="b" data-a="history">Lịch sử làm bài</button><button class="b" data-a="profile">Tài khoản</button></div>';
