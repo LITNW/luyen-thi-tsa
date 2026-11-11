@@ -96,7 +96,7 @@
       out+=D.exams.length?D.exams.map(x=>'<div class="c"><h3>'+esc(x.title)+'</h3><p class="m">'+esc(x.desc)+'</p><p class="m">Phiên bản '+x.version_no+' · '+x.minutes+' phút · '+(x.question_count||0)+' câu</p><button class="b bp" data-a="start" data-i="'+x.id+'">Làm bài</button></div>').join(''):'<div class="c m">Hiện chưa có đề nào được xuất bản.</div>';
       return out+'<p id="global-msg" class="m"></p>';
     }
-    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
+    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
     async function openEditor(versionId,status,examId){
       try{let id=versionId;if(status==='published'){const {data:newId,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:examId});if(error)throw error;id=newId}
         const {data:x,error}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:id});if(error)throw error;
@@ -150,7 +150,7 @@ Có thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q"
         if(oldIndex<0&&qs.length===oldList.length&&!usedOld.has(i))oldIndex=i;
         const old=oldIndex>=0?oldList[oldIndex]:{};
         if(oldIndex>=0)usedOld.add(oldIndex);
-        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{fm:q.fm||[]},points:q.p||1};
+        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
       try{const {data,error}=await sb.rpc('admin_save_exam_content',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_publish:!!publishNow});if(error)throw error;
