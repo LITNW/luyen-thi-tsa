@@ -106,7 +106,7 @@ BEGIN
         INTO v_slot_keys
       FROM (
         SELECT DISTINCT (match_parts)[1]::integer AS slot
-        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+        FROM regexp_matches(p_content->>'q', '\[([0-9]+)\]', 'g') AS matches(match_parts)
       ) AS slots;
 
       IF cardinality(v_slot_keys) = 0 OR EXISTS (
