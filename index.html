@@ -352,6 +352,21 @@ input::placeholder, textarea::placeholder {
   -webkit-text-fill-color: #ffffff !important;
 }
 
+
+/* Preserve the primary action hierarchy while keeping button labels white. */
+.b.bp, .exam-shell .b.bp {
+  color: #ffffff !important;
+  background: #315ee8 !important;
+  border-color: #315ee8 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.b.fl, .exam-shell .b.fl {
+  color: #ffffff !important;
+  background: #4b3514 !important;
+  border-color: #fbbf24 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script>
       if('serviceWorker' in navigator){
         window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{}));
