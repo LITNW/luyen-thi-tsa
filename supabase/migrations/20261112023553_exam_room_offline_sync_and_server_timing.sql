@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 87b7421d83d0a7a43a3ddb92a4c2f58f
 -- TSA exam room: server-authoritative deadline, auto-submit grace and idempotent offline time sync.
 -- This migration is intentionally committed but not applied to the live project until review/approval.
 
