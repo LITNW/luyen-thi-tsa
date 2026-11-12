@@ -20,6 +20,44 @@ CREATE TABLE IF NOT EXISTS public.attempt_question_time_events (
 ALTER TABLE public.attempt_question_time_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.attempt_question_time_events FROM PUBLIC, anon, authenticated;
 
+-- Close the exact-deadline boundary in the existing answer/time RPCs.
+-- Preserve their existing validation and permissions while making the deadline exclusive.
+DO $migration$
+DECLARE
+    v_definition text;
+BEGIN
+    v_definition := pg_get_functiondef(
+        'public.save_attempt_answer(uuid,uuid,jsonb)'::regprocedure
+    );
+    IF position('IF clock_timestamp() >=' IN v_definition) = 0 THEN
+        IF position('IF clock_timestamp() >' IN v_definition) = 0 THEN
+            RAISE EXCEPTION 'Không tìm thấy kiểm tra hạn giờ trong save_attempt_answer; dừng migration.';
+        END IF;
+        v_definition := replace(
+            v_definition,
+            'IF clock_timestamp() >',
+            'IF clock_timestamp() >='
+        );
+        EXECUTE v_definition;
+    END IF;
+
+    v_definition := pg_get_functiondef(
+        'public.record_attempt_question_time(uuid,uuid,integer,integer)'::regprocedure
+    );
+    IF position('IF clock_timestamp() >=' IN v_definition) = 0 THEN
+        IF position('IF clock_timestamp() >' IN v_definition) = 0 THEN
+            RAISE EXCEPTION 'Không tìm thấy kiểm tra hạn giờ trong record_attempt_question_time; dừng migration.';
+        END IF;
+        v_definition := replace(
+            v_definition,
+            'IF clock_timestamp() >',
+            'IF clock_timestamp() >='
+        );
+        EXECUTE v_definition;
+    END IF;
+END;
+$migration$;
+
 CREATE OR REPLACE FUNCTION public.record_attempt_question_time_v2(
     p_attempt_id uuid,
     p_exam_version_question_id uuid,
