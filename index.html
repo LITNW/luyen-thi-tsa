@@ -134,7 +134,8 @@
     else if(m=l.match(/^(?:quy tắc|quy tac)\s*[:：]\s*(.*)/i))oncef=/một lần|1 lần|once/i.test(m[1]);
     else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){o=splitOpts(m[1]);k='dnd'}
     else if((m=l.match(/^([a-d])[.)]\s*(.*)/))&&m[1]==='abcd'[o.length]){o.push(m[2]);k='tf'}
-    else if((m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length]){o.push(m[2]);if(k==='dnd')idMode=true}
+    else if(k==='dnd'&&(m=l.match(/^([A-F])[.)]\s*(.*)/))){if(m[1]!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);idMode=true}
+    else if((m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length])o.push(m[2])
     else if(o.length)o[o.length-1]+=' '+l;else q.push(l)}
     if(!q.length)throw new Error('Câu '+(i+1)+': thiếu nội dung');
     const bad=s=>new Error('Câu '+(i+1)+': '+s),tk=ra.split(/[\s,;]+/).filter(Boolean);
