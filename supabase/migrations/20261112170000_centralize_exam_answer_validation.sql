@@ -58,9 +58,11 @@ BEGIN
       END IF;
 
     WHEN 'ms' THEN
-      IF v_option_count < 2 OR jsonb_typeof(p_answer_key) <> 'array'
-         OR jsonb_array_length(p_answer_key) = 0 THEN
-        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án MS phải là mảng chỉ số phương án không rỗng.';
+      IF v_option_count < 2 OR jsonb_typeof(p_answer_key) <> 'array' THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án MS phải là mảng chỉ số phương án.';
+      END IF;
+      IF jsonb_array_length(p_answer_key) = 0 THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án MS không được để trống.';
       END IF;
       FOR v_value IN SELECT value FROM jsonb_array_elements(p_answer_key)
       LOOP
@@ -79,10 +81,11 @@ BEGIN
       END LOOP;
 
     WHEN 'tf' THEN
-      IF v_option_count < 2 OR v_option_count > 4
-         OR jsonb_typeof(p_answer_key) <> 'array'
-         OR jsonb_array_length(p_answer_key) <> v_option_count THEN
-        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án TF phải có từ 2 đến 4 giá trị, khớp số lượng ý.';
+      IF v_option_count < 2 OR v_option_count > 4 OR jsonb_typeof(p_answer_key) <> 'array' THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án TF phải là mảng ứng với từ 2 đến 4 ý.';
+      END IF;
+      IF jsonb_array_length(p_answer_key) <> v_option_count THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Số đáp án TF phải khớp số lượng ý.';
       END IF;
       IF EXISTS (
         SELECT 1 FROM jsonb_array_elements(p_answer_key) AS item(value)
@@ -97,9 +100,11 @@ BEGIN
       END IF;
 
     WHEN 'dnd' THEN
-      IF v_option_count < 1 OR jsonb_typeof(p_answer_key) <> 'object'
-         OR (SELECT count(*) FROM jsonb_each(p_answer_key)) = 0 THEN
-        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án DND phải là đối tượng ghép nối không rỗng.';
+      IF v_option_count < 1 OR jsonb_typeof(p_answer_key) <> 'object' THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án DND phải là đối tượng ghép nối.';
+      END IF;
+      IF (SELECT count(*) FROM jsonb_each(p_answer_key)) = 0 THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án DND không được để trống.';
       END IF;
 
       SELECT coalesce(array_agg(slot ORDER BY slot), ARRAY[]::integer[])
