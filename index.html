@@ -34,6 +34,106 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
 .empty-state{padding:44px 20px;text-align:center;border:1px dashed #cbd5e5;border-radius:16px;background:rgba(255,255,255,.65);color:var(--mu)}.empty-state b{display:block;color:var(--tx);margin:8px 0}.empty-state p{font-size:.85rem}.empty-symbol{font-size:2rem;color:#315ee8}.notice-card{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;background:#edf3ff;border:1px solid #d8e3ff;border-radius:14px}.notice-card p{font-size:.8rem;color:var(--mu);margin-top:4px}.dashboard-message{margin-top:20px}.site-footer{padding:22px 0;border-top:1px solid var(--bd);font-size:.65rem;font-weight:800;letter-spacing:.12em;color:#8491a7}.site-footer span{float:right;font-weight:500;letter-spacing:0}.bar{background:var(--bg)}
 @media(max-width:800px){.auth-shell{grid-template-columns:1fr}.auth-intro{min-height:390px;padding:34px 28px}.auth-intro .eyebrow{margin-top:28px}.auth-points{margin-top:25px;gap:12px}.auth-foot{display:none}.auth-panel{width:100%;padding:42px 28px}.hero-decoration{margin-right:0;transform:scale(.8)}.welcome-hero{padding:34px 28px}.site-shell{padding:0 20px}}
 @media(max-width:600px){.site-shell{padding:0 15px}.site-header{height:70px}.top-nav{gap:10px}.nav-link{font-size:.77rem}.user-pill{padding-left:10px}.user-pill>span{display:none}.welcome-hero{min-height:220px;padding:28px 22px}.welcome-hero h1{font-size:1.8rem}.hero-decoration{position:absolute;right:-55px;bottom:-55px;opacity:.35;transform:scale(.75)}.dashboard-metrics{grid-template-columns:1fr;gap:9px;margin:14px 0 30px}.metric-card{padding:12px 15px}.exam-grid,.admin-toolbar{grid-template-columns:1fr}.section-heading{margin-top:30px}.notice-card{align-items:flex-start;flex-direction:column}.site-footer span{float:none;display:block;margin-top:7px}.auth-intro{min-height:350px}.auth-intro h1{font-size:2.5rem}}
+
+/* ---- Focused exam room ---- */
+body.exam-active{overflow:hidden}
+.exam-shell{display:grid;grid-template-columns:minmax(0,1fr) 336px;width:100%;height:100dvh;min-height:0;overflow:hidden;background:#f4f6fb;color:#17233b}
+.exam-main-scroll{height:100dvh;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:26px clamp(18px,3.2vw,52px) 48px}
+.exam-main-inner{max-width:980px;margin:0 auto}
+.exam-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:4px 0 22px;border-bottom:1px solid #e1e7f0;margin-bottom:24px}
+.exam-brand{font-size:.7rem;letter-spacing:.12em;font-weight:850;color:#315ee8}
+.exam-header h1{font-size:clamp(1.15rem,2vw,1.55rem);letter-spacing:-.035em;margin:4px 0 0}
+.exam-progress{min-width:120px;text-align:right;color:#71809a;font-size:.78rem}
+.exam-progress strong{display:block;color:#17233b;font-size:1.05rem}
+.exam-question-card{background:#fff;border:1px solid #e3e8f1;border-radius:18px;padding:clamp(20px,3vw,34px);box-shadow:0 8px 24px rgba(25,42,78,.04)}
+.exam-question-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#71809a;font-size:.78rem;margin-bottom:20px}
+.exam-question-meta strong{color:#315ee8;font-size:.82rem}
+.exam-question-card .q{font-size:1.12rem;line-height:1.8;color:#17233b;margin:0 0 26px;white-space:pre-wrap;overflow-wrap:anywhere}
+.exam-question-card .o{border:1px solid #e0e6f0;border-radius:12px;padding:13px 16px;margin:9px 0;background:#fff;transition:border-color .15s,background .15s;min-height:48px}
+.exam-question-card .o.on{border-color:#315ee8;background:#f3f6ff;box-shadow:inset 0 0 0 1px #315ee8}
+.exam-question-card .o:focus-visible,.exam-shell button:focus-visible{outline:3px solid rgba(49,94,232,.25);outline-offset:2px}
+.exam-question-card .chip{border-radius:9px;background:#f7f9fc}
+.exam-question-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #edf0f5;margin-top:28px;padding-top:18px}
+.exam-question-actions .b{margin:0}
+.exam-question-actions .b:disabled{opacity:.35;cursor:not-allowed}
+.exam-sidebar{height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:#fff;border-left:1px solid #e1e7f0;padding:22px 20px 26px}
+.exam-side-title{font-size:.7rem;letter-spacing:.13em;color:#71809a;font-weight:850;margin:2px 0 14px}
+.exam-timer-card{border:1px solid #dfe6f2;border-radius:14px;padding:15px 16px;margin-bottom:12px;background:#f8faff}
+.exam-timer-card small{display:block;color:#71809a;font-size:.69rem;font-weight:750;letter-spacing:.08em}
+.exam-time-total{display:block;font-size:2rem;line-height:1.2;font-weight:850;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#17233b;margin-top:5px}
+.exam-time-question{display:block;font-size:1.35rem;line-height:1.2;font-weight:800;font-variant-numeric:tabular-nums;color:#315ee8;margin-top:5px}
+.exam-timer-card.is-warning .exam-time-total{color:#b7791f}
+.exam-timer-card.is-danger .exam-time-total{color:#b42318}
+.exam-time-note{font-size:.68rem;color:#8a96aa;margin-top:6px}
+.exam-sync-status{font-size:.72rem;line-height:1.5;padding:9px 11px;border-radius:9px;background:#edf7f1;color:#14734f;margin:14px 0}
+.exam-sync-status.is-offline,.exam-sync-status.is-pending{background:#fff5e5;color:#93600c}
+.exam-sync-status.is-error{background:#fff0ef;color:#b42318}
+.exam-nav-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:20px 0 10px}
+.exam-nav-head b{font-size:.88rem}
+.exam-nav-count{font-size:.72rem;color:#71809a}
+.exam-filters{display:flex;gap:5px;margin-bottom:12px}
+.exam-filters .b{flex:1;padding:7px 5px;font-size:.7rem;margin:0;border-radius:8px}
+.exam-filters .b.active{background:#edf2ff;border-color:#315ee8;color:#244fc8}
+.exam-nav-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.exam-nav-grid .nb{width:100%;height:38px;border-radius:9px;font-size:.78rem;font-weight:700}
+.exam-nav-grid .nb.dn{background:#e7f7ef;border-color:#a7dfc4;color:#14734f}
+.exam-nav-grid .nb.fg{border:2px solid #d99a32;background:#fff9ec;color:#9a640c}
+.exam-nav-grid .nb.cur{outline:2px solid #315ee8;outline-offset:2px}
+.exam-legend{display:flex;flex-wrap:wrap;gap:8px 13px;margin:13px 0;color:#71809a;font-size:.67rem}
+.exam-legend span{display:inline-flex;align-items:center;gap:5px}
+.exam-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;background:#fff;border:1px solid #cfd7e5}
+.exam-legend i.answered{background:#e7f7ef;border-color:#a7dfc4}
+.exam-legend i.flagged{background:#fff9ec;border:2px solid #d99a32}
+.exam-legend i.current{outline:2px solid #315ee8;outline-offset:1px}
+.exam-side-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:17px}
+.exam-side-actions .b{margin:0;font-size:.8rem}
+.exam-side-actions .submit-action{grid-column:1/-1;min-height:46px}
+.exam-mobile-bar,.exam-mobile-sheet{display:none}
+.exam-confirm-backdrop,.exam-lock-overlay{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:18px;background:rgba(12,24,48,.52);backdrop-filter:blur(5px)}
+.exam-confirm-card,.exam-lock-card{width:min(100%,440px);background:#fff;border-radius:18px;padding:25px;box-shadow:0 24px 80px rgba(5,20,50,.25)}
+.exam-confirm-card h2,.exam-lock-card h2{font-size:1.35rem;margin:0 0 8px;letter-spacing:-.03em}
+.exam-confirm-card p,.exam-lock-card p{color:#71809a;font-size:.88rem;line-height:1.6}
+.exam-confirm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}
+.exam-confirm-stats div{padding:12px 8px;text-align:center;border-radius:10px;background:#f5f7fb}
+.exam-confirm-stats strong{display:block;font-size:1.45rem}
+.exam-confirm-stats span{font-size:.68rem;color:#71809a}
+.exam-confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.exam-confirm-actions .b{margin:0}
+.exam-lock-overlay{z-index:100;background:rgba(12,24,48,.68)}
+.exam-lock-card{text-align:center}
+.exam-lock-count{display:block;font-size:4rem;line-height:1.1;font-weight:900;letter-spacing:-.06em;color:#315ee8;font-variant-numeric:tabular-nums;margin:18px 0}
+.exam-lock-card .m{font-size:.75rem}
+.exam-empty-nav{font-size:.75rem;color:#8a96aa;text-align:center;padding:18px 4px}
+.exam-network-note{font-size:.7rem;color:#71809a;line-height:1.5;margin-top:12px}
+@media(max-width:900px){
+ .exam-shell{display:block;height:100dvh}
+ .exam-main-scroll{height:100dvh;padding:18px 15px 112px}
+ .exam-main-inner{max-width:760px}
+ .exam-sidebar{display:none}
+ .exam-mobile-bar{position:fixed;z-index:50;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.97);border-top:1px solid #dfe6f0;box-shadow:0 -8px 24px rgba(25,42,78,.08)}
+ .exam-mobile-time{min-width:0}
+ .exam-mobile-time small{display:block;color:#71809a;font-size:.62rem;font-weight:750}
+ .exam-mobile-time .exam-time-total{font-size:1.25rem;margin:0}
+ .exam-mobile-time .exam-time-question{font-size:.92rem;margin:0}
+ .exam-mobile-bar .b{margin:0;white-space:nowrap}
+ .exam-mobile-sheet{position:fixed;z-index:55;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:block;max-height:0;overflow:auto;opacity:0;pointer-events:none;transform:translateY(12px);transition:max-height .2s ease,opacity .2s ease,transform .2s ease;background:#fff;border:1px solid #dfe6f0;border-radius:16px;box-shadow:0 18px 50px rgba(12,24,48,.18);padding:0 15px}
+ .exam-mobile-sheet.is-open{max-height:72dvh;opacity:1;pointer-events:auto;transform:translateY(0);padding:16px 15px calc(18px + env(safe-area-inset-bottom,0px))}
+ .exam-mobile-sheet .exam-nav-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .exam-mobile-sheet .exam-side-actions{margin-bottom:4px}
+}
+@media(max-width:520px){
+ .exam-main-scroll{padding:14px 10px 110px}
+ .exam-header{align-items:flex-start;margin-bottom:16px;padding-bottom:15px}
+ .exam-header h1{font-size:1.05rem}
+ .exam-progress{min-width:80px;font-size:.68rem}
+ .exam-question-card{padding:17px 14px;border-radius:14px}
+ .exam-question-card .q{font-size:1.02rem;line-height:1.72}
+ .exam-question-meta{font-size:.7rem}
+ .exam-question-actions{gap:6px}
+ .exam-question-actions .b{padding:8px 10px;font-size:.78rem}
+ .exam-confirm-card,.exam-lock-card{padding:20px}
+}
+
 </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
@@ -86,11 +186,11 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
     async function refreshData(user){
       if(!user){profile=null;me=false;D.exams=[];adminVersions=[];view={n:'auth'};render();return}
       const {data:p,error:pe}=await sb.from('profiles').select('id,email,display_name,user_code,role,status,created_at').eq('id',user.id).single();
-      if(pe||!p){profile=null;me=false;view={n:'auth'};render();notify('Không tải được hồ sơ tài khoản: '+(pe?.message||'chưa có hồ sơ'));return}
+      if(pe||!p){if(!navigator.onLine&&restoreOfflineAttempt(user.id))return;profile=null;me=false;view={n:'auth'};render();notify('Không tải được hồ sơ tài khoản: '+(pe?.message||'chưa có hồ sơ'));return}
       profile=p;me=p.role==='admin'&&p.status==='active';
       if(p.status!=='active'){D.exams=[];adminVersions=[];view={n:'home'};render();notify('Tài khoản hiện không hoạt động. Hãy liên hệ quản trị viên.');return}
       const {data:exams,error:ee}=await sb.rpc('list_published_exams');
-      if(ee){D.exams=[];notify('Không tải được danh sách đề: '+ee.message)}
+      if(ee){D.exams=[];if(!navigator.onLine&&restoreOfflineAttempt(user.id))return;notify('Không tải được danh sách đề: '+ee.message)}
       else D.exams=(exams||[]).map(x=>({id:x.id,title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs:[],exam_id:x.exam_id,version_no:x.version_no,question_count:x.question_count}));
       if(me){const {data:v,error:ve}=await sb.rpc('admin_list_exam_versions');adminVersions=ve?[]:(v||[]);if(ve)notify('Không tải được danh sách quản trị: '+ve.message)}
       else adminVersions=[];
@@ -147,9 +247,21 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
     }
     function take(){
       const x=ex(view.id),a=view.at,n=x.qs.length,q=x.qs[a.cur];
-      return '<div class="bar"><b>'+esc(x.title)+'</b><span id="tm" class="tm"></span><button class="b bp" data-a="sub">Nộp bài</button></div>'+(view.cf?'<div class="c n">Còn <b>'+a.ans.filter((v,i)=>!any(x.qs[i],v)).length+'</b> câu chưa trả lời. Nộp bài ngay? <button class="b bp" data-a="yes">Nộp</button> <button class="b" data-a="no">Làm tiếp</button></div>':'')+'<div class="c"><p class="m">Câu '+(a.cur+1)+'/'+n+(q.t?' · '+esc(q.t):'')+' · '+TL[K(q)]+'</p><p class="q">'+qt(q,a.ans[a.cur])+'</p>'+inp(q,a.ans[a.cur])+'<div class="row"><button class="b" data-a="prev"'+(a.cur?'':' disabled')+'>← Trước</button><button class="b'+(a.fl[a.cur]?' fl':'')+'" data-a="flag">⚑ Xem lại</button><button class="b" data-a="next"'+(a.cur<n-1?'':' disabled')+'>Sau →</button></div></div><div class="gr">'+x.qs.map((_,i)=>'<button class="nb'+(i===a.cur?' cur':'')+(any(x.qs[i],a.ans[i])?' dn':'')+(a.fl[i]?' fg':'')+'" data-a="jump" data-i="'+i+'">'+(i+1)+'</button>').join('')+'</div>';
+      const answered=a.ans.filter((v,i)=>any(x.qs[i],v)).length;
+      const unanswered=n-answered,flagged=a.fl.filter(Boolean).length;
+      const filter=a.filter||'all';
+      const visible=x.qs.map((z,i)=>i).filter(i=>filter==='unanswered'?!any(x.qs[i],a.ans[i]):filter==='flagged'?!!a.fl[i]:true);
+      const nav=visible.map(i=>'<button class="nb'+(i===a.cur?' cur':'')+(any(x.qs[i],a.ans[i])?' dn':'')+(a.fl[i]?' fg':'')+'" data-a="jump" data-i="'+i+'" aria-label="Câu '+(i+1)+(any(x.qs[i],a.ans[i])?', đã trả lời':' , chưa trả lời')+(a.fl[i]?', đã đánh dấu':'')+'">'+(i+1)+'</button>').join('');
+      const filters='<div class="exam-filters"><button class="b'+(filter==='all'?' active':'')+'" data-a="filterAll">Tất cả</button><button class="b'+(filter==='unanswered'?' active':'')+'" data-a="filterUnanswered">Chưa làm</button><button class="b'+(filter==='flagged'?' active':'')+'" data-a="filterFlagged">Đánh dấu</button></div>';
+      const navPanel='<div class="exam-nav-head"><b>Danh sách câu hỏi</b><span class="exam-nav-count">'+(a.cur+1)+' / '+n+'</span></div>'+filters+'<div class="exam-nav-grid">'+(nav||'<div class="exam-empty-nav">Không có câu hỏi trong bộ lọc này.</div>')+'</div><div class="exam-legend"><span><i class="answered"></i> Đã trả lời</span><span><i></i> Chưa trả lời</span><span><i class="flagged"></i> Đánh dấu</span><span><i class="current"></i> Đang xem</span></div><div class="exam-side-actions"><button class="b'+(a.fl[a.cur]?' fl':'')+'" data-a="flag">'+(a.fl[a.cur]?'⚑ Bỏ đánh dấu':'⚑ Đánh dấu câu')+'</button><button class="b" data-a="next"'+(a.cur<n-1?'':' disabled')+'>Câu tiếp →</button><button class="b bp submit-action" data-a="sub"'+(a.locked||!navigator.onLine?' disabled':'')+'>Nộp bài</button></div>';
+      const syncText=!navigator.onLine?'Mất kết nối. Đáp án đang được giữ trên thiết bị; hệ thống sẽ thử đồng bộ khi có mạng. Để được ghi nhận, máy chủ cần nhận đáp án trước khi hết giờ.':a.syncBlocked==='deadline'?'Một số dữ liệu chưa đồng bộ trước hạn và không thể gửi sau khi hết giờ.':Object.keys(a.dirtyAnswers||{}).length||a.timeQueue?.length?'Đang chờ xác nhận đồng bộ từ máy chủ.':'Đã đồng bộ với máy chủ.';
+      const syncClass=!navigator.onLine?'is-offline':a.syncBlocked==='deadline'?'is-error':Object.keys(a.dirtyAnswers||{}).length||a.timeQueue?.length?'is-pending':'';
+      const mobileOpen=!!a.mobilePanelOpen;
+      const modal=view.cf?'<div class="exam-confirm-backdrop"><section class="exam-confirm-card" role="dialog" aria-modal="true" aria-labelledby="exam-confirm-title">'+(view.cf===1?'<h2 id="exam-confirm-title">Kiểm tra trước khi nộp</h2><p>Hãy kiểm tra tình trạng bài làm. Bạn vẫn có thể quay lại chỉnh sửa câu trả lời.</p><div class="exam-confirm-stats"><div><strong>'+answered+'</strong><span>Đã trả lời</span></div><div><strong>'+unanswered+'</strong><span>Chưa trả lời</span></div><div><strong>'+flagged+'</strong><span>Đánh dấu</span></div></div><div class="exam-confirm-actions"><button class="b" data-a="no">Quay lại bài thi</button><button class="b bp" data-a="confirmFirst">Tiếp tục</button></div>':'<h2 id="exam-confirm-title">Xác nhận nộp bài lần cuối</h2><p>Sau khi xác nhận, bài thi sẽ được gửi lên máy chủ và không thể tiếp tục chỉnh sửa. Bạn có chắc chắn muốn nộp?</p><div class="exam-confirm-actions"><button class="b" data-a="no">Chưa nộp</button><button class="b bp" data-a="yes">Xác nhận nộp bài</button></div>')+'</section></div>':'';
+      const lock=a.locked?'<div class="exam-lock-overlay"><section class="exam-lock-card"><div class="exam-brand">ĐÃ HẾT THỜI GIAN LÀM BÀI</div><h2>Bài thi đang được khóa</h2><p>Bạn không thể tiếp tục thay đổi đáp án hoặc điều hướng câu hỏi.</p><strong class="exam-lock-count" id="exam-auto-countdown">--</strong><p>Hệ thống sẽ tự động nộp bài khi bộ đếm kết thúc.</p><p class="m">'+(navigator.onLine?'Đang chuẩn bị gửi bài lên máy chủ.':'Mất kết nối. Bài thi đã khóa trên thiết bị và sẽ được gửi khi kết nối trở lại.')+'</p></section></div>':'';
+      return '<div class="exam-shell"><main class="exam-main-scroll"><div class="exam-main-inner"><header class="exam-header"><div><div class="exam-brand">TSA PRACTICE · PHÒNG THI</div><h1>'+esc(x.title)+'</h1></div><div class="exam-progress"><strong>Câu '+(a.cur+1)+' / '+n+'</strong>'+answered+' câu đã trả lời</div></header><section class="exam-question-card"><div class="exam-question-meta"><strong>CÂU HỎI '+String(a.cur+1).padStart(2,'0')+'</strong><span>'+TL[K(q)]+(q.t?' · '+esc(q.t):'')+'</span></div><p class="q">'+qt(q,a.ans[a.cur])+'</p>'+inp(q,a.ans[a.cur])+'<div class="exam-question-actions"><button class="b" data-a="prev"'+(a.cur?'':' disabled')+'>← Câu trước</button><button class="b'+(a.fl[a.cur]?' fl':'')+'" data-a="flag">'+(a.fl[a.cur]?'⚑ Đã đánh dấu':'⚑ Đánh dấu')+'</button><button class="b bp" data-a="next"'+(a.cur<n-1?'':' disabled')+'>Câu tiếp →</button></div></section><p id="global-msg" class="m" style="margin:12px 2px"></p></div></main><aside class="exam-sidebar"><div class="exam-side-title">THỜI GIAN LÀM BÀI</div><div class="exam-timer-card"><small>THỜI GIAN CÒN LẠI</small><strong class="exam-time-total">'+fmt(Math.max(0,Math.ceil((a.deadlineAt-serverNow(a))/1000)))+'</strong><div class="exam-time-note">Thời gian tổng của bài thi</div></div><div class="exam-timer-card"><small>THỜI GIAN CÂU HIỆN TẠI</small><strong class="exam-time-question">'+fmt(a.t[a.cur]||0)+'</strong><div class="exam-time-note">Cộng dồn qua các lần truy cập câu này</div></div><div class="exam-sync-status '+syncClass+'" id="exam-sync-status">'+esc(syncText)+'</div>'+navPanel+'<p class="exam-network-note">Đáp án được lưu cục bộ ngay khi thay đổi và đồng bộ với máy chủ khi có kết nối.</p></aside><div class="exam-mobile-sheet'+(mobileOpen?' is-open':'')+'"><div class="exam-side-title">ĐIỀU KHIỂN BÀI THI</div><div class="exam-timer-card"><small>THỜI GIAN CÒN LẠI</small><strong class="exam-time-total">'+fmt(Math.max(0,Math.ceil((a.deadlineAt-serverNow(a))/1000)))+'</strong></div><div class="exam-timer-card"><small>THỜI GIAN CÂU HIỆN TẠI</small><strong class="exam-time-question">'+fmt(a.t[a.cur]||0)+'</strong></div><div class="exam-sync-status '+syncClass+'">'+esc(syncText)+'</div>'+navPanel+'</div><div class="exam-mobile-bar"><div class="exam-mobile-time"><small>THỜI GIAN CÒN LẠI</small><strong class="exam-time-total">'+fmt(Math.max(0,Math.ceil((a.deadlineAt-serverNow(a))/1000)))+'</strong><small>Câu hiện tại · <span class="exam-time-question">'+fmt(a.t[a.cur]||0)+'</span></small></div><button class="b" data-a="toggleMobilePanel">'+(mobileOpen?'Thu gọn':'Điều khiển')+'</button><button class="b bp" data-a="sub"'+(a.locked||!navigator.onLine?' disabled':'')+'>Nộp</button></div>'+modal+lock+'</div>';
     }
-    function res(){
+        function res(){
       const x=ex(view.id),a=view.at,n=x.qs.length,M=Number(a.max_score)||mx(x),results=a.result||[];let correct=0,partial=0,wrong=0,blank=0;
       const details=x.qs.map((q,i)=>{const r=results.find(z=>Number(z.position)===i+1)||{};q.a=r.correct_answer;q.e=r.explanation||'';const v=r.answer;if(!any(q,v))blank++;else if(r.is_correct)correct++;else if(Number(r.earned_points)>0)partial++;else wrong++;
         return '<div class="c '+(r.is_correct?'ok':Number(r.earned_points)>0?'n':'no')+'"><p class="m">Câu '+(i+1)+' · '+TL[K(q)]+' · '+Number(r.earned_points||0)+'/'+Number(r.points||q.p||1)+' điểm · '+Math.round(a.t[i]||0)+'s</p><p class="re">'+esc(q.q)+'</p><p>Bạn trả lời: <b>'+ans(q,v)+'</b></p>'+(r.is_correct?'':'<p>Đáp án đúng: <b>'+key(q)+'</b></p>')+(q.e?'<p class="m re">'+esc(q.e)+'</p>':'')+'</div>'}).join('');
@@ -161,13 +273,269 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
     function adminUsers(){return '<h1>Quản lý tài khoản</h1>'+adminProfiles.map(p=>'<div class="c"><h3>'+esc(p.display_name)+' · '+esc(p.user_code)+'</h3><p class="m">'+esc(p.email)+' · '+esc(p.role)+' · '+esc(p.status)+'</p><button class="b" data-a="toggleRole" data-i="'+p.id+'">'+(p.role==='admin'?'Hạ xuống học sinh':'Cấp quyền Admin')+'</button> <button class="b" data-a="toggleStatus" data-i="'+p.id+'">'+(p.status==='active'?'Tạm khóa':'Kích hoạt')+'</button></div>').join('')+'<button class="b" data-a="home">Quay lại</button>'}
     async function loadAdminAttempts(){const {data,error}=await sb.rpc('admin_list_attempts',{p_limit:200,p_offset:0});if(error)throw error;adminAttempts=data||[];view={n:'adminAttempts'};render()}
     function adminAttemptsPage(){return '<h1>Tất cả lượt làm bài</h1>'+adminAttempts.map(a=>'<div class="c"><h3>'+esc(a.title)+'</h3><p class="m">'+esc(a.display_name)+' · '+esc(a.user_code)+' · '+esc(a.email)+'</p><p>'+esc(a.status)+' · '+(a.status==='submitted'?a.score+'/'+a.max_score+' điểm':'Chưa nộp')+' · '+fmt(a.elapsed_seconds||0)+'</p><p class="m">'+new Date(a.started_at).toLocaleString('vi-VN')+'</p></div>').join('')+'<button class="b" data-a="home">Quay lại</button>'}
-    function render(){clearInterval(T);const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};A.innerHTML=(pages[view.n]||auth)();if(view.n==='take'){T=setInterval(tick,1000);tick()}mj()}
-    function tick(){const a=view.at;if(!a||a.submitting)return;const r=Math.round((a.end-Date.now())/1000),e=document.getElementById('tm');if(r<=0){finish();return}if(e){e.textContent=fmt(r);e.style.color=r<60?'var(--no)':''}if(Date.now()-(a.lastFlush||0)>15000){lap(a);a.lastFlush=Date.now();flushTime(a,a.cur,0).catch(()=>{})}}
-    function lap(a){const n=Date.now(),delta=Math.max(0,Math.floor((n-a.l)/1000));a.t[a.cur]=(a.t[a.cur]||0)+delta;a.pendingTime=(a.pendingTime||0)+delta;a.l=n}
-    async function flushTime(a,index,visit){if(!a.qids||!a.qids[index])return;const seconds=index===a.cur?(a.pendingTime||0):0;if(!seconds&&!visit)return;const {error}=await sb.rpc('record_attempt_question_time',{p_attempt_id:a.attemptId,p_exam_version_question_id:a.qids[index],p_seconds:seconds,p_visit_increment:visit||0});if(!error&&index===a.cur)a.pendingTime=0;if(error)throw error}
-    async function saveCurrentAnswer(a,index){const i=index==null?a.cur:index,q=ex(view.id).qs[i],v=a.ans[i];let answer=v;if(v==null||v===''||(Array.isArray(v)&&!v.some(z=>z!=null)))answer=null;else if(K(q)==='num'){const parsed=Number(String(v).replace(',','.'));answer=Number.isFinite(parsed)?parsed:null}const {error}=await sb.rpc('save_attempt_answer',{p_attempt_id:a.attemptId,p_exam_version_question_id:a.qids[i],p_answer:answer});if(error)throw error}
-    async function finish(){const a=view.at;if(!a||a.submitting)return;a.submitting=true;clearInterval(T);try{lap(a);try{await saveCurrentAnswer(a,a.cur)}catch(e){if(!/không hợp lệ|hết thời gian/i.test(e.message))throw e}try{await flushTime(a,a.cur,0)}catch(e){}const {error}=await sb.rpc('submit_exam_attempt',{p_attempt_id:a.attemptId});if(error)throw error;const {data:state,error:se}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});if(se)throw se;a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;go({n:'res',id:view.id,at:a})}catch(e){a.submitting=false;notify('Không nộp được bài: '+e.message);if(view.n==='take')T=setInterval(tick,1000)}}
-    async function start(id){try{const {data:attemptId,error:ae}=await sb.rpc('start_exam_attempt',{p_exam_version_id:id});if(ae)throw ae;const {data:exam,error:ee}=await sb.rpc('get_published_exam',{p_exam_version_id:id});if(ee)throw ee;const {data:state,error:se}=await sb.rpc('get_my_attempt_state',{p_attempt_id:attemptId});if(se)throw se;const qs=(exam.questions||[]).map(q=>({id:q.id,k:q.type,q:q.content.q,o:q.content.o||[],p:Number(q.points)||1,t:q.content.t||'',once:!!q.content.once}));const ans=Array(qs.length).fill(null),times=Array(qs.length).fill(0);(state.answers||[]).forEach(x=>{const i=qs.findIndex(q=>q.id===x.exam_version_question_id);if(i>=0)ans[i]=x.answer});(state.question_times||[]).forEach(x=>{const i=qs.findIndex(q=>q.id===x.exam_version_question_id);if(i>=0)times[i]=Number(x.seconds_spent)||0});const startAt=new Date(state.started_at).getTime(),duration=Number(state.duration_minutes)||exam.duration_minutes;D.exams=D.exams.filter(x=>x.id!==id);D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:duration,qs,exam_id:exam.exam_id,version_no:exam.version_no});const a={attemptId,qids:qs.map(q=>q.id),start:startAt,end:startAt+duration*60000,ans,fl:Array(qs.length).fill(false),t:times,cur:0,l:Date.now(),pendingTime:0,lastFlush:Date.now()};await flushTime(a,0,1).catch(()=>{});go({n:'take',id:exam.id,at:a})}catch(e){notify('Không thể bắt đầu/tiếp tục bài thi: '+e.message)}}
+    function render(){
+      clearInterval(T);
+      document.body.classList.toggle('exam-active',view.n==='take');
+      const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};
+      A.innerHTML=(pages[view.n]||auth)();
+      if(view.n==='take'){T=setInterval(tick,1000);tick()}
+      mj();
+    }
+    function serverNow(a){
+      if(a&&Number.isFinite(a.serverNowAtSync)&&Number.isFinite(a.serverPerf))
+        return a.serverNowAtSync+(performance.now()-a.serverPerf);
+      return Date.now();
+    }
+    function currentQuestionElapsed(a){
+      const extra=a&&!a.locked?Math.max(0,Math.floor((performance.now()-a.l)/1000)):0;
+      return Math.max(0,(a?.t?.[a.cur]||0)+extra);
+    }
+    function makeUuid(){
+      if(crypto?.randomUUID)return crypto.randomUUID();
+      const b=new Uint8Array(16);crypto.getRandomValues(b);
+      return [...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+    }
+    function persistAttempt(a){
+      if(!a?.attemptId)return;
+      const cache={
+        ans:a.ans,fl:a.fl,t:a.t,cur:a.cur,pendingTime:a.pendingTime||0,
+        dirtyAnswers:a.dirtyAnswers||{},timeQueue:a.timeQueue||[],
+        filter:a.filter||'all',mobilePanelOpen:!!a.mobilePanelOpen,
+        pendingSubmit:!!a.pendingSubmit,savedAt:Date.now()
+      };
+      st.set('tsa-attempt-'+a.attemptId,cache);
+      const pointer=st.get('tsa-active-attempt')||{};
+      pointer.attemptId=a.attemptId;pointer.examVersionId=a.examVersionId;
+      pointer.userId=a.userId||profile?.id||pointer.userId||null;
+      pointer.examSnapshot=a.examSnapshot||pointer.examSnapshot;
+      pointer.stateSnapshot=a.stateSnapshot||pointer.stateSnapshot;
+      pointer.deadlineAt=a.deadlineAt;pointer.autoSubmitAt=a.autoSubmitAt;
+      pointer.serverNowAtSync=serverNow(a);pointer.savedAt=Date.now();
+      st.set('tsa-active-attempt',pointer);
+    }
+    function updateSyncStatus(a){
+      const el=document.getElementById('exam-sync-status');if(!el)return;
+      let message='Đã đồng bộ với máy chủ.',cls='';
+      if(!navigator.onLine){message='Mất kết nối. Đáp án đang được giữ trên thiết bị; sẽ thử đồng bộ khi có mạng.';cls='is-offline'}
+      else if(a.syncBlocked==='deadline'){message='Có dữ liệu chưa đồng bộ trước hạn. Máy chủ không nhận thay đổi sau khi hết giờ.';cls='is-error'}
+      else if(Object.keys(a.dirtyAnswers||{}).length||(a.timeQueue||[]).length){message='Đang chờ máy chủ xác nhận đồng bộ.';cls='is-pending'}
+      el.textContent=message;el.className='exam-sync-status '+cls;
+    }
+    function updateTimeUI(a){
+      const now=serverNow(a),remaining=Math.max(0,Math.ceil((a.deadlineAt-now)/1000));
+      document.querySelectorAll('.exam-time-total').forEach(el=>{el.textContent=fmt(remaining);const card=el.closest('.exam-timer-card');if(card){card.classList.toggle('is-warning',remaining<=300&&remaining>60);card.classList.toggle('is-danger',remaining<=60)}});
+      document.querySelectorAll('.exam-time-question').forEach(el=>el.textContent=fmt(currentQuestionElapsed(a)));
+      const auto=document.getElementById('exam-auto-countdown');
+      if(auto)auto.textContent=String(Math.max(0,Math.ceil((a.autoSubmitAt-now)/1000)));
+    }
+    function lap(a){
+      if(!a||a.locked)return;
+      const now=performance.now(),elapsed=Math.max(0,Math.floor((now-(a.l||now))/1000));
+      const remaining=Math.max(0,Math.ceil((a.deadlineAt-serverNow(a))/1000));
+      const delta=Math.min(elapsed,remaining);
+      if(delta>0){a.t[a.cur]=(a.t[a.cur]||0)+delta;a.pendingTime=(a.pendingTime||0)+delta}
+      a.l=now;
+    }
+    async function sendAnswer(a,index){
+      const q=ex(view.id).qs[index],v=a.ans[index];let answer=v;
+      if(v==null||v===''||(Array.isArray(v)&&!v.some(z=>z!=null)))answer=null;
+      else if(K(q)==='num'){const parsed=Number(String(v).replace(',','.'));answer=Number.isFinite(parsed)?parsed:null}
+      const {error}=await sb.rpc('save_attempt_answer',{p_attempt_id:a.attemptId,p_exam_version_question_id:a.qids[index],p_answer:answer});
+      if(error)throw error;
+    }
+    async function refreshAttemptState(a){
+      const {data:state,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});
+      if(error)throw error;
+      if(state.status==='submitted'){
+        a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;
+        a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;
+        st.del('tsa-active-attempt');st.del('tsa-attempt-'+a.attemptId);
+        go({n:'res',id:view.id,at:a});return false;
+      }
+      a.serverNowAtSync=Date.parse(state.server_now)||Date.now();
+      a.serverPerf=performance.now();
+      a.deadlineAt=Date.parse(state.deadline_at)||(new Date(state.started_at).getTime()+Number(state.duration_minutes)*60000);
+      a.autoSubmitAt=Date.parse(state.auto_submit_at)||(a.deadlineAt+10000);
+      a.end=a.deadlineAt;a.locked=serverNow(a)>=a.deadlineAt;
+      const serverAnswers=state.answers||[];
+      serverAnswers.forEach(item=>{const i=a.qids.indexOf(item.exam_version_question_id);if(i>=0&&!a.dirtyAnswers[i])a.ans[i]=item.answer});
+      (state.question_times||[]).forEach(item=>{const i=a.qids.indexOf(item.exam_version_question_id);if(i>=0)a.t[i]=Math.max(a.t[i]||0,Number(item.seconds_spent)||0)});
+      a.needsServerReconcile=false;persistAttempt(a);return true;
+    }
+    async function syncPending(a){
+      if(!a||a.syncing||!navigator.onLine||a.locked||serverNow(a)>=a.deadlineAt)return false;
+      a.syncing=true;
+      try{
+        if(a.needsServerReconcile){const ok=await refreshAttemptState(a);if(!ok)return false;if(a.locked)return false}
+        for(const key of Object.keys(a.dirtyAnswers||{}).sort((x,y)=>Number(x)-Number(y))){
+          if(!a.dirtyAnswers[key])continue;
+          if(a.locked||serverNow(a)>=a.deadlineAt){a.syncBlocked='deadline';break}
+          try{await sendAnswer(a,Number(key));delete a.dirtyAnswers[key];persistAttempt(a)}
+          catch(err){a.syncBlocked=/hết thời gian|hết hạn/i.test(err.message||'')?'deadline':'network';persistAttempt(a);updateSyncStatus(a);return false}
+        }
+        if(a.syncBlocked==='deadline'){updateSyncStatus(a);return false}
+        while((a.timeQueue||[]).length){
+          if(a.locked||serverNow(a)>=a.deadlineAt){a.syncBlocked='deadline';break}
+          const event=a.timeQueue[0];
+          try{
+            const {error}=await sb.rpc('record_attempt_question_time_v2',{
+              p_attempt_id:a.attemptId,p_exam_version_question_id:a.qids[event.index],
+              p_seconds:event.seconds,p_visit_increment:event.visit,p_event_id:event.id
+            });
+            if(error)throw error;
+            a.timeQueue.shift();persistAttempt(a);
+          }catch(err){a.syncBlocked=/hết thời gian|hết hạn/i.test(err.message||'')?'deadline':'network';persistAttempt(a);updateSyncStatus(a);return false}
+        }
+        if(!a.syncBlocked||a.syncBlocked==='network')a.syncBlocked=null;
+        persistAttempt(a);updateSyncStatus(a);return !Object.keys(a.dirtyAnswers||{}).length&&!(a.timeQueue||[]).length;
+      }catch(err){a.syncBlocked='network';persistAttempt(a);updateSyncStatus(a);return false}
+      finally{a.syncing=false}
+    }
+    async function flushTime(a,index,visit){
+      if(!a.qids||!a.qids[index])return;
+      let seconds=index===a.cur?(a.pendingTime||0):0;
+      if(!seconds&&!visit)return;
+      if(index===a.cur)a.pendingTime=0;
+      let first=true;
+      while(seconds>0||first&&visit){
+        const chunk=Math.min(300,seconds);
+        a.timeQueue.push({id:makeUuid(),index,seconds:chunk,visit:first?(visit||0):0});
+        seconds-=chunk;first=false;
+      }
+      persistAttempt(a);await syncPending(a);
+    }
+    async function saveCurrentAnswer(a,index){
+      const i=index==null?a.cur:index;
+      a.dirtyAnswers=a.dirtyAnswers||{};a.dirtyAnswers[i]=true;
+      persistAttempt(a);await syncPending(a);
+    }
+    async function finish(autoSubmit=false){
+      const a=view.at;if(!a||a.submitting)return;
+      if(!autoSubmit&&a.locked)return;
+      if(!autoSubmit&&!navigator.onLine){notify('Mất kết nối. Hãy chờ kết nối trở lại trước khi nộp thủ công.');return}
+      a.submitting=true;clearInterval(T);
+      try{
+        if(!autoSubmit){
+          lap(a);await flushTime(a,a.cur,0);await syncPending(a);
+          if(Object.keys(a.dirtyAnswers||{}).length||(a.timeQueue||[]).length)
+            throw new Error('Một số dữ liệu chưa được máy chủ xác nhận. Hãy kiểm tra kết nối trước khi nộp.');
+        }else a.pendingSubmit=true;
+        const {error}=await sb.rpc('submit_exam_attempt',{p_attempt_id:a.attemptId});if(error)throw error;
+        const {data:state,error:se}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});if(se)throw se;
+        a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;
+        a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;a.pendingSubmit=false;
+        st.del('tsa-active-attempt');st.del('tsa-attempt-'+a.attemptId);
+        go({n:'res',id:view.id,at:a});
+      }catch(err){
+        a.submitting=false;
+        if(autoSubmit){a.pendingSubmit=true;a.lastSubmitAttempt=performance.now();persistAttempt(a);updateSyncStatus(a)}
+        else notify('Chưa nộp được bài: '+(err.message||String(err)));
+        if(view.n==='take'){T=setInterval(tick,1000);render()}
+      }
+    }
+    function buildAttempt(exam,attemptId,state,cached,offline=false,pointer=null){
+      const qs=(exam.questions||[]).map(q=>({id:q.id,k:q.type,q:q.content.q,o:q.content.o||[],p:Number(q.points)||1,t:q.content.t||'',once:!!q.content.once}));
+      const ans=Array(qs.length).fill(null),times=Array(qs.length).fill(0);
+      (state.answers||[]).forEach(item=>{const i=qs.findIndex(q=>q.id===item.exam_version_question_id);if(i>=0)ans[i]=item.answer});
+      (state.question_times||[]).forEach(item=>{const i=qs.findIndex(q=>q.id===item.exam_version_question_id);if(i>=0)times[i]=Number(item.seconds_spent)||0});
+      if(cached?.ans?.length===qs.length)cached.ans.forEach((v,i)=>{ans[i]=v});
+      if(cached?.t?.length===qs.length)cached.t.forEach((v,i)=>{times[i]=Math.max(times[i]||0,Number(v)||0)});
+      const startAt=new Date(state.started_at||pointer?.stateSnapshot?.started_at).getTime();
+      const duration=Number(state.duration_minutes||pointer?.stateSnapshot?.duration_minutes)||Number(exam.duration_minutes);
+      const deadline=Date.parse(state.deadline_at||pointer?.deadlineAt)||(startAt+duration*60000);
+      const serverNowAtSync=Date.parse(state.server_now)||Number(pointer?.serverNowAtSync)||Date.now();
+      const a={
+        attemptId,examVersionId:exam.id,userId:profile?.id||pointer?.userId||null,
+        qids:qs.map(q=>q.id),start:startAt,end:deadline,deadlineAt:deadline,
+        autoSubmitAt:Date.parse(state.auto_submit_at||pointer?.autoSubmitAt)||(deadline+10000),
+        serverNowAtSync:offline?serverNowAtSync+Math.max(0,Date.now()-(pointer?.savedAt||Date.now())):serverNowAtSync,
+        serverPerf:performance.now(),ans,fl:cached?.fl?.length===qs.length?cached.fl:Array(qs.length).fill(false),
+        t:times,cur:Math.min(qs.length-1,Math.max(0,Number(cached?.cur)||0)),
+        l:performance.now(),pendingTime:Number(cached?.pendingTime)||0,
+        lastFlush:performance.now(),dirtyAnswers:cached?.dirtyAnswers||{},timeQueue:cached?.timeQueue||[],
+        filter:cached?.filter||'all',mobilePanelOpen:!!cached?.mobilePanelOpen,
+        pendingSubmit:!!cached?.pendingSubmit,locked:false,syncing:false,
+        needsServerReconcile:offline,syncBlocked:null,
+        examSnapshot:{...exam,questions:exam.questions||[]}
+      };
+      a.locked=serverNow(a)>=a.deadlineAt;
+      return {qs,a};
+    }
+    async function start(id){
+      try{
+        let attemptId,exam,state;
+        try{
+          const started=await sb.rpc('start_exam_attempt',{p_exam_version_id:id});if(started.error)throw started.error;attemptId=started.data;
+          const fetchedExam=await sb.rpc('get_published_exam',{p_exam_version_id:id});if(fetchedExam.error)throw fetchedExam.error;exam=fetchedExam.data;
+          const fetchedState=await sb.rpc('get_my_attempt_state',{p_attempt_id:attemptId});if(fetchedState.error)throw fetchedState.error;state=fetchedState.data;
+        }catch(networkError){
+          const pointer=st.get('tsa-active-attempt');
+          if(!pointer||pointer.examVersionId!==id||pointer.userId!==profile?.id||!pointer.examSnapshot)throw networkError;
+          const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
+          exam=pointer.examSnapshot;attemptId=pointer.attemptId;state=pointer.stateSnapshot||{};
+          const {qs,a}=buildAttempt(exam,attemptId,state,cached,true,pointer);
+          D.exams=D.exams.filter(x=>x.id!==exam.id);
+          D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no});
+          view={n:'take',id:exam.id,at:a};render();notify('Đang làm việc ở chế độ ngoại tuyến. Đáp án được giữ trên thiết bị; máy chủ sẽ xác nhận khi có mạng.');return;
+        }
+        const {qs,a}=buildAttempt(exam,attemptId,state,st.get('tsa-attempt-'+attemptId)||{},false);
+        D.exams=D.exams.filter(x=>x.id!==exam.id);
+        D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no});
+        a.stateSnapshot=state;persistAttempt(a);
+        if(state.status==='submitted'){
+          a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;a.elapsed_seconds=state.elapsed_seconds;
+          st.del('tsa-active-attempt');st.del('tsa-attempt-'+attemptId);go({n:'res',id:exam.id,at:a});return;
+        }
+        view={n:'take',id:exam.id,at:a};render();
+        if(!a.locked)await flushTime(a,a.cur,1);
+      }catch(e){notify('Không thể bắt đầu/tiếp tục bài thi: '+e.message)}
+    }
+    function restoreOfflineAttempt(userId){
+      const pointer=st.get('tsa-active-attempt');
+      if(!pointer||!pointer.attemptId||!pointer.examSnapshot||!userId||pointer.userId!==userId)return false;
+      const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
+      const exam=pointer.examSnapshot,state=pointer.stateSnapshot||{};
+      const {qs,a}=buildAttempt(exam,pointer.attemptId,state,cached,true,pointer);
+      D.exams=[{id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no}];
+      view={n:'take',id:exam.id,at:a};render();return true;
+    }
+    function tick(){
+      const a=view.at;if(!a||a.submitting)return;
+      const now=serverNow(a);
+      if(!a.locked&&now>=a.deadlineAt){
+        lap(a);a.locked=true;a.l=performance.now();persistAttempt(a);render();return;
+      }
+      if(a.locked){
+        updateTimeUI(a);
+        if(now>=a.autoSubmitAt){
+          a.pendingSubmit=true;
+          if(navigator.onLine&&performance.now()-(a.lastSubmitAttempt||0)>=5000)finish(true);
+        }
+        persistAttempt(a);return;
+      }
+      lap(a);
+      if(performance.now()-(a.lastFlush||0)>=5000){
+        a.lastFlush=performance.now();
+        flushTime(a,a.cur,0).catch(()=>{});
+      }
+      persistAttempt(a);updateTimeUI(a);updateSyncStatus(a);
+    }
+    window.addEventListener('online',async()=>{
+      if(view.n!=='take'||!view.at)return;
+      const a=view.at;a.needsServerReconcile=true;
+      await syncPending(a);
+      if(view.n==='take'&&a.locked&&serverNow(a)>=a.autoSubmitAt&&navigator.onLine)finish(true);
+      if(view.n==='take'){persistAttempt(a);render()}
+    });
+    window.addEventListener('offline',()=>{
+      if(view.n==='take'&&view.at){persistAttempt(view.at);updateSyncStatus(view.at)}
+    });
+    document.addEventListener('visibilitychange',()=>{
+      if(view.n==='take'&&view.at){tick();persistAttempt(view.at)}
+    });
+    window.addEventListener('beforeunload',()=>{
+      if(view.n==='take'&&view.at){lap(view.at);persistAttempt(view.at)}
+    });
     async function save(publishNow){
       const g=i=>document.getElementById(i).value,m=document.getElementById('msg');let qs;
       try{qs=parse(g('f-q'));if(!qs.length)throw new Error('Chưa có câu hỏi nào')}catch(e){m.textContent=e.message;return}
@@ -444,6 +812,7 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
 
     A.addEventListener('click',async e=>{
       const b=e.target.closest('[data-a]');if(!b)return;const k=b.dataset.a,i=b.dataset.i,a=view.at;
+      if(view.n==='take'&&a?.locked)return;
       try{
         if(k==='login')await login();
         else if(k==='signup')await signup();
@@ -464,16 +833,21 @@ input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline
         else if(k==='start')await start(i);
         else if(k==='toggleRole'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role==='admin'?'student':'admin',p.status)}
         else if(k==='toggleStatus'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role,p.status==='active'?'suspended':'active')}
-        else if(k==='sub')view.cf=true;
+        else if(k==='sub'){if(!a?.locked&&navigator.onLine)view.cf=1;else notify('Không thể nộp thủ công khi mất kết nối hoặc khi thời gian đã hết.');}
+        else if(k==='confirmFirst')view.cf=2;
         else if(k==='no')view.cf=false;
-        else if(k==='yes'){await finish();return}
+        else if(k==='yes'){await finish(false);return}
+        else if(k==='filterAll')a.filter='all';
+        else if(k==='filterUnanswered')a.filter='unanswered';
+        else if(k==='filterFlagged')a.filter='flagged';
+        else if(k==='toggleMobilePanel')a.mobilePanelOpen=!a.mobilePanelOpen;
         else if(k==='pick'){a.ans[a.cur]=+i;await saveCurrentAnswer(a)}
         else if(k==='tf'){const q=ex(view.id).qs[a.cur],f=a.ans[a.cur]||Array(q.o.length).fill(null);f[+i]=b.dataset.v==='1';a.ans[a.cur]=f;await saveCurrentAnswer(a)}
         else if(k==='ms'){const s0=new Set(a.ans[a.cur]||[]);if(s0.has(+i))s0.delete(+i);else s0.add(+i);a.ans[a.cur]=[...s0].sort((x,y)=>x-y);await saveCurrentAnswer(a)}
         else if(k==='chip'){sel=sel===+i?null:+i;render();return}
         else if(k==='slot'){await place(+i);return}
-        else if(k==='flag')a.fl[a.cur]=!a.fl[a.cur];
-        else if(k==='prev'||k==='next'||k==='jump'){lap(a);await flushTime(a,a.cur,0).catch(()=>{});a.cur=k==='jump'?+i:a.cur+(k==='next'?1:-1);await flushTime(a,a.cur,1).catch(()=>{});a.l=Date.now();a.lastFlush=Date.now()}
+        else if(k==='flag'){a.fl[a.cur]=!a.fl[a.cur];persistAttempt(a)}
+        else if(k==='prev'||k==='next'||k==='jump'){lap(a);await flushTime(a,a.cur,0);a.cur=k==='jump'?+i:a.cur+(k==='next'?1:-1);a.l=performance.now();a.lastFlush=performance.now();persistAttempt(a);await flushTime(a,a.cur,1)}
         if(view.n==='take'){render();return}
         if(k==='sub'||k==='no')render();
       }catch(err){notify(err.message||String(err))}
