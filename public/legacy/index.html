@@ -693,11 +693,16 @@ if('serviceWorker' in navigator){
       a.syncing=true;
       try{
         if(a.needsServerReconcile){const ok=await refreshAttemptState(a);if(!ok)return false;if(a.locked)return false}
-        for(const key of Object.keys(a.dirtyAnswers||{}).sort((x,y)=>Number(x)-Number(y))){
-          if(!a.dirtyAnswers[key])continue;
+        while(true){
+          const key=Object.keys(a.dirtyAnswers||{}).filter(k=>a.dirtyAnswers[k]).sort((x,y)=>Number(x)-Number(y))[0];
+          if(key===undefined)break;
           if(a.locked||serverNow(a)>=a.deadlineAt){a.syncBlocked='deadline';break}
-          try{await sendAnswer(a,Number(key));delete a.dirtyAnswers[key];persistAttempt(a)}
-          catch(err){a.syncBlocked=/hết thời gian|hết hạn/i.test(err.message||'')?'deadline':'network';persistAttempt(a);updateSyncStatus(a);return false}
+          const revision=a.dirtyAnswers[key];
+          try{
+            await sendAnswer(a,Number(key));
+            if(a.dirtyAnswers[key]===revision)delete a.dirtyAnswers[key];
+            persistAttempt(a);
+          }catch(err){a.syncBlocked=/hết thời gian|hết hạn/i.test(err.message||'')?'deadline':'network';persistAttempt(a);updateSyncStatus(a);return false}
         }
         if(a.syncBlocked==='deadline'){updateSyncStatus(a);return false}
         while((a.timeQueue||[]).length){
@@ -732,7 +737,7 @@ if('serviceWorker' in navigator){
     }
     async function saveCurrentAnswer(a,index){
       const i=index==null?a.cur:index;
-      a.dirtyAnswers=a.dirtyAnswers||{};a.dirtyAnswers[i]=true;
+      a.dirtyAnswers=a.dirtyAnswers||{};a.dirtyAnswers[i]=(Number(a.dirtyAnswers[i])||0)+1;
       persistAttempt(a);
       if(!navigator.onLine){updateSyncStatus(a);return false}
       await syncPending(a);
