@@ -490,8 +490,77 @@ if('serviceWorker' in navigator){
       const x=view.exam||{title:'',desc:'',minutes:60,qs:[]};
       return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'"><label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
+    function ensureAttemptReady(a){
+      const x=ex(view.id);
+      if(!a||!x||!Array.isArray(x.qs)||!x.qs.length)return false;
+      const n=x.qs.length,oldIds=Array.isArray(a.qids)?a.qids:[];
+      const oldAns=Array.isArray(a.ans)?a.ans:[],oldTimes=Array.isArray(a.t)?a.t:[],oldFlags=Array.isArray(a.fl)?a.fl:[];
+      const sameOrder=oldIds.length===n&&x.qs.every((q,i)=>q&&oldIds[i]===q.id);
+      if(sameOrder&&oldAns.length===n&&oldTimes.length===n&&oldFlags.length===n){
+        a.qids=x.qs.map(q=>q.id);
+      }else{
+        const previous=new Map(oldIds.map((id,i)=>[id,{answer:oldAns[i]??null,time:Number(oldTimes[i])||0,flag:!!oldFlags[i]}]));
+        a.ans=x.qs.map((q,i)=>previous.has(q.id)?previous.get(q.id).answer:(oldAns[i]??null));
+        a.t=x.qs.map((q,i)=>Math.max(0,previous.has(q.id)?previous.get(q.id).time:(Number(oldTimes[i])||0)));
+        a.fl=x.qs.map((q,i)=>previous.has(q.id)?previous.get(q.id).flag:!!oldFlags[i]);
+        a.qids=x.qs.map(q=>q.id);
+      }
+      const cursor=Number(a.cur);
+      a.cur=Number.isFinite(cursor)?Math.min(n-1,Math.max(0,Math.floor(cursor))):0;
+      return !!x.qs[a.cur];
+    }
+    function installAttemptExam(a,exam){
+      if(!exam||!Array.isArray(exam.questions)||!exam.questions.length)return false;
+      const qs=exam.questions.map(q=>({id:q.id,k:q.type,q:q.content?.q||'',o:q.content?.o||[],p:Number(q.points)||1,t:q.content?.t||'',once:!!q.content?.once}));
+      if(qs.some(q=>!q.id||!q.q))return false;
+      const previous=new Map((a.qids||[]).map((id,i)=>[id,{answer:a.ans?.[i]??null,time:Number(a.t?.[i])||0,flag:!!a.fl?.[i]}]));
+      a.ans=qs.map((q,i)=>previous.has(q.id)?previous.get(q.id).answer:(a.ans?.[i]??null));
+      a.t=qs.map((q,i)=>Math.max(0,previous.has(q.id)?previous.get(q.id).time:(Number(a.t?.[i])||0)));
+      a.fl=qs.map((q,i)=>previous.has(q.id)?previous.get(q.id).flag:!!a.fl?.[i]);
+      a.qids=qs.map(q=>q.id);a.examSnapshot=exam;
+      const item={id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(exam.duration_minutes)||60,qs,exam_id:exam.exam_id,version_no:exam.version_no};
+      D.exams=D.exams.filter(x=>x.id!==exam.id);D.exams.push(item);
+      const cursor=Number(a.cur);a.cur=Number.isFinite(cursor)?Math.min(qs.length-1,Math.max(0,Math.floor(cursor))):0;
+      return true;
+    }
+    let resumeAttemptPromise=null;
+    async function resumeAttempt(){
+      if(resumeAttemptPromise)return resumeAttemptPromise;
+      if(view.n!=='take'||!view.at)return;
+      const a=view.at;
+      resumeAttemptPromise=(async()=>{
+        a.resuming=true;
+        try{
+          if(!ensureAttemptReady(a)){
+            let exam=a.examSnapshot;
+            if(!exam||!Array.isArray(exam.questions)||!exam.questions.length){
+              const {data,error}=await sb.rpc('get_published_exam',{p_exam_version_id:a.examVersionId});
+              if(error)throw error;exam=data;
+            }
+            if(!installAttemptExam(a,exam)||!ensureAttemptReady(a))throw new Error('Không khôi phục được danh sách câu hỏi của lượt thi này.');
+          }
+          if(navigator.onLine){
+            const ok=await refreshAttemptState(a);
+            if(!ok)return;
+            await syncPending(a);
+          }else{a.offlineMode=true}
+          if(view.n==='take'&&view.at===a){
+            ensureAttemptReady(a);a.l=performance.now();a.lastFlush=performance.now();
+            persistAttempt(a);updateTimeUI(a);updateSyncStatus(a);render();
+          }
+        }catch(err){
+          if(view.n==='take'&&view.at===a){
+            ensureAttemptReady(a);render();
+            notify('Chưa thể đồng bộ khi quay lại phòng thi: '+(err.message||String(err))+' Đáp án đang được giữ trên thiết bị.');
+          }
+        }finally{a.resuming=false;resumeAttemptPromise=null}
+      })();
+      return resumeAttemptPromise;
+    }
     function take(){
-      const x=ex(view.id),a=view.at,n=x.qs.length,q=x.qs[a.cur];
+      const a=view.at,x=ex(view.id);
+      if(!a||!ensureAttemptReady(a))return '<div class="c"><h2>Đang khôi phục phòng thi</h2><p>Danh sách câu hỏi chưa sẵn sàng. Đáp án đã lưu trên thiết bị sẽ được giữ nguyên.</p><button class="b bp" data-a="resumeAttempt">Thử khôi phục</button></div>';
+      const n=x.qs.length,q=x.qs[a.cur];
       const answered=a.ans.filter((v,i)=>any(x.qs[i],v)).length;
       const unanswered=n-answered,flagged=a.fl.filter(Boolean).length;
       const filter=a.filter||'all';
@@ -676,7 +745,7 @@ if('serviceWorker' in navigator){
     async function retrySubmittedResult(){try{await loadSubmittedResult(view.at,view.id)}catch(err){notify('Chưa tải được kết quả: '+(err.message||String(err)))}}
     function resultPending(){return '<h1>Bài thi đã được nộp</h1><div class="c"><p>Máy chủ đã nhận bài thi. Bộ đếm đã dừng; dữ liệu điểm đang được tải.</p><p class="m">Nếu kết nối chập chờn, hãy tải lại kết quả. Không cần nộp lại bài.</p><button class="b bp" data-a="retryResult">Xem điểm và kết quả</button><button class="b" data-a="home">Về trang chủ</button></div>'}
     async function finish(autoSubmit=false){
-      const a=view.at;if(!a||a.submitting)return;
+      const a=view.at;if(!a||a.submitting||a.resuming)return;
       if(!autoSubmit&&a.locked)return;
       if(!autoSubmit&&!navigator.onLine){notify('Mất kết nối. Hãy chờ kết nối trở lại trước khi nộp thủ công.');return}
       a.submitting=true;clearInterval(T);
@@ -803,7 +872,16 @@ if('serviceWorker' in navigator){
       if(view.n==='take'&&view.at){persistAttempt(view.at);updateSyncStatus(view.at)}
     });
     document.addEventListener('visibilitychange',()=>{
-      if(view.n==='take'&&view.at){tick();persistAttempt(view.at)}
+      if(view.n!=='take'||!view.at)return;
+      const a=view.at;
+      if(document.visibilityState==='hidden'){
+        lap(a);persistAttempt(a);updateSyncStatus(a);
+      }else{
+        void resumeAttempt();
+      }
+    });
+    window.addEventListener('pageshow',event=>{
+      if(event.persisted&&view.n==='take'&&view.at)void resumeAttempt();
     });
     window.addEventListener('beforeunload',()=>{
       if(view.n==='take'&&view.at){lap(view.at);persistAttempt(view.at)}
@@ -1099,6 +1177,7 @@ if('serviceWorker' in navigator){
         else if(k==='editVersion')await openEditor(i,b.dataset.status,b.dataset.exam);
         else if(k==='deleteVersion')await deleteExamVersion(i,b.dataset.title,b.dataset.status);
         else if(k==='retryResult')await retrySubmittedResult();
+        else if(k==='resumeAttempt'){await resumeAttempt();return}
         else if(k==='createVersion'){const {data:id,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:b.dataset.exam});if(error)throw error;await openEditor(id,'draft',b.dataset.exam)}
         else if(k==='saveDraft')await save(false);
         else if(k==='publishDraft')await save(true);
