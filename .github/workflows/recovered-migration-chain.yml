@@ -49,5 +49,46 @@ jobs:
             echo "Applying $file"
             psql -v ON_ERROR_STOP=1 -f "supabase/migrations/$file"
           done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
-      - name: Verify resulting schema and RPCs
+      - name: Verify recovered schema and RPCs
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
+      - name: Fetch reviewed answer-validation PR at its current tested head
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin fix/exam-answer-validation-guard
+          actual="$(git rev-parse FETCH_HEAD)"
+          expected="196de93af114652c7a567b2535c07b00def3de5a"
+          test "$actual" = "$expected" || {
+            echo "PR #22 head changed: expected $expected, got $actual"
+            exit 1
+          }
+          git show FETCH_HEAD:supabase/migrations/20261112170000_centralize_exam_answer_validation.sql > /tmp/answer-validation.sql
+          git show FETCH_HEAD:supabase/tests/answer_validation_regression.sql > /tmp/answer-validation-regression.sql
+      - name: Apply answer-validation migration after recovered chain
+        run: psql -v ON_ERROR_STOP=1 -f /tmp/answer-validation.sql
+      - name: Seed a test-only Admin identity
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO auth.users (id,email,email_confirmed_at,raw_user_meta_data)
+          VALUES (
+            '00000000-0000-4000-8000-000000000001',
+            'ci-admin@example.test',
+            now(),
+            '{"display_name":"CI Admin"}'::jsonb
+          );
+          UPDATE public.profiles
+          SET role='admin', status='active'
+          WHERE id='00000000-0000-4000-8000-000000000001';
+          DO $assert$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM public.profiles
+              WHERE id='00000000-0000-4000-8000-000000000001'
+                AND role='admin' AND status='active'
+            ) THEN
+              RAISE EXCEPTION 'Could not seed the test-only Admin profile.';
+            END IF;
+          END;
+          $assert$;
+          SQL
+      - name: Run answer-validation regression suite on recovered schema
+        run: psql -v ON_ERROR_STOP=1 -f /tmp/answer-validation-regression.sql
