@@ -35,7 +35,7 @@ export default function DashboardPage() {
         const { data: adminData, error: adminError } = await supabase.rpc('admin_list_exam_versions');
         if (!active) return;
         if (adminError) {
-          setError((current) => current ? current + ' · ' : '' + 'Không tải được danh sách quản trị: ' + adminError.message);
+          setError((current) => [current, 'Không tải được danh sách quản trị: ' + adminError.message].filter(Boolean).join(' · '));
         } else {
           setVersions(adminData || []);
         }
@@ -53,7 +53,7 @@ export default function DashboardPage() {
       <header className="topbar">
         <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></Link>
         <nav className="top-links" aria-label="Điều hướng chính">
-          <Link to="/history">Lịch sử</Link>
+          <Link to="/history">Lịch sử (giao diện hiện tại)</Link>
           <Link to="/account">Tài khoản</Link>
           {isAdmin && <a href="/legacy/index.html">Quản trị</a>}
         </nav>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
               <h3>{exam.title}</h3>
               <p className="muted">{exam.description || 'Bài luyện tập đánh giá tư duy TSA.'}</p>
               <div className="exam-meta"><span>{exam.duration} phút</span><span>{exam.questionCount || 0} câu hỏi</span><span>Phiên bản {exam.version}</span></div>
-              <a className="button primary full" href="/legacy/index.html">Mở giao diện làm bài <span aria-hidden="true">→</span></a>
+              <a className="button primary full" href="/legacy/index.html">Mở danh sách đề ở giao diện hiện tại <span aria-hidden="true">→</span></a>
             </article>)}</div> :
             <div className="empty-state"><b>Chưa có đề thi được xuất bản</b><p>Các đề luyện tập sẽ xuất hiện tại đây khi quản trị viên đăng tải.</p></div>
           }

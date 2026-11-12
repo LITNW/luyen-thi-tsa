@@ -7,5 +7,14 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('/node_modules/@supabase/')) return 'supabase';
+          if (id.includes('/node_modules/react-router')) return 'router';
+          if (id.includes('/node_modules/react-dom/') || id.includes('/node_modules/react/')) return 'react';
+        },
+      },
+    },
   },
 });

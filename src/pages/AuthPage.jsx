@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -12,6 +12,10 @@ export default function AuthPage({ mode = 'login' }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (session) navigate('/', { replace: true });
+  }, [session, navigate]);
+
   if (loading) return <main className="center-state"><span className="spinner" /><p>Đang kiểm tra phiên đăng nhập…</p></main>;
   if (session) return <Navigate to="/" replace />;
 
@@ -24,12 +28,9 @@ export default function AuthPage({ mode = 'login' }) {
         const data = await signUp({ displayName, email: email.trim(), password });
         if (!data.session) {
           setMessage('Đã tạo yêu cầu đăng ký. Hãy mở email xác minh, sau đó đăng nhập.');
-        } else {
-          navigate('/', { replace: true });
         }
       } else {
         await signIn(email.trim(), password);
-        navigate('/', { replace: true });
       }
     } catch (error) {
       setMessage(error?.message || 'Không thể hoàn tất thao tác.');
