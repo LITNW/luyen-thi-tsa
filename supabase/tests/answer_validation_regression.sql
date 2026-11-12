@@ -3,6 +3,23 @@
 
 DO $tests$
 BEGIN
+  -- Ensure all three write/publish paths use the shared validator.
+  IF position('public.validate_question_answer_key(' IN pg_get_functiondef(
+       'public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)'::regprocedure
+     )) = 0 THEN
+    RAISE EXCEPTION 'admin_save_question is missing the shared validator.';
+  END IF;
+  IF position('public.validate_question_answer_key(' IN pg_get_functiondef(
+       'public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb)'::regprocedure
+     )) = 0 THEN
+    RAISE EXCEPTION 'admin_set_question_answer_key is missing the shared validator.';
+  END IF;
+  IF position('public.validate_question_answer_key(' IN pg_get_functiondef(
+       'public.admin_publish_exam_version(uuid)'::regprocedure
+     )) = 0 THEN
+    RAISE EXCEPTION 'admin_publish_exam_version is missing the shared validator.';
+  END IF;
+
   -- Valid examples for all five supported question types.
   PERFORM public.validate_question_answer_key(
     'mc', '{"q":"Question?","o":["A","B","C","D"]}'::jsonb, '1'::jsonb
