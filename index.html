@@ -147,6 +147,47 @@ body.exam-active{overflow:hidden}
 .exam-confirm-actions .bp:disabled{opacity:.72;cursor:wait;transform:none;box-shadow:none}
 .exam-confirm-feedback{min-height:1.4em;margin-top:12px;color:#43536d;font-size:.82rem}
 .exam-shell .m[aria-live="polite"]{color:#43536d}
+
+/* Answer readability: enforce dark, fully opaque text for every question type. */
+.exam-question-card,
+.exam-question-card .q,
+.exam-question-card .m,
+.exam-question-card .o,
+.exam-question-card .o :not(button),
+.exam-question-card .chip,
+.exam-question-card .sl,
+.exam-question-card input,
+.exam-question-card textarea,
+.exam-question-card select,
+.exam-question-card label,
+.exam-question-card mjx-container {
+  color: #172033 !important;
+  opacity: 1 !important;
+}
+.exam-question-card input,
+.exam-question-card textarea,
+.exam-question-card select {
+  -webkit-text-fill-color: #172033;
+  background-color: #fff;
+}
+.exam-question-card input::placeholder,
+.exam-question-card textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #64748b;
+}
+.exam-question-card .o:disabled,
+.exam-question-card input:disabled,
+.exam-question-card textarea:disabled,
+.exam-question-card select:disabled {
+  color: #475569 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #475569;
+}
+.exam-question-card mjx-container svg {
+  color: #172033 !important;
+}
+
 </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script>
       if('serviceWorker' in navigator){
         window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{}));
