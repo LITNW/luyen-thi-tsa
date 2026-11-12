@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 677a83eba6eb338f4bf2067856d9366c
 
 -- Migration 015: avoid creating duplicate question versions when an Admin saves an unchanged draft.
 
