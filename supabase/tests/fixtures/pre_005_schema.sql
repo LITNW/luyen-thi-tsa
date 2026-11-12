@@ -935,3 +935,117 @@ BEGIN
     WHERE id = p_attempt_id;
 END;
 $function$;
+
+-- Reconstructed pre-005 start_exam_attempt RPC.
+-- The original function body is not retained in the migration ledger. This copy
+-- is reconstructed from the live function, with the post-020 archive predicate
+-- removed so migration 020 can exercise its intended transformation.
+CREATE OR REPLACE FUNCTION public.start_exam_attempt(p_exam_version_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_exam_id uuid;
+    v_duration integer;
+    v_question_count integer;
+    v_missing_keys integer;
+    v_max_score numeric;
+    v_attempt_id uuid;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.profiles
+        WHERE id = v_uid
+          AND status = 'active'
+    ) THEN
+        RAISE EXCEPTION 'Tài khoản không hoạt động.';
+    END IF;
+
+    SELECT exam_id, duration_minutes
+    INTO v_exam_id, v_duration
+    FROM public.exam_versions
+    WHERE id = p_exam_version_id
+      AND status = 'published';
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Đề thi không tồn tại hoặc chưa xuất bản.';
+    END IF;
+
+    SELECT
+        count(*),
+        COALESCE(sum(evq.points), 0),
+        count(*) FILTER (
+            WHERE ak.question_version_id IS NULL
+        )
+    INTO
+        v_question_count,
+        v_max_score,
+        v_missing_keys
+    FROM public.exam_version_questions evq
+    LEFT JOIN public.question_answer_keys ak
+        ON ak.question_version_id = evq.question_version_id
+    WHERE evq.exam_version_id = p_exam_version_id;
+
+    IF v_question_count = 0 OR v_max_score <= 0 THEN
+        RAISE EXCEPTION 'Đề thi chưa có câu hỏi hợp lệ.';
+    END IF;
+
+    IF v_missing_keys > 0 THEN
+        RAISE EXCEPTION
+            'Đề thi còn % câu chưa có đáp án.',
+            v_missing_keys;
+    END IF;
+
+    INSERT INTO public.attempts (
+        user_id,
+        exam_id,
+        exam_version_id,
+        answers,
+        score,
+        max_score,
+        elapsed_seconds,
+        result_details,
+        status,
+        started_at,
+        last_activity_at
+    )
+    VALUES (
+        v_uid,
+        v_exam_id,
+        p_exam_version_id,
+        '[]'::jsonb,
+        0,
+        v_max_score,
+        0,
+        '[]'::jsonb,
+        'in_progress',
+        clock_timestamp(),
+        clock_timestamp()
+    )
+    ON CONFLICT (user_id, exam_version_id)
+    WHERE status = 'in_progress'
+      AND exam_version_id IS NOT NULL
+    DO NOTHING
+    RETURNING id INTO v_attempt_id;
+
+    -- A concurrent start may have created the open attempt first.
+    IF v_attempt_id IS NULL THEN
+        SELECT id
+        INTO v_attempt_id
+        FROM public.attempts
+        WHERE user_id = v_uid
+          AND exam_version_id = p_exam_version_id
+          AND status = 'in_progress'
+        LIMIT 1;
+    END IF;
+
+    RETURN v_attempt_id;
+END;
+$function$;
