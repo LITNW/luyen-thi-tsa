@@ -1,0 +1,636 @@
+-- Test-only reconstruction of the schema state immediately before recorded migration 005.
+-- Generated from Production catalog metadata; contains schema only, no user/exam/attempt rows.
+-- This is not an original historical migration and is not intended to be applied to Production.
+
+DO $roles$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
+END;
+$roles$;
+
+CREATE SCHEMA IF NOT EXISTS auth;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+CREATE TABLE auth.users (
+  id uuid PRIMARY KEY,
+  email text,
+  email_confirmed_at timestamptz,
+  raw_user_meta_data jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS uuid LANGUAGE sql STABLE
+AS $function$
+  SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid
+$function$;
+
+CREATE OR REPLACE FUNCTION auth.role()
+RETURNS text LANGUAGE sql STABLE
+AS $function$
+  SELECT nullif(current_setting('request.jwt.claim.role',true),'')
+$function$;
+
+CREATE OR REPLACE FUNCTION auth.jwt()
+RETURNS jsonb LANGUAGE sql STABLE
+AS $function$
+  SELECT coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb
+$function$;
+
+CREATE SEQUENCE public.audit_logs_id_seq AS bigint START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 NO CYCLE;
+CREATE SEQUENCE public.tsa_user_code_seq AS bigint START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999 CACHE 1 NO CYCLE;
+CREATE TABLE public.attempt_answers (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  attempt_id uuid NOT NULL,
+  exam_version_id uuid NOT NULL,
+  exam_version_question_id uuid NOT NULL,
+  answer jsonb NOT NULL,
+  is_correct boolean,
+  earned_points numeric(10,4),
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  graded_at timestamp with time zone,
+  CONSTRAINT attempt_answers_answer_check CHECK (answer <> 'null'::jsonb),
+  CONSTRAINT attempt_answers_attempt_question_unique UNIQUE (attempt_id, exam_version_question_id),
+  CONSTRAINT attempt_answers_earned_points_check CHECK (earned_points IS NULL OR earned_points >= 0::numeric),
+  CONSTRAINT attempt_answers_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.attempt_question_times (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  attempt_id uuid NOT NULL,
+  exam_version_id uuid NOT NULL,
+  exam_version_question_id uuid NOT NULL,
+  seconds_spent integer DEFAULT 0 NOT NULL,
+  visit_count integer DEFAULT 0 NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT attempt_question_times_pkey PRIMARY KEY (id),
+  CONSTRAINT attempt_question_times_seconds_spent_check CHECK (seconds_spent >= 0),
+  CONSTRAINT attempt_question_times_unique UNIQUE (attempt_id, exam_version_question_id),
+  CONSTRAINT attempt_question_times_visit_count_check CHECK (visit_count >= 0)
+);
+
+CREATE TABLE public.attempts (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  user_id uuid NOT NULL,
+  exam_id uuid NOT NULL,
+  answers jsonb DEFAULT '[]'::jsonb NOT NULL,
+  score numeric(10,3) DEFAULT 0 NOT NULL,
+  max_score numeric(10,3) NOT NULL,
+  elapsed_seconds integer DEFAULT 0 NOT NULL,
+  result_details jsonb DEFAULT '[]'::jsonb NOT NULL,
+  submitted_at timestamp with time zone,
+  exam_version_id uuid,
+  status text DEFAULT 'in_progress'::text NOT NULL,
+  started_at timestamp with time zone DEFAULT now() NOT NULL,
+  finished_at timestamp with time zone,
+  last_activity_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT attempts_answers_check CHECK (jsonb_typeof(answers) = 'array'::text),
+  CONSTRAINT attempts_check CHECK (max_score > 0::numeric AND score <= max_score),
+  CONSTRAINT attempts_elapsed_seconds_check CHECK (elapsed_seconds >= 0),
+  CONSTRAINT attempts_finish_state_check CHECK (status = 'in_progress'::text AND submitted_at IS NULL AND finished_at IS NULL OR status = 'submitted'::text AND submitted_at IS NOT NULL AND finished_at IS NOT NULL OR status = 'abandoned'::text AND submitted_at IS NULL AND finished_at IS NOT NULL),
+  CONSTRAINT attempts_id_version_unique UNIQUE (id, exam_version_id),
+  CONSTRAINT attempts_pkey PRIMARY KEY (id),
+  CONSTRAINT attempts_result_details_check CHECK (jsonb_typeof(result_details) = 'array'::text),
+  CONSTRAINT attempts_score_check CHECK (score >= 0::numeric),
+  CONSTRAINT attempts_status_check CHECK (status = ANY (ARRAY['in_progress'::text, 'submitted'::text, 'abandoned'::text]))
+);
+
+CREATE TABLE public.audit_logs (
+  id bigint NOT NULL,
+  actor_id uuid,
+  action text NOT NULL,
+  target_type text NOT NULL,
+  target_id text,
+  details jsonb DEFAULT '{}'::jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT audit_logs_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.exam_solutions (
+  exam_id uuid NOT NULL,
+  solutions jsonb NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT exam_solutions_pkey PRIMARY KEY (exam_id),
+  CONSTRAINT exam_solutions_solutions_check CHECK (jsonb_typeof(solutions) = 'array'::text)
+);
+
+CREATE TABLE public.exam_version_questions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  exam_version_id uuid NOT NULL,
+  exam_id uuid NOT NULL,
+  question_version_id uuid NOT NULL,
+  question_id uuid NOT NULL,
+  "position" integer NOT NULL,
+  points numeric(8,2) DEFAULT 1 NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT evq_id_version_unique UNIQUE (id, exam_version_id),
+  CONSTRAINT evq_position_unique UNIQUE (exam_version_id, "position"),
+  CONSTRAINT evq_question_unique UNIQUE (exam_version_id, question_version_id),
+  CONSTRAINT exam_version_questions_pkey PRIMARY KEY (id),
+  CONSTRAINT exam_version_questions_points_check CHECK (points > 0::numeric),
+  CONSTRAINT exam_version_questions_position_check CHECK ("position" > 0)
+);
+
+CREATE TABLE public.exam_versions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  exam_id uuid NOT NULL,
+  version_no integer NOT NULL,
+  title text NOT NULL,
+  description text DEFAULT ''::text NOT NULL,
+  duration_minutes integer NOT NULL,
+  status text DEFAULT 'draft'::text NOT NULL,
+  created_by uuid,
+  published_by uuid,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  published_at timestamp with time zone,
+  CONSTRAINT exam_versions_duration_minutes_check CHECK (duration_minutes >= 1 AND duration_minutes <= 600),
+  CONSTRAINT exam_versions_exam_version_unique UNIQUE (exam_id, version_no),
+  CONSTRAINT exam_versions_id_exam_unique UNIQUE (id, exam_id),
+  CONSTRAINT exam_versions_pkey PRIMARY KEY (id),
+  CONSTRAINT exam_versions_publish_state_check CHECK (status = 'draft'::text AND published_at IS NULL OR status = 'published'::text AND published_at IS NOT NULL),
+  CONSTRAINT exam_versions_status_check CHECK (status = ANY (ARRAY['draft'::text, 'published'::text])),
+  CONSTRAINT exam_versions_title_check CHECK (length(TRIM(BOTH FROM title)) >= 1 AND length(TRIM(BOTH FROM title)) <= 240),
+  CONSTRAINT exam_versions_version_no_check CHECK (version_no > 0)
+);
+
+CREATE TABLE public.exams (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  title text NOT NULL,
+  description text DEFAULT ''::text NOT NULL,
+  duration_minutes integer NOT NULL,
+  questions_public jsonb DEFAULT '[]'::jsonb NOT NULL,
+  is_published boolean DEFAULT false NOT NULL,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT exams_duration_minutes_check CHECK (duration_minutes >= 1 AND duration_minutes <= 600),
+  CONSTRAINT exams_pkey PRIMARY KEY (id),
+  CONSTRAINT exams_questions_public_check CHECK (jsonb_typeof(questions_public) = 'array'::text),
+  CONSTRAINT exams_title_check CHECK (length(TRIM(BOTH FROM title)) >= 1 AND length(TRIM(BOTH FROM title)) <= 240)
+);
+
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text NOT NULL,
+  role text DEFAULT 'student'::text NOT NULL,
+  status text DEFAULT 'active'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  user_code text DEFAULT ('TSA-'::text || lpad((nextval('tsa_user_code_seq'::regclass))::text, 6, '0'::text)) NOT NULL,
+  display_name text NOT NULL,
+  CONSTRAINT profiles_display_name_check CHECK (char_length(btrim(display_name)) >= 1 AND char_length(btrim(display_name)) <= 80),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_role_check CHECK (role = ANY (ARRAY['admin'::text, 'student'::text])),
+  CONSTRAINT profiles_status_check CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text])),
+  CONSTRAINT profiles_user_code_format_check CHECK (user_code ~ '^TSA-[0-9]{6}$'::text),
+  CONSTRAINT profiles_user_code_key UNIQUE (user_code)
+);
+
+CREATE TABLE public.question_answer_keys (
+  question_version_id uuid NOT NULL,
+  answer_key jsonb NOT NULL,
+  explanation text DEFAULT ''::text NOT NULL,
+  grading_config jsonb DEFAULT '{}'::jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  source_metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+  CONSTRAINT question_answer_keys_grading_config_check CHECK (jsonb_typeof(grading_config) = 'object'::text),
+  CONSTRAINT question_answer_keys_metadata_object_check CHECK (jsonb_typeof(source_metadata) = 'object'::text),
+  CONSTRAINT question_answer_keys_pkey PRIMARY KEY (question_version_id)
+);
+
+CREATE TABLE public.question_versions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  question_id uuid NOT NULL,
+  version_no integer NOT NULL,
+  question_type text NOT NULL,
+  content jsonb NOT NULL,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT question_versions_content_check CHECK (jsonb_typeof(content) = 'object'::text AND content ? 'q'::text),
+  CONSTRAINT question_versions_id_question_unique UNIQUE (id, question_id),
+  CONSTRAINT question_versions_pkey PRIMARY KEY (id),
+  CONSTRAINT question_versions_question_type_check CHECK (question_type = ANY (ARRAY['mc'::text, 'ms'::text, 'tf'::text, 'num'::text, 'dnd'::text])),
+  CONSTRAINT question_versions_question_version_unique UNIQUE (question_id, version_no),
+  CONSTRAINT question_versions_version_no_check CHECK (version_no > 0)
+);
+
+CREATE TABLE public.questions (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  scope text NOT NULL,
+  owner_exam_id uuid,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT questions_pkey PRIMARY KEY (id),
+  CONSTRAINT questions_scope_check CHECK (scope = ANY (ARRAY['bank'::text, 'exam'::text])),
+  CONSTRAINT questions_scope_owner_check CHECK (scope = 'bank'::text AND owner_exam_id IS NULL OR scope = 'exam'::text AND owner_exam_id IS NOT NULL)
+);
+
+ALTER TABLE public.attempt_answers ADD CONSTRAINT attempt_answers_attempt_fk FOREIGN KEY (attempt_id, exam_version_id) REFERENCES attempts(id, exam_version_id) ON DELETE CASCADE;
+
+ALTER TABLE public.attempt_answers ADD CONSTRAINT attempt_answers_exam_question_fk FOREIGN KEY (exam_version_question_id, exam_version_id) REFERENCES exam_version_questions(id, exam_version_id) ON DELETE RESTRICT;
+
+ALTER TABLE public.attempt_question_times ADD CONSTRAINT attempt_question_times_attempt_fk FOREIGN KEY (attempt_id, exam_version_id) REFERENCES attempts(id, exam_version_id) ON DELETE CASCADE;
+
+ALTER TABLE public.attempt_question_times ADD CONSTRAINT attempt_question_times_exam_question_fk FOREIGN KEY (exam_version_question_id, exam_version_id) REFERENCES exam_version_questions(id, exam_version_id) ON DELETE RESTRICT;
+
+ALTER TABLE public.attempts ADD CONSTRAINT attempts_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE;
+
+ALTER TABLE public.attempts ADD CONSTRAINT attempts_exam_version_fk FOREIGN KEY (exam_version_id, exam_id) REFERENCES exam_versions(id, exam_id) ON DELETE RESTRICT;
+
+ALTER TABLE public.attempts ADD CONSTRAINT attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE public.audit_logs ADD CONSTRAINT audit_logs_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.exam_solutions ADD CONSTRAINT exam_solutions_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE;
+
+ALTER TABLE public.exam_version_questions ADD CONSTRAINT evq_exam_version_fk FOREIGN KEY (exam_version_id, exam_id) REFERENCES exam_versions(id, exam_id) ON DELETE RESTRICT;
+
+ALTER TABLE public.exam_version_questions ADD CONSTRAINT evq_question_version_fk FOREIGN KEY (question_version_id, question_id) REFERENCES question_versions(id, question_id) ON DELETE RESTRICT;
+
+ALTER TABLE public.exam_versions ADD CONSTRAINT exam_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.exam_versions ADD CONSTRAINT exam_versions_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.exam_versions ADD CONSTRAINT exam_versions_published_by_fkey FOREIGN KEY (published_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.exams ADD CONSTRAINT exams_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+ALTER TABLE public.question_answer_keys ADD CONSTRAINT question_answer_keys_question_version_id_fkey FOREIGN KEY (question_version_id) REFERENCES question_versions(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.question_versions ADD CONSTRAINT question_versions_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.question_versions ADD CONSTRAINT question_versions_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.questions ADD CONSTRAINT questions_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.questions ADD CONSTRAINT questions_owner_exam_id_fkey FOREIGN KEY (owner_exam_id) REFERENCES exams(id) ON DELETE RESTRICT;
+
+CREATE INDEX attempt_answers_attempt_idx ON public.attempt_answers USING btree (attempt_id);
+
+CREATE INDEX attempt_answers_attempt_version_fk_idx ON public.attempt_answers USING btree (attempt_id, exam_version_id);
+
+CREATE INDEX attempt_answers_question_version_fk_idx ON public.attempt_answers USING btree (exam_version_question_id, exam_version_id);
+
+CREATE INDEX attempt_question_times_attempt_idx ON public.attempt_question_times USING btree (attempt_id);
+
+CREATE INDEX attempt_question_times_attempt_version_fk_idx ON public.attempt_question_times USING btree (attempt_id, exam_version_id);
+
+CREATE INDEX attempt_question_times_question_version_fk_idx ON public.attempt_question_times USING btree (exam_version_question_id, exam_version_id);
+
+CREATE INDEX attempts_exam_submitted_idx ON public.attempts USING btree (exam_id, submitted_at DESC);
+
+CREATE INDEX attempts_exam_version_exam_fk_idx ON public.attempts USING btree (exam_version_id, exam_id);
+
+CREATE UNIQUE INDEX attempts_one_open_per_user_version ON public.attempts USING btree (user_id, exam_version_id) WHERE ((status = 'in_progress'::text) AND (exam_version_id IS NOT NULL));
+
+CREATE INDEX attempts_user_submitted_idx ON public.attempts USING btree (user_id, submitted_at DESC);
+
+CREATE INDEX attempts_version_user_idx ON public.attempts USING btree (exam_version_id, user_id, started_at DESC);
+
+CREATE INDEX audit_logs_actor_id_idx ON public.audit_logs USING btree (actor_id);
+
+CREATE INDEX audit_logs_created_idx ON public.audit_logs USING btree (created_at DESC);
+
+CREATE INDEX evq_exam_version_exam_fk_idx ON public.exam_version_questions USING btree (exam_version_id, exam_id);
+
+CREATE INDEX evq_exam_version_idx ON public.exam_version_questions USING btree (exam_version_id, "position");
+
+CREATE INDEX evq_question_version_idx ON public.exam_version_questions USING btree (question_version_id);
+
+CREATE INDEX evq_question_version_question_fk_idx ON public.exam_version_questions USING btree (question_version_id, question_id);
+
+CREATE INDEX exam_versions_created_by_idx ON public.exam_versions USING btree (created_by);
+
+CREATE INDEX exam_versions_exam_idx ON public.exam_versions USING btree (exam_id, version_no DESC);
+
+CREATE INDEX exam_versions_published_by_idx ON public.exam_versions USING btree (published_by);
+
+CREATE INDEX exam_versions_status_idx ON public.exam_versions USING btree (status, created_at DESC);
+
+CREATE INDEX exams_created_by_idx ON public.exams USING btree (created_by);
+
+CREATE INDEX exams_published_updated_idx ON public.exams USING btree (is_published, updated_at DESC);
+
+CREATE INDEX question_versions_created_by_idx ON public.question_versions USING btree (created_by);
+
+CREATE INDEX question_versions_question_idx ON public.question_versions USING btree (question_id, version_no DESC);
+
+CREATE INDEX questions_created_by_idx ON public.questions USING btree (created_by);
+
+CREATE INDEX questions_owner_exam_idx ON public.questions USING btree (owner_exam_id) WHERE (owner_exam_id IS NOT NULL);
+
+CREATE INDEX questions_scope_idx ON public.questions USING btree (scope, created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.audit_exam_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  target uuid;
+  action_name text;
+  exam_title text;
+begin
+  if auth.uid() is null then
+    if tg_op = 'DELETE' then return old; else return new; end if;
+  end if;
+  if tg_op = 'DELETE' then
+    target := old.id;
+    action_name := 'exam.delete';
+    exam_title := old.title;
+    insert into public.audit_logs(actor_id, action, target_type, target_id, details)
+    values (auth.uid(), action_name, 'exam', target::text, jsonb_build_object('title', exam_title));
+    return old;
+  elsif tg_op = 'INSERT' then
+    target := new.id;
+    action_name := 'exam.create';
+    exam_title := new.title;
+  else
+    target := new.id;
+    action_name := 'exam.update';
+    exam_title := new.title;
+  end if;
+  insert into public.audit_logs(actor_id, action, target_type, target_id, details)
+  values (auth.uid(), action_name, 'exam', target::text,
+          jsonb_build_object('title', exam_title, 'is_published', new.is_published));
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_profile_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if auth.uid() is null then return new; end if;
+  if old.role is distinct from new.role or old.status is distinct from new.status then
+    insert into public.audit_logs(actor_id, action, target_type, target_id, details)
+    values (auth.uid(), 'user.permission_change', 'profile', new.id::text,
+      jsonb_build_object('email', new.email,
+                         'old_role', old.role, 'new_role', new.role,
+                         'old_status', old.status, 'new_status', new.status));
+  end if;
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_display_name text;
+begin
+  -- Lấy tên hiển thị từ metadata khi đăng ký
+  v_display_name := nullif(
+    btrim(new.raw_user_meta_data ->> 'display_name'),
+    ''
+  );
+
+  -- Kiểm tra tên hiển thị
+  if v_display_name is null
+     or char_length(v_display_name) > 80 then
+    raise exception 'Tên hiển thị phải có từ 1 đến 80 ký tự';
+  end if;
+
+  -- Đảm bảo tài khoản có email
+  if new.email is null or btrim(new.email) = '' then
+    raise exception 'Email đăng ký không hợp lệ';
+  end if;
+
+  -- Tạo hồ sơ với quyền mặc định
+  insert into public.profiles (
+    id,
+    email,
+    user_code,
+    display_name,
+    role,
+    status
+  )
+  values (
+    new.id,
+    new.email,
+    default,
+    v_display_name,
+    'student',
+    'active'
+  )
+  on conflict (id)
+  do update set email = excluded.email;
+
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid()
+      and p.role = 'admin'
+      and p.status = 'active'
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_answer_key_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+BEGIN
+    RAISE EXCEPTION
+        'Đáp án của question_version là bất biến. Hãy tạo phiên bản câu hỏi mới.';
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_last_active_admin_removal()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  active_admins integer;
+begin
+  if old.role = 'admin' and old.status = 'active'
+     and (new.role <> 'admin' or new.status <> 'active') then
+    select count(*) into active_admins
+    from public.profiles
+    where role = 'admin' and status = 'active' and id <> old.id;
+    if active_admins = 0 then
+      raise exception 'Không thể vô hiệu hóa hoặc hạ quyền Admin cuối cùng';
+    end if;
+  end if;
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_last_admin_delete()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  active_admins integer;
+begin
+  if old.role = 'admin' and old.status = 'active' then
+    select count(*) into active_admins from public.profiles
+    where role = 'admin' and status = 'active' and id <> old.id;
+    if active_admins = 0 then
+      raise exception 'Không thể xóa Admin cuối cùng';
+    end if;
+  end if;
+  return old;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_question_identity_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+BEGIN
+    RAISE EXCEPTION
+        'Không được sửa hoặc xóa định danh câu hỏi. Hãy tạo phiên bản mới.';
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.prevent_question_version_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+BEGIN
+    RAISE EXCEPTION
+        'Phiên bản câu hỏi là bất biến. Hãy tạo question_version mới.';
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+;
+
+CREATE TRIGGER audit_exam_changes AFTER INSERT OR DELETE OR UPDATE ON exams FOR EACH ROW EXECUTE FUNCTION audit_exam_change();
+
+CREATE TRIGGER audit_profile_changes AFTER UPDATE OF role, status ON profiles FOR EACH ROW EXECUTE FUNCTION audit_profile_change();
+
+CREATE TRIGGER on_auth_user_created_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user();
+
+CREATE TRIGGER prevent_last_active_admin BEFORE UPDATE OF role, status ON profiles FOR EACH ROW EXECUTE FUNCTION prevent_last_active_admin_removal();
+
+CREATE TRIGGER prevent_last_admin_delete BEFORE DELETE ON profiles FOR EACH ROW EXECUTE FUNCTION prevent_last_admin_delete();
+
+CREATE TRIGGER question_answer_keys_immutable BEFORE DELETE OR UPDATE ON question_answer_keys FOR EACH ROW EXECUTE FUNCTION prevent_answer_key_change();
+
+CREATE TRIGGER question_versions_immutable BEFORE DELETE OR UPDATE ON question_versions FOR EACH ROW EXECUTE FUNCTION prevent_question_version_change();
+
+CREATE TRIGGER questions_identity_immutable BEFORE DELETE OR UPDATE ON questions FOR EACH ROW EXECUTE FUNCTION prevent_question_identity_change();
+
+ALTER TABLE public.attempt_answers ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.attempt_question_times ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.attempts ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.exam_solutions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.exam_version_questions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.exam_versions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.question_answer_keys ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.question_versions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY attempt_answers_read_owner_admin ON public.attempt_answers AS PERMISSIVE FOR SELECT TO authenticated USING (EXISTS ( SELECT 1
+   FROM attempts a
+  WHERE ((a.id = attempt_answers.attempt_id) AND ((a.user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin)))));
+
+CREATE POLICY attempt_question_times_read_owner_admin ON public.attempt_question_times AS PERMISSIVE FOR SELECT TO authenticated USING (EXISTS ( SELECT 1
+   FROM attempts a
+  WHERE ((a.id = attempt_question_times.attempt_id) AND ((a.user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin)))));
+
+CREATE POLICY attempts_read_self_or_admin ON public.attempts AS PERMISSIVE FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin));
+
+CREATE POLICY audit_logs_admin_read ON public.audit_logs AS PERMISSIVE FOR SELECT TO authenticated USING ( SELECT is_admin() AS is_admin);
+
+CREATE POLICY exams_read_published_or_admin ON public.exams AS PERMISSIVE FOR SELECT TO authenticated USING ((is_published = true) OR ( SELECT is_admin() AS is_admin));
+
+CREATE POLICY profiles_read_self_or_admin ON public.profiles AS PERMISSIVE FOR SELECT TO authenticated USING ((id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin));
+
+GRANT SELECT ON TABLE public.attempt_answers TO authenticated;
+
+GRANT SELECT ON TABLE public.attempt_question_times TO authenticated;
+
+GRANT SELECT ON TABLE public.attempts TO authenticated;
+
+GRANT SELECT ON TABLE public.audit_logs TO authenticated;
+
+GRANT SELECT ON TABLE public.exams TO authenticated;
+
+GRANT SELECT ON TABLE public.profiles TO authenticated;
+
+GRANT ALL PRIVILEGES ON TABLE public.attempt_answers TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.attempt_question_times TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.attempts TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.audit_logs TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.exam_solutions TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.exam_version_questions TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.exam_versions TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.exams TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.profiles TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.question_answer_keys TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.question_versions TO service_role;
+
+GRANT ALL PRIVILEGES ON TABLE public.questions TO service_role;
