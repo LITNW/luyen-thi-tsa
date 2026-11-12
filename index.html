@@ -188,6 +188,38 @@ body.exam-active{overflow:hidden}
   color: #172033 !important;
 }
 
+
+/* Dashboard cards use white surfaces even when the page follows a dark system theme.
+   Keep their text dark and readable instead of inheriting pale dark-mode variables. */
+.metric-card,
+.admin-action,
+.exam-card {
+  color: #17233b !important;
+}
+.metric-card b,
+.admin-action b,
+.exam-card h3 {
+  color: #17233b !important;
+}
+.metric-card small,
+.admin-action small,
+.exam-description,
+.exam-meta-row,
+.exam-meta {
+  color: #475569 !important;
+}
+.exam-label {
+  color: #52627a !important;
+}
+.metric-card,
+.admin-action,
+.exam-card,
+.exam-description,
+.exam-meta-row,
+.exam-meta {
+  opacity: 1 !important;
+}
+
 </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script>
       if('serviceWorker' in navigator){
         window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{}));
