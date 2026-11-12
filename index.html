@@ -330,9 +330,11 @@ body.exam-active{overflow:hidden}
     }
     function lap(a){
       if(!a||a.locked)return;
-      const now=performance.now(),elapsed=Math.max(0,Math.floor((now-(a.l||now))/1000));
-      const remaining=Math.max(0,Math.ceil((a.deadlineAt-serverNow(a))/1000));
-      const delta=Math.min(elapsed,remaining);
+      const now=performance.now(),elapsedMs=Math.max(0,now-(a.l||now));
+      const elapsed=Math.floor(elapsedMs/1000);
+      const serverAtStart=serverNow(a)-elapsedMs;
+      const remainingAtStart=Math.max(0,a.deadlineAt-serverAtStart);
+      const delta=Math.min(elapsed,Math.floor(remainingAtStart/1000));
       if(delta>0){a.t[a.cur]=(a.t[a.cur]||0)+delta;a.pendingTime=(a.pendingTime||0)+delta}
       a.l=now;
     }
