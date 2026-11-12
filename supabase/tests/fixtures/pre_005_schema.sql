@@ -1049,3 +1049,173 @@ BEGIN
     RETURN v_attempt_id;
 END;
 $function$;
+
+-- Reconstructed pre-005 attempt and exam integrity triggers.
+-- These live integrity objects predate the recovered 005-020 migration ledger
+-- but were absent from its SQL statements. Reconstructed from the live catalog.
+CREATE OR REPLACE FUNCTION public.guard_attempt_child()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+declare
+  v_attempt_id uuid;
+  v_status text;
+  v_user_id uuid;
+begin
+  if tg_op = 'DELETE' then
+    v_attempt_id := old.attempt_id;
+  else
+    v_attempt_id := new.attempt_id;
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.attempt_id is distinct from old.attempt_id
+       or new.exam_version_id is distinct from old.exam_version_id
+       or new.exam_version_question_id is distinct from old.exam_version_question_id then
+      raise exception 'Không được chuyển câu trả lời sang lần thi hoặc câu hỏi khác.';
+    end if;
+  end if;
+
+  select a.user_id,a.status
+  into v_user_id,v_status
+  from public.attempts a
+  where a.id=v_attempt_id;
+
+  if not found
+     or v_status<>'in_progress'
+     or auth.uid() is null
+     or v_user_id is distinct from auth.uid()
+     or not exists (
+       select 1 from public.profiles p
+       where p.id=auth.uid() and p.status='active'
+     ) then
+    raise exception 'Chỉ chủ tài khoản đang hoạt động mới được sửa dữ liệu của lần làm bài đang diễn ra.';
+  end if;
+
+  if tg_op='DELETE' then return old; end if;
+  return new;
+end;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.guard_attempt_record()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+begin
+  if tg_op='DELETE' then
+    raise exception 'Không được xóa lịch sử làm bài.';
+  end if;
+
+  if old.status<>'in_progress' then
+    raise exception 'Lần làm bài đã kết thúc và không thể chỉnh sửa.';
+  end if;
+
+  if new.id is distinct from old.id
+     or new.user_id is distinct from old.user_id
+     or new.exam_id is distinct from old.exam_id
+     or new.exam_version_id is distinct from old.exam_version_id
+     or new.started_at is distinct from old.started_at
+     or new.max_score is distinct from old.max_score then
+    raise exception 'Không được thay đổi định danh hoặc chủ sở hữu lần làm bài.';
+  end if;
+
+  if auth.uid() is null
+     or old.user_id is distinct from auth.uid()
+     or not exists (
+       select 1 from public.profiles p
+       where p.id=auth.uid() and p.status='active'
+     ) then
+    raise exception 'Chỉ chủ tài khoản đang hoạt động mới được cập nhật lần làm bài.';
+  end if;
+
+  return new;
+end;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.protect_exam_version()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    IF current_setting('app.allow_exam_version_delete', true) IS DISTINCT FROM 'on' THEN
+      RAISE EXCEPTION 'Chỉ được xóa phiên bản đề qua thao tác quản trị có kiểm tra.';
+    END IF;
+    IF EXISTS (SELECT 1 FROM public.attempts a WHERE a.exam_version_id = OLD.id) THEN
+      RAISE EXCEPTION 'Không thể xóa phiên bản đã có lượt làm bài; cần giữ lại lịch sử kết quả.';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  IF OLD.status <> 'draft' THEN
+    IF current_setting('app.allow_exam_version_delete', true) = 'on'
+       AND OLD.status = 'published'
+       AND NEW.archived_at IS DISTINCT FROM OLD.archived_at
+       AND (to_jsonb(NEW) - 'archived_at') = (to_jsonb(OLD) - 'archived_at') THEN
+      RETURN NEW;
+    END IF;
+    RAISE EXCEPTION 'Phiên bản đã xuất bản không thể chỉnh sửa. Hãy tạo phiên bản mới.';
+  END IF;
+
+  IF NEW.exam_id IS DISTINCT FROM OLD.exam_id
+     OR NEW.version_no IS DISTINCT FROM OLD.version_no
+     OR NEW.id IS DISTINCT FROM OLD.id THEN
+    RAISE EXCEPTION 'Không được thay đổi định danh hoặc số phiên bản đề thi.';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.protect_exam_version_questions()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
+DECLARE
+  v_status text;
+  v_exam_id uuid;
+  v_scope text;
+  v_owner_exam_id uuid;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    SELECT status INTO v_status
+      FROM public.exam_versions
+     WHERE id = OLD.exam_version_id;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Không tìm thấy exam_version.';
+    END IF;
+    IF current_setting('app.allow_exam_version_delete', true) = 'on' THEN
+      RETURN OLD;
+    END IF;
+    IF v_status <> 'draft' THEN
+      RAISE EXCEPTION 'Không được thay đổi danh sách câu hỏi của đề đã xuất bản.';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  SELECT status, exam_id INTO v_status, v_exam_id
+    FROM public.exam_versions WHERE id = NEW.exam_version_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Không tìm thấy exam_version.'; END IF;
+  IF v_status <> 'draft' THEN
+    RAISE EXCEPTION 'Không được thay đổi danh sách câu hỏi của đề đã xuất bản.';
+  END IF;
+  IF NEW.exam_id IS DISTINCT FROM v_exam_id THEN
+    RAISE EXCEPTION 'exam_id không khớp với exam_version.';
+  END IF;
+  SELECT scope, owner_exam_id INTO v_scope, v_owner_exam_id
+    FROM public.questions WHERE id = NEW.question_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Không tìm thấy câu hỏi.'; END IF;
+  IF v_scope = 'exam' AND v_owner_exam_id IS DISTINCT FROM v_exam_id THEN
+    RAISE EXCEPTION 'Câu hỏi riêng của đề khác không được sử dụng ở đề này.';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE TRIGGER attempts_guard_update BEFORE DELETE OR UPDATE ON public.attempts FOR EACH ROW EXECUTE FUNCTION public.guard_attempt_record();
+CREATE TRIGGER attempt_answers_guard BEFORE INSERT OR DELETE OR UPDATE ON public.attempt_answers FOR EACH ROW EXECUTE FUNCTION public.guard_attempt_child();
+CREATE TRIGGER exam_versions_immutable_after_publish BEFORE DELETE OR UPDATE ON public.exam_versions FOR EACH ROW EXECUTE FUNCTION public.protect_exam_version();
+CREATE TRIGGER exam_version_questions_protected BEFORE INSERT OR DELETE OR UPDATE ON public.exam_version_questions FOR EACH ROW EXECUTE FUNCTION public.protect_exam_version_questions();
