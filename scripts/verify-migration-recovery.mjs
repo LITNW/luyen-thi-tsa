@@ -54,14 +54,9 @@ for (const migration of manifest.migrations) {
     }
   }
 
-  if (lines[bodyStart] !== "") {
-    errors.push(`${filename}: expected blank line before recovered SQL body.`);
-    continue;
-  }
-  bodyStart += 1;
-
   if (!migration.redacted) {
-    const sqlBody = "\n" + lines.slice(bodyStart).join("\n");
+    // Keep the original leading newline (if present) when hashing the stored SQL body.
+    const sqlBody = lines.slice(bodyStart).join("\n");
     const actual = createHash("md5").update(sqlBody, "utf8").digest("hex");
     if (actual !== migration.source_md5) {
       errors.push(`${filename}: SQL body checksum mismatch (expected ${migration.source_md5}, got ${actual}).`);
