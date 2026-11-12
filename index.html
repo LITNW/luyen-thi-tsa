@@ -223,7 +223,7 @@
     }
     function edit(){
       const x=view.exam||{title:'',desc:'',minutes:60,qs:[]};
-      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'"><label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: phương án 1 | phương án 2 | phương án 3; dòng Đáp án: 1: nội dung phương án | 2: nội dung phương án. Mỗi phương án chỉ dùng một lần; có thể thêm phương án nhiễu.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
+      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'"><label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: phương án 1 | phương án 2 | phương án 3; dòng Đáp án: 1: nội dung phương án | 2: nội dung phương án. Mỗi phương án chỉ dùng một lần; có thể thêm phương án nhiễu.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX cần được bọc trong $...$ (nội dòng), $...$ (dòng riêng), \\( ... \\) hoặc \\[ ... \\]. Hệ thống sẽ cảnh báo lệnh LaTeX phổ biến chưa được bọc và chỉ rõ câu/trường; không tự động sửa vì có thể làm sai nội dung. Hãy đối chiếu với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
     function take(){
       const x=ex(view.id),a=view.at,n=x.qs.length,q=x.qs[a.cur];
@@ -408,6 +408,30 @@
     while(m=re.exec(s)){const k=m[1]!=null?0:m[2]!=null?1:m[3]!=null?2:3,o=['$$','$','\\(','\\['][k],c=['$$','$','\\)','\\]'][k];
     out.push({s:m.index,e:m.index+m[0].length,tex:t.slice(m.index+o.length,m.index+m[0].length-c.length).trim(),disp:k===0||k===3,o,c})}
     return out}
+    // Nhận diện lệnh LaTeX thường gặp nhưng chưa được bọc trong dấu phân cách toán học.
+    // Chỉ cảnh báo, không tự động bọc vì ranh giới giữa công thức và văn xuôi có thể mơ hồ.
+    const RAW_TEX=/\\\\(?:frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|iint|iiint|oint|lim|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|pi|alpha|beta|gamma|delta|theta|lambda|mu|omega|Delta|Sigma|Omega|Gamma|Phi|forall|exists|infty|in|notin|subset|subseteq|supset|supseteq|cup|cap|setminus|emptyset|mathbb|mathrm|mathbf|mathit|mathcal|operatorname|text|left|right|begin|end|cdot|times|pm|mp|le|leq|ge|geq|ne|neq|approx|equiv|iff|implies|to|rightarrow|Rightarrow|Leftrightarrow|mapsto|overline|underline|widehat|widetilde|vec|overrightarrow|perp|parallel|angle|circ|quad|qquad|dots|ldots|cdots|vdots|ddots|pmod|bmod|cases|matrix|pmatrix|bmatrix|aligned|array)\\b/g;
+    function rawTexLine(line){
+      const masked=String(line).split('');
+      fmx(line).forEach(f=>{for(let i=f.s;i<f.e;i++)masked[i]=' '});
+      const scan=masked.join(''),out=[];let m,re=new RegExp(RAW_TEX.source,'g');
+      while((m=re.exec(scan)))out.push({cmd:m[0],at:m.index});
+      return out;
+    }
+    function locateRaw(text){
+      const out=[];let qi=1;
+      String(text).split('\\n').forEach((line,li)=>{
+        if(/^\\s*---+\\s*$/.test(line)){qi++;return}
+        const t=line.trim();let fld='đề',m;
+        if(/^(?:giải thích|giai thich)\\s*[:：]/i.test(t))fld='lời giải';
+        else if(/^(?:đáp án|dap an)\\s*[:：]/i.test(t))fld='đáp án';
+        else if(/^(?:lựa chọn|lua chon)\\s*[:：]/i.test(t))fld='danh sách phương án';
+        else if(m=/^([A-F])[.)]\\s/.exec(t))fld='phương án '+m[1];
+        else if(m=/^([a-d])\\)\\s/.exec(t))fld='ý '+m[1];
+        rawTexLine(line).forEach(x=>out.push({qi,fld,line:li+1,cmd:x.cmd,sample:t.slice(Math.max(0,x.at-24),Math.min(t.length,x.at+48))}));
+      });
+      return out;
+    }
     function flat(t){t=String(t);const F=fmx(t);for(let i=F.length-1;i>=0;i--){const f=F[i];t=t.slice(0,f.s)+t.slice(f.s,f.e).replace(/\s*\n\s*/g,' ')+t.slice(f.e)}return t}
     function escBar(s){s=String(s);const F=fmx(s);let o='',p=0;F.forEach(f=>{o+=s.slice(p,f.s).replace(/\|/g,'\\|')+s.slice(f.s,f.e);p=f.e});return o+s.slice(p).replace(/\|/g,'\\|')}
     function splitOpts(str){const F=fmx(str),inM=i=>F.some(f=>i>=f.s&&i<f.e),out=[];let cur='';
@@ -522,10 +546,140 @@
     async function srcp(){const b=document.getElementById('src');if(!b)return;if(!SRC.length){b.innerHTML='';return}
     for(const s of SRC)if(!s.u)s.u=await Promise.all(s.b.map(du));
     b.innerHTML='<details><summary>Đối chiếu trang/ảnh gốc đã gửi cho Claude ('+SRC.length+' phần)</summary>'+SRC.map(s=>'<p class="m">'+esc(s.lab)+'</p>'+s.u.map(u=>'<img alt="" src="'+u+'" style="max-width:100%;border:1px solid var(--bd);margin:4px 0">').join('')).join('')+'</details>'}
-    async function fpanel(){const ta=document.getElementById('f-q'),box=document.getElementById('fp');if(!ta||!box)return;const F=locate(ta.value);
-    box.innerHTML=F.length?F.map((f,k)=>{const mt=FMETA[f.tex]||{st:'user'},ln=texLint(f.tex),src=QL[f.qi-1]||mt.src||'';
-    return '<div class="c fx"><p class="m"><b>Câu '+f.qi+' · '+f.fld+'</b> · '+(ST[mt.st]||mt.st)+(src?' · nguồn: '+esc(src):'')+'</p><div class="mth">'+(f.disp?'$$':'$')+esc(f.tex)+(f.disp?'$$':'$')+'</div><input class="fxi" data-k="'+k+'" value="'+esc(f.tex)+'" spellcheck="false">'
-    +(mt.note?'<p class="m re">⚠ '+esc(mt.note)+'</p>':'')+(mt.raw?'<p class="m">Nhận diện ban đầu: '+esc(mt.raw)+'</p>':'')+'<p class="m re ferr">'+(ln.length?'✗ '+esc(ln.join('; ')):'')+'</p></div>'}).join(''):'<p class="m">Chưa có công thức nào trong bản nháp.</p>';
+    async function fpanel(){const ta=document.getElementById('f-q'),box=document.getElementById('fp');if(!ta||!box)return;const F=locate(ta.value),R=locateRaw(ta.value);
+    const formulas=F.length?F.map((f,k)=>{const mt=FMETA[f.tex]||{st:'user'},ln=texLint(f.tex),src=QL[f.qi-1]||mt.src||'';
+    return '<div class="c fx"><p class="m"><b>Câu '+f.qi+' · '+f.fld+'</b> · '+(ST[mt.st]||mt.st)+(src?' · nguồn: '+esc(src):'')+'</p><div class="mth">'+(f.disp?'$':'
+    box.querySelectorAll('.fx').forEach(d=>{const er=d.querySelector('.mth [data-mjx-error]');if(er){d.querySelector('.ferr').textContent='✗ Lỗi hiển thị: '+(er.getAttribute('data-mjx-error')||'cú pháp LaTeX không hợp lệ');d.style.borderColor='var(--no)'}});
+    await srcp()}
+    function fedit(k,v){const ta=document.getElementById('f-q'),f=locate(ta.value)[k];if(!f)return;v=v.replace(/\s*\n\s*/g,' ').trim();if(!v||v===f.tex)return;
+    const old=FMETA[f.tex]||{};FMETA[v]={...old,st:'edited',raw:old.raw||f.tex,note:null};
+    ta.value=ta.value.slice(0,f.s)+f.o+v+f.c+ta.value.slice(f.e);fpanel()}
+    async function fcheck(qs){const errs=[],prev={};try{ex(view.id).qs.forEach(q=>(q.fm||[]).forEach(f=>{prev[f.tex]=f}))}catch(e){}
+    const has=qs.some(q=>fmx([q.q,...(q.o||[]),q.e||''].join('\n')).length);let ok=false;
+    if(has){try{await loadMJ();ok=true}catch(e){}}
+    qs.forEach((q,i)=>{const seen=[];
+    [[q.q,'đề'],...(q.o||[]).map((o,j)=>[o,'phương án '+(j+1)]),[q.e||'','lời giải']].forEach(([t,fld])=>{
+      rawTexLine(t).forEach(x=>errs.push('Câu '+(i+1)+' ('+fld+'): phát hiện '+x.cmd+' nhưng chưa được bọc trong $...$ hoặc \\\\( ... \\\\). Hãy đánh dấu rõ phần công thức; hệ thống không tự sửa nội dung.'));
+    });
+    [[q.q,'đề'],...(q.o||[]).map((o,j)=>[o,'phương án '+(j+1)]),[q.e||'','lời giải']].forEach(([t,fld])=>fmx(t).forEach(f=>{
+    let msg=texLint(f.tex)[0];
+    if(!msg&&ok){try{const nd=MathJax.tex2svg(f.tex,{display:f.disp}),er=nd.querySelector('[data-mjx-error]');if(er)msg=er.getAttribute('data-mjx-error')||'cú pháp không hợp lệ'}catch(e){msg=e.message}}
+    if(msg)errs.push('Câu '+(i+1)+' ('+fld+'): “'+f.tex.slice(0,60)+'” — '+msg);
+    if(!seen.includes(f.tex))seen.push(f.tex)}));
+    q.fm=seen.map(tex=>{const mt=FMETA[tex]||prev[tex]||{st:'user'};return{tex,st:mt.st,raw:mt.raw||null,src:mt.src||null,warn:mt.note||mt.warn||null,chk:ok?'đã render':'đã lint'}})});
+    if(has&&!ok)errs.push('Không kiểm tra được cách hiển thị công thức vì thư viện hiển thị chưa tải được; hãy thử lại sau');
+    return errs}
+
+    async function pdfText(f){if(!window.pdfjsLib)await lj(PJ);pdfjsLib.GlobalWorkerOptions.workerSrc=PW;const d=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,out=[],N=Math.min(d.numPages,40);for(let i=1;i<=N;i++){const pg=await d.getPage(i),tc=await pg.getTextContent();out.push(tc.items.map(x=>x.str).join(' '))}if(d.numPages>N)IW.push(f.name+': chỉ trích xuất '+N+' trang đầu.');return out.join('\n\n')}
+    async function imp(){const ms=document.getElementById('im'),files=[...document.getElementById('fi').files];if(!files.length){ms.textContent='Hãy chọn tệp DOCX, PDF hoặc TXT.';return}try{IW=[];FMETA={};SRC=[];QL=[];const out=[];for(const f of files){const n=f.name.toLowerCase();if(n.endsWith('.docx'))out.push(await docxText(f));else if(n.endsWith('.pdf'))out.push(await pdfText(f));else if(n.endsWith('.txt'))out.push(await f.text());else throw new Error(f.name+': định dạng này chưa hỗ trợ trích xuất văn bản.')}document.getElementById('f-q').value=out.join('\n\n---\n\n');ms.textContent='Đã trích xuất văn bản. Hãy rà soát cấu trúc câu, phương án, đáp án và công thức trước khi lưu.';document.getElementById('iw').innerHTML=IW.map(x=>'<p class="m">⚠ '+esc(x)+'</p>').join('');fpanel()}catch(e){ms.textContent='Lỗi trích xuất: '+e.message}}
+
+    A.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-a]');if(!b)return;const k=b.dataset.a,i=b.dataset.i,a=view.at;
+      try{
+        if(k==='login')await login();
+        else if(k==='signup')await signup();
+        else if(k==='signout'){await sb.auth.signOut();profile=null;me=false;D.exams=[];go({n:'auth'})}
+        else if(k==='bootstrap')await bootstrapAdmin();
+        else if(k==='home'){if(profile)go({n:'home'});else go({n:'auth'})}
+        else if(k==='profile')go({n:'profilePage'});
+        else if(k==='history')await loadHistory();
+        else if(k==='users')await loadUsers();
+        else if(k==='attempts')await loadAdminAttempts();
+        else if(k==='new')go({n:'edit',id:null,exam_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]});
+        else if(k==='editVersion')await openEditor(i,b.dataset.status,b.dataset.exam);
+        else if(k==='createVersion'){const {data:id,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:b.dataset.exam});if(error)throw error;await openEditor(id,'draft',b.dataset.exam)}
+        else if(k==='saveDraft')await save(false);
+        else if(k==='publishDraft')await save(true);
+        else if(k==='imp')await imp();
+        else if(k==='fchk')fpanel();
+        else if(k==='start')await start(i);
+        else if(k==='toggleRole'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role==='admin'?'student':'admin',p.status)}
+        else if(k==='toggleStatus'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role,p.status==='active'?'suspended':'active')}
+        else if(k==='sub')view.cf=true;
+        else if(k==='no')view.cf=false;
+        else if(k==='yes'){await finish();return}
+        else if(k==='pick'){a.ans[a.cur]=+i;await saveCurrentAnswer(a)}
+        else if(k==='tf'){const q=ex(view.id).qs[a.cur],f=a.ans[a.cur]||Array(q.o.length).fill(null);f[+i]=b.dataset.v==='1';a.ans[a.cur]=f;await saveCurrentAnswer(a)}
+        else if(k==='ms'){const s0=new Set(a.ans[a.cur]||[]);if(s0.has(+i))s0.delete(+i);else s0.add(+i);a.ans[a.cur]=[...s0].sort((x,y)=>x-y);await saveCurrentAnswer(a)}
+        else if(k==='chip'){sel=sel===+i?null:+i;render();return}
+        else if(k==='slot'){await place(+i);return}
+        else if(k==='flag')a.fl[a.cur]=!a.fl[a.cur];
+        else if(k==='prev'||k==='next'||k==='jump'){lap(a);await flushTime(a,a.cur,0).catch(()=>{});a.cur=k==='jump'?+i:a.cur+(k==='next'?1:-1);await flushTime(a,a.cur,1).catch(()=>{});a.l=Date.now();a.lastFlush=Date.now()}
+        if(view.n==='take'){render();return}
+        if(k==='sub'||k==='no')render();
+      }catch(err){notify(err.message||String(err))}
+    });
+    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
+    A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
+    A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});
+    boot();
+    </script></body></html>)+esc(f.tex)+(f.disp?'$':'
+    box.querySelectorAll('.fx').forEach(d=>{const er=d.querySelector('.mth [data-mjx-error]');if(er){d.querySelector('.ferr').textContent='✗ Lỗi hiển thị: '+(er.getAttribute('data-mjx-error')||'cú pháp LaTeX không hợp lệ');d.style.borderColor='var(--no)'}});
+    await srcp()}
+    function fedit(k,v){const ta=document.getElementById('f-q'),f=locate(ta.value)[k];if(!f)return;v=v.replace(/\s*\n\s*/g,' ').trim();if(!v||v===f.tex)return;
+    const old=FMETA[f.tex]||{};FMETA[v]={...old,st:'edited',raw:old.raw||f.tex,note:null};
+    ta.value=ta.value.slice(0,f.s)+f.o+v+f.c+ta.value.slice(f.e);fpanel()}
+    async function fcheck(qs){const errs=[],prev={};try{ex(view.id).qs.forEach(q=>(q.fm||[]).forEach(f=>{prev[f.tex]=f}))}catch(e){}
+    const has=qs.some(q=>fmx([q.q,...(q.o||[]),q.e||''].join('\n')).length);let ok=false;
+    if(has){try{await loadMJ();ok=true}catch(e){}}
+    qs.forEach((q,i)=>{const seen=[];[[q.q,'đề'],...(q.o||[]).map((o,j)=>[o,'phương án '+(j+1)]),[q.e||'','lời giải']].forEach(([t,fld])=>fmx(t).forEach(f=>{
+    let msg=texLint(f.tex)[0];
+    if(!msg&&ok){try{const nd=MathJax.tex2svg(f.tex,{display:f.disp}),er=nd.querySelector('[data-mjx-error]');if(er)msg=er.getAttribute('data-mjx-error')||'cú pháp không hợp lệ'}catch(e){msg=e.message}}
+    if(msg)errs.push('Câu '+(i+1)+' ('+fld+'): “'+f.tex.slice(0,60)+'” — '+msg);
+    if(!seen.includes(f.tex))seen.push(f.tex)}));
+    q.fm=seen.map(tex=>{const mt=FMETA[tex]||prev[tex]||{st:'user'};return{tex,st:mt.st,raw:mt.raw||null,src:mt.src||null,warn:mt.note||mt.warn||null,chk:ok?'đã render':'đã lint'}})});
+    if(has&&!ok)errs.push('Không kiểm tra được cách hiển thị công thức vì thư viện hiển thị chưa tải được; hãy thử lại sau');
+    return errs}
+
+    async function pdfText(f){if(!window.pdfjsLib)await lj(PJ);pdfjsLib.GlobalWorkerOptions.workerSrc=PW;const d=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,out=[],N=Math.min(d.numPages,40);for(let i=1;i<=N;i++){const pg=await d.getPage(i),tc=await pg.getTextContent();out.push(tc.items.map(x=>x.str).join(' '))}if(d.numPages>N)IW.push(f.name+': chỉ trích xuất '+N+' trang đầu.');return out.join('\n\n')}
+    async function imp(){const ms=document.getElementById('im'),files=[...document.getElementById('fi').files];if(!files.length){ms.textContent='Hãy chọn tệp DOCX, PDF hoặc TXT.';return}try{IW=[];FMETA={};SRC=[];QL=[];const out=[];for(const f of files){const n=f.name.toLowerCase();if(n.endsWith('.docx'))out.push(await docxText(f));else if(n.endsWith('.pdf'))out.push(await pdfText(f));else if(n.endsWith('.txt'))out.push(await f.text());else throw new Error(f.name+': định dạng này chưa hỗ trợ trích xuất văn bản.')}document.getElementById('f-q').value=out.join('\n\n---\n\n');ms.textContent='Đã trích xuất văn bản. Hãy rà soát cấu trúc câu, phương án, đáp án và công thức trước khi lưu.';document.getElementById('iw').innerHTML=IW.map(x=>'<p class="m">⚠ '+esc(x)+'</p>').join('');fpanel()}catch(e){ms.textContent='Lỗi trích xuất: '+e.message}}
+
+    A.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-a]');if(!b)return;const k=b.dataset.a,i=b.dataset.i,a=view.at;
+      try{
+        if(k==='login')await login();
+        else if(k==='signup')await signup();
+        else if(k==='signout'){await sb.auth.signOut();profile=null;me=false;D.exams=[];go({n:'auth'})}
+        else if(k==='bootstrap')await bootstrapAdmin();
+        else if(k==='home'){if(profile)go({n:'home'});else go({n:'auth'})}
+        else if(k==='profile')go({n:'profilePage'});
+        else if(k==='history')await loadHistory();
+        else if(k==='users')await loadUsers();
+        else if(k==='attempts')await loadAdminAttempts();
+        else if(k==='new')go({n:'edit',id:null,exam_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]});
+        else if(k==='editVersion')await openEditor(i,b.dataset.status,b.dataset.exam);
+        else if(k==='createVersion'){const {data:id,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:b.dataset.exam});if(error)throw error;await openEditor(id,'draft',b.dataset.exam)}
+        else if(k==='saveDraft')await save(false);
+        else if(k==='publishDraft')await save(true);
+        else if(k==='imp')await imp();
+        else if(k==='fchk')fpanel();
+        else if(k==='start')await start(i);
+        else if(k==='toggleRole'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role==='admin'?'student':'admin',p.status)}
+        else if(k==='toggleStatus'){const p=adminProfiles.find(x=>x.id===i);await updateProfile(i,p.role,p.status==='active'?'suspended':'active')}
+        else if(k==='sub')view.cf=true;
+        else if(k==='no')view.cf=false;
+        else if(k==='yes'){await finish();return}
+        else if(k==='pick'){a.ans[a.cur]=+i;await saveCurrentAnswer(a)}
+        else if(k==='tf'){const q=ex(view.id).qs[a.cur],f=a.ans[a.cur]||Array(q.o.length).fill(null);f[+i]=b.dataset.v==='1';a.ans[a.cur]=f;await saveCurrentAnswer(a)}
+        else if(k==='ms'){const s0=new Set(a.ans[a.cur]||[]);if(s0.has(+i))s0.delete(+i);else s0.add(+i);a.ans[a.cur]=[...s0].sort((x,y)=>x-y);await saveCurrentAnswer(a)}
+        else if(k==='chip'){sel=sel===+i?null:+i;render();return}
+        else if(k==='slot'){await place(+i);return}
+        else if(k==='flag')a.fl[a.cur]=!a.fl[a.cur];
+        else if(k==='prev'||k==='next'||k==='jump'){lap(a);await flushTime(a,a.cur,0).catch(()=>{});a.cur=k==='jump'?+i:a.cur+(k==='next'?1:-1);await flushTime(a,a.cur,1).catch(()=>{});a.l=Date.now();a.lastFlush=Date.now()}
+        if(view.n==='take'){render();return}
+        if(k==='sub'||k==='no')render();
+      }catch(err){notify(err.message||String(err))}
+    });
+    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
+    A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
+    A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});
+    boot();
+    </script></body></html>)+'</div><input class="fxi" data-k="'+k+'" value="'+esc(f.tex)+'" spellcheck="false">'
+    +(mt.note?'<p class="m re">⚠ '+esc(mt.note)+'</p>':'')+(mt.raw?'<p class="m">Nhận diện ban đầu: '+esc(mt.raw)+'</p>':'')+'<p class="m re ferr">'+(ln.length?'✗ '+esc(ln.join('; ')):'')+'</p></div>'}).join(''):'<p class="m">Chưa tìm thấy công thức có dấu phân cách.</p>';
+    const raw=R.length?'<div class="c" style="border-color:var(--fl)"><b>Phát hiện LaTeX chưa được đánh dấu ('+R.length+' vị trí)</b><p class="m">Các lệnh dưới đây đang nằm ngoài $...$, $...$, \\( ... \\) hoặc \\[ ... \\]. Hãy sửa trực tiếp nội dung đề: bọc từng biểu thức toán học bằng dấu phân cách phù hợp. Không nên bọc cả câu văn nếu trong câu chỉ có một phần là công thức.</p>'+R.map(x=>'<p class="m"><b>Câu '+x.qi+' · '+x.fld+'</b> — dòng '+x.line+' — lệnh <code>'+esc(x.cmd)+'</code><br>'+esc(x.sample)+'</p>').join('')+'</div>':'<p class="m">Không phát hiện lệnh LaTeX phổ biến nằm ngoài dấu phân cách.</p>';
+    box.innerHTML=formulas+raw;
     await mj(box);
     box.querySelectorAll('.fx').forEach(d=>{const er=d.querySelector('.mth [data-mjx-error]');if(er){d.querySelector('.ferr').textContent='✗ Lỗi hiển thị: '+(er.getAttribute('data-mjx-error')||'cú pháp LaTeX không hợp lệ');d.style.borderColor='var(--no)'}});
     await srcp()}
