@@ -449,6 +449,8 @@
     if((t.match(/\\left(?![a-zA-Z])/g)||[]).length!==(t.match(/\\right(?![a-zA-Z])/g)||[]).length)r.push('\\left và \\right không khớp');
     const b=(t.match(/\\begin\{[^}]*\}/g)||[]).map(x=>x.slice(7,-1)),e=(t.match(/\\end\{[^}]*\}/g)||[]).map(x=>x.slice(5,-1));
     if(b.length!==e.length||b.some((x,i)=>x!==e[b.length-1-i]))r.push('cặp \\begin/\\end không khớp');
+    const damaged=[...t.matchAll(new RegExp(RAW_TEX_FRAGMENT.source,'g'))].map(x=>x[0]);
+    if(damaged.length)r.push('có thể thiếu dấu gạch chéo trong lệnh LaTeX: '+[...new Set(damaged)].join(', '));
     if(/\\$/.test(t))r.push('kết thúc bằng dấu \\');
     return r}
     /* ---- Word (OMML) -> LaTeX ---- */
