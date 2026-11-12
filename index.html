@@ -135,6 +135,20 @@ body.exam-active{overflow:hidden}
 }
 
 
+
+
+/* Exam answer-card readability: force dark text for statement content and math. */
+.exam-question-card .q,
+.exam-question-card .o,
+.exam-question-card .o > span,
+.exam-question-card .q mjx-container,
+.exam-question-card .o mjx-container {
+  color: #111827 !important;
+}
+.exam-question-card .o > span {
+  font-weight: 400;
+}
+
 /* Accessibility: stronger text contrast in the exam room and confirmation dialog. */
 .exam-shell{color:#14213a}
 .exam-progress,.exam-question-meta,.exam-side-title,.exam-timer-card small,
