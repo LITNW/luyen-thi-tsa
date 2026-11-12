@@ -112,8 +112,8 @@
     const TL={mc:'Trắc nghiệm',ms:'Nhiều đáp án',tf:'Đúng/Sai',num:'Điền số',dnd:'Ghép nối'},K=q=>q.k||'mc',P=q=>q.p||1,mx=x=>x.qs.reduce((s,q)=>s+P(q),0),num=s=>parseFloat(String(s).replace(',','.'));
     const any=(q,v)=>v!=null&&(Array.isArray(v)?v.some(z=>z!=null):v!=='');
     function frac(q,v){if(!any(q,v))return 0;const k=K(q);if(k==='mc')return v===q.a?1:0;if(k==='ms'){const s0=new Set(v);return s0.size===q.a.length&&q.a.every(z=>s0.has(z))?1:0}if(k==='num'){const x=num(v);return isFinite(x)&&Math.abs(x-q.a)<=1e-6*Math.max(1,Math.abs(q.a))?1:0}if(k==='dnd'){const m=dm(q),ks=Object.keys(m);return ks.length>0&&ks.every(z=>v[z-1]===m[z]-1)?1:0}return q.a.filter((z,i)=>v[i]===z).length/q.a.length}
-    const ans=(q,v)=>{const k=K(q);if(!any(q,v))return '(bỏ trống)';if(k==='mc')return L[v]+'. '+esc(q.o[v]);if(k==='ms')return v.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; ');if(k==='num')return esc(v);if(k==='tf')return v.map((z,i)=>'abcd'[i]+') '+(z==null?'–':z?'Đ':'S')).join(' · ');return SL(q).map(z=>'['+z+']→'+(v[z-1]==null?'–':L[v[z-1]]+'. '+esc(q.o[v[z-1]]))).join(' ; ')};
-    const key=q=>{const k=K(q);return k==='mc'?L[q.a]+'. '+esc(q.o[q.a]):k==='ms'?q.a.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; '):k==='num'?String(q.a).replace('.',','):k==='tf'?q.a.map((z,i)=>'abcd'[i]+') '+(z?'Đ':'S')).join(' · '):Object.entries(dm(q)).map(([z,v])=>'['+z+']→'+L[v-1]+'. '+esc(q.o[v-1])).join(' ; ')};
+    const ans=(q,v)=>{const k=K(q);if(!any(q,v))return '(bỏ trống)';if(k==='mc')return L[v-1]+'. '+esc(q.o[v-1]);if(k==='ms')return v.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; ');if(k==='num')return esc(v);if(k==='tf')return v.map((z,i)=>'abcd'[i]+') '+(z==null?'–':z?'Đ':'S')).join(' · ');return SL(q).map(z=>'['+z+']→'+(v[z-1]==null?'–':L[v[z-1]]+'. '+esc(q.o[v[z-1]]))).join(' ; ')};
+    const key=q=>{const k=K(q);return k==='mc'?L[q.a]+'. '+esc(q.o[q.a]):k==='ms'?q.a.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; '):k==='num'?String(q.a).replace('.',','):k==='tf'?q.a.map((z,i)=>'abcd'[i]+') '+(z?'Đ':'S')).join(' · '):Object.entries(dm(q)).map(([z,v])=>'['+z+']→'+L[v]+'. '+esc(q.o[v])).join(' ; ')};
     const qt=(q,v)=>K(q)==='dnd'?esc(q.q).replace(/\[(\d+)\]/g,(m,n)=>'<span class="sl'+(sel!=null?' ac':'')+'" data-a="slot" data-i="'+(n-1)+'">'+(v&&v[n-1]!=null?L[v[n-1]]+'. '+esc(q.o[v[n-1]]):'['+n+']')+'</span>'):esc(q.q);
     function inp(q,v){const k=K(q);
     if(k==='mc')return q.o.map((s,i)=>'<button class="o'+(v===i?' on':'')+'" data-a="pick" data-i="'+i+'"><b>'+L[i]+'.</b> '+esc(s)+'</button>').join('');
@@ -127,9 +127,16 @@
     function parse(txt){return txt.split(/\n\s*---+\s*\n?/).map(b=>b.trim()).filter(Boolean).map((b,i)=>{let q=[],o=[],a=null,e='',t='',p=1,m,k='mc',ra='',mf=false,oncef=false,idMode=false;
     const lines=b.split('\n').map(s=>s.trim()).filter(Boolean);
     // Nhận diện ghép nối trước khi đọc từng dòng: không phụ thuộc thứ tự parser gặp nhãn A-F.
-    const hasSlots=/\[\s*\d+\s*\]/.test(b),hasChoiceHeader=/^(?:lựa chọn|lua chon)\s*[:：]/im.test(b);
-    const dndLabeled=hasSlots&&hasChoiceHeader&&lines.filter(s=>/^[A-F][.)]\s*/i.test(s)).length>=2;
-    for(const l of lines){
+    const hasSlots=/\[\s*\d+\s*\]/.test(b),choiceLine=lines.findIndex(s=>/^(?:lựa chọn|lua chon)\s*[:：]/i.test(s)),hasChoiceHeader=choiceLine>=0;
+    // Với định dạng cũ A., B., ... chỉ nhận nhãn sau dòng chứa vị trí ghép nối.
+    // Không suy diễn nhãn từ đầu câu hỏi: "A. con kiến..." là văn bản câu hỏi, không phải phương án.
+    const lastSlotLine=lines.reduce((last,s,j)=>/\[\s*\d+\s*\]/.test(s)?j:last,-1);
+    let legacyStart=-1;
+    if(hasSlots&&!hasChoiceHeader)for(let j=lastSlotLine+1;j<lines.length-1;j++){
+      if(/^A[.)]\s+/.test(lines[j])&&/^B[.)]\s+/.test(lines[j+1])){legacyStart=j;break}
+    }
+    const dndLabeled=legacyStart>=0,dndCandidate=hasChoiceHeader||dndLabeled;
+    for(let li=0;li<lines.length;li++){const l=lines[li];
     if(m=l.match(/^(?:đáp án|dap an)\s*[:：]\s*(.*)/i))ra=m[1].trim();
     else if(m=l.match(/^(?:giải thích|giai thich)\s*[:：]\s*(.*)/i))e=m[1];
     else if(m=l.match(/^(?:chủ đề|chu de)\s*[:：]\s*(.*)/i))t=m[1];
@@ -137,9 +144,10 @@
     else if(m=l.match(/^(?:loại|loai)\s*[:：]\s*(.*)/i))mf=/nhiều|nhieu|multi/i.test(m[1]);
     else if(m=l.match(/^(?:quy tắc|quy tac)\s*[:：]\s*(.*)/i))oncef=/một lần|1 lần|once/i.test(m[1]);
     else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){o=splitOpts(m[1]);k='dnd'}
-    else if(dndLabeled&&(m=l.match(/^([A-F])[.)]\s*(.*)/i))){const code=m[1].toUpperCase();if(code!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);k='dnd';idMode=true}
-    else if((m=l.match(/^([a-d])[.)]\s*(.*)/))&&m[1]==='abcd'[o.length]){o.push(m[2]);k='tf'}
-    else if((m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length])o.push(m[2])
+    else if(dndLabeled&&li>=legacyStart&&(m=l.match(/^([A-F])[.)]\s*(.*)/i))){const code=m[1].toUpperCase();if(code!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);k='dnd';idMode=true}
+    else if(dndCandidate&&(!dndLabeled||li<legacyStart)){q.push(l)}
+    else if(!dndCandidate&&(m=l.match(/^([a-d])[.)]\s*(.*)/))&&m[1]==='abcd'[o.length]){o.push(m[2]);k='tf'}
+    else if(!dndCandidate&&(m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length])o.push(m[2])
     else if(o.length)o[o.length-1]+=' '+l;else q.push(l)}
     if(dndLabeled){k='dnd';idMode=true}
     if(!q.length)throw new Error('Câu '+(i+1)+': thiếu nội dung');
@@ -261,7 +269,7 @@
         else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped};render();notify('Đã lưu bản nháp. Chưa xuất bản.')}
       }catch(e){m.textContent='Không lưu được: '+e.message}
     }
-    function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf')return {method:'all_or_nothing'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'partial_mapping',no_option_reuse:true,allow_unused_options:true}}
+    function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf'||k==='dnd')return {method:'all_or_nothing',no_option_reuse:k==='dnd',allow_unused_options:k==='dnd'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'all_or_nothing'}}
     async function login(){const email=document.getElementById('login-email').value.trim(),password=document.getElementById('login-password').value;const {error}=await sb.auth.signInWithPassword({email,password});if(error)notify('Đăng nhập không thành công: '+error.message)}
     async function signup(){const display_name=document.getElementById('signup-name').value.trim(),email=document.getElementById('signup-email').value.trim(),password=document.getElementById('signup-password').value;if(display_name.length<1||display_name.length>80){notify('Tên hiển thị phải từ 1 đến 80 ký tự.');return}if(password.length<8){notify('Mật khẩu phải có ít nhất 8 ký tự.');return}const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name},emailRedirectTo:window.location.origin}});if(error){notify('Đăng ký không thành công: '+error.message);return}if(!data.session)notify('Đã tạo yêu cầu đăng ký. Hãy mở email để xác minh, sau đó đăng nhập.');else await refreshData(data.user)}
     async function bootstrapAdmin(){const {error}=await sb.rpc('bootstrap_first_admin');if(error)throw error;await refreshData((await sb.auth.getSession()).data.session?.user);notify('Đã kích hoạt quyền Admin.')}
