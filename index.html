@@ -244,13 +244,20 @@ body.exam-active{overflow:hidden}
  if(profile.email.toLowerCase()==='lotoynocoriel@gmail.com'&&profile.role==='student')out+='<section class="notice-card"><div><b>Kích hoạt quyền quản trị đầu tiên</b><p>Chỉ khả dụng sau khi email đã được xác minh và chưa có Admin nào được thiết lập.</p></div><button class="b bp" data-a="bootstrap">Kích hoạt Admin</button></section>';
  if(me){
   out+='<section class="section-heading"><div><p class="eyebrow">WORKSPACE</p><h2>Khu vực quản trị</h2></div><span class="role-tag">ADMIN</span></section><section class="admin-toolbar"><button class="admin-action primary" data-a="new"><span>＋</span><b>Tạo đề mới</b><small>Soạn và xuất bản đề thi</small></button><button class="admin-action" data-a="users"><span>♙</span><b>Quản lý tài khoản</b><small>Vai trò và trạng thái người dùng</small></button><button class="admin-action" data-a="attempts"><span>▤</span><b>Tất cả lượt làm</b><small>Theo dõi kết quả học viên</small></button></section><section class="section-heading"><div><p class="eyebrow">CONTENT MANAGEMENT</p><h2>Phiên bản đề thi</h2></div></section>';
-  out+=adminVersions.length?'<section class="exam-grid">'+adminVersions.map(x=>'<article class="exam-card admin-exam"><div class="exam-card-top"><span class="exam-label">PHIÊN BẢN '+x.version_no+'</span><span class="status-tag '+(x.status==='published'?'published':'draft')+'">'+(x.status==='published'?'Đã xuất bản':'Bản nháp')+'</span></div><h3>'+esc(x.title)+'</h3><p class="exam-meta">'+x.question_count+' câu <i>·</i> '+x.duration_minutes+' phút <i>·</i> '+x.attempt_count+' lượt làm</p><div class="exam-card-actions"><button class="b bp" data-a="editVersion" data-i="'+x.exam_version_id+'" data-status="'+x.status+'" data-exam="'+x.exam_id+'">'+(x.status==='published'?'Tạo bản sửa mới':'Mở bản nháp')+'</button>'+(x.status==='published'?'<button class="b" data-a="createVersion" data-exam="'+x.exam_id+'">＋ Phiên bản</button>':'')+'</div></article>').join('')+'</section>':'<div class="empty-state">Chưa có phiên bản đề thi. Tạo đề đầu tiên để bắt đầu.</div>';
+  out+=adminVersions.length?'<section class="exam-grid">'+adminVersions.map(x=>'<article class="exam-card admin-exam"><div class="exam-card-top"><span class="exam-label">PHIÊN BẢN '+x.version_no+'</span><span class="status-tag '+(x.status==='published'?'published':'draft')+'">'+(x.status==='published'?'Đã xuất bản':'Bản nháp')+'</span></div><h3>'+esc(x.title)+'</h3><p class="exam-meta">'+x.question_count+' câu <i>·</i> '+x.duration_minutes+' phút <i>·</i> '+x.attempt_count+' lượt làm</p><div class="exam-card-actions"><button class="b bp" data-a="editVersion" data-i="'+x.exam_version_id+'" data-status="'+x.status+'" data-exam="'+x.exam_id+'">'+(x.status==='published'?'Tạo bản sửa mới':'Mở bản nháp')+'</button>'+(x.status==='published'?'<button class="b" data-a="createVersion" data-exam="'+x.exam_id+'">＋ Phiên bản</button>':'')+'<button class="b danger" data-a="deleteVersion" data-i="'+x.exam_version_id+'" data-title="'+esc(x.title)+'" data-status="'+x.status+'">Xóa phiên bản</button>'+'</div></article>').join('')+'</section>':'<div class="empty-state">Chưa có phiên bản đề thi. Tạo đề đầu tiên để bắt đầu.</div>';
  }
  out+='<section class="section-heading"><div><p class="eyebrow">EXAM LIBRARY</p><h2>Đề thi đã xuất bản</h2><p class="m">Các bài luyện tập hiện có trên hệ thống.</p></div></section>';
  out+=D.exams.length?'<section class="exam-grid">'+D.exams.map((x,i)=>'<article class="exam-card"><div class="exam-card-top"><span class="exam-label">ĐỀ LUYỆN TẬP '+String(i+1).padStart(2,'0')+'</span><span class="status-tag published">Sẵn sàng</span></div><h3>'+esc(x.title)+'</h3><p class="exam-description">'+esc(x.desc||'Bài luyện tập đánh giá tư duy TSA.')+'</p><div class="exam-meta-row"><span>◷ '+x.minutes+' phút</span><span>▤ '+(x.question_count||0)+' câu hỏi</span><span>v'+x.version_no+'</span></div><button class="b bp exam-start" data-a="start" data-i="'+x.id+'">Bắt đầu làm bài <span>→</span></button></article>').join('')+'</section>':'<div class="empty-state"><div class="empty-symbol">◎</div><b>Chưa có đề thi được xuất bản</b><p>Các đề luyện tập sẽ xuất hiện tại đây khi quản trị viên đăng tải.</p></div>';
  return out+'<p id="global-msg" class="m dashboard-message"></p></main><footer class="site-footer">TSA PRACTICE PLATFORM <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer></div>';
 }
     function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
+    async function deleteExamVersion(id,title,status){
+      const label=title||'phiên bản đề';
+      if(!window.confirm('Xóa '+label+' ('+(status==='published'?'đã xuất bản':'bản nháp')+')? Thao tác này không thể hoàn tác. Phiên bản đã có lượt làm bài sẽ không được xóa để bảo toàn lịch sử.'))return;
+      const {error}=await sb.rpc('admin_delete_exam_version',{p_exam_version_id:id});if(error)throw error;
+      await refreshData((await sb.auth.getSession()).data.session?.user);
+      go({n:'home'});notify('Đã xóa phiên bản đề thi.');
+    }
     async function openEditor(versionId,status,examId){
       try{let id=versionId;if(status==='published'){const {data:newId,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:examId});if(error)throw error;id=newId}
         const {data:x,error}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:id});if(error)throw error;
@@ -293,7 +300,7 @@ body.exam-active{overflow:hidden}
     function render(){
       clearInterval(T);
       document.body.classList.toggle('exam-active',view.n==='take');
-      const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};
+      const pages={auth,home,edit,take,res,resultPending,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};
       A.innerHTML=(pages[view.n]||auth)();
       if(view.n==='take'){T=setInterval(tick,1000);tick()}
       mj();
@@ -438,6 +445,15 @@ body.exam-active{overflow:hidden}
       if(!navigator.onLine){updateSyncStatus(a);return false}
       await syncPending(a);
     }
+    async function loadSubmittedResult(a,examId){
+      const {data:state,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});if(error)throw error;
+      if(state?.status!=='submitted')throw new Error('Máy chủ chưa xác nhận trạng thái đã nộp.');
+      a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;a.elapsed_seconds=state.elapsed_seconds;
+      a.submitting=false;a.pendingSubmit=false;a.submitted=true;a.locked=true;clearInterval(T);clearAttemptCache(a);
+      go({n:'res',id:examId,at:a});
+    }
+    async function retrySubmittedResult(){try{await loadSubmittedResult(view.at,view.id)}catch(err){notify('Chưa tải được kết quả: '+(err.message||String(err)))}}
+    function resultPending(){return '<h1>Bài thi đã được nộp</h1><div class="c"><p>Máy chủ đã nhận bài thi. Bộ đếm đã dừng; dữ liệu điểm đang được tải.</p><p class="m">Nếu kết nối chập chờn, hãy tải lại kết quả. Không cần nộp lại bài.</p><button class="b bp" data-a="retryResult">Xem điểm và kết quả</button><button class="b" data-a="home">Về trang chủ</button></div>'}
     async function finish(autoSubmit=false){
       const a=view.at;if(!a||a.submitting)return;
       if(!autoSubmit&&a.locked)return;
@@ -452,19 +468,15 @@ body.exam-active{overflow:hidden}
             throw new Error('Chưa đồng bộ được dữ liệu bài thi. Kiểm tra kết nối và cấu hình máy chủ trước khi nộp.'+detail);
           }
         }else a.pendingSubmit=true;
+        const examId=view.id;
         const {error}=await sb.rpc('submit_exam_attempt',{p_attempt_id:a.attemptId});if(error)throw error;
-        const {data:state,error:se}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});if(se)throw se;
-        a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;
-        a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;a.pendingSubmit=false;
-        clearAttemptCache(a);
-        go({n:'res',id:view.id,at:a});
+        a.submitted=true;a.locked=true;a.submitting=false;clearInterval(T);
+        await loadSubmittedResult(a,examId);
       }catch(err){
         a.submitting=false;
+        if(a.submitted){clearInterval(T);a.locked=true;view={n:'resultPending',id:view.id,at:a};render();notify('Bài thi đã nộp; chưa tải được kết quả. Bộ đếm đã dừng.');return}
         if(autoSubmit){a.pendingSubmit=true;a.lastSubmitAttempt=performance.now();persistAttempt(a);updateSyncStatus(a)}
-        if(view.n==='take'){
-          render();
-          if(!autoSubmit)notify('Chưa nộp được bài: '+(err.message||String(err)));
-        }
+        if(view.n==='take'){render();if(!autoSubmit)notify('Chưa nộp được bài: '+(err.message||String(err)))}
       }
     }
     function buildAttempt(exam,attemptId,state,cached,offline=false,pointer=null){
@@ -864,6 +876,8 @@ body.exam-active{overflow:hidden}
         else if(k==='attempts')await loadAdminAttempts();
         else if(k==='new')go({n:'edit',id:null,exam_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]});
         else if(k==='editVersion')await openEditor(i,b.dataset.status,b.dataset.exam);
+        else if(k==='deleteVersion')await deleteExamVersion(i,b.dataset.title,b.dataset.status);
+        else if(k==='retryResult')await retrySubmittedResult();
         else if(k==='createVersion'){const {data:id,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:b.dataset.exam});if(error)throw error;await openEditor(id,'draft',b.dataset.exam)}
         else if(k==='saveDraft')await save(false);
         else if(k==='publishDraft')await save(true);
