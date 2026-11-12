@@ -488,7 +488,7 @@
         return MJP;
       }
       if(window.MathJax&&window.MathJax.tex2svg&&window.MathJax.typesetPromise)return Promise.resolve(window.MathJax);
-      window.MathJax={tex:{inlineMath:[['$','$'],['\(','\)']],displayMath:[['$$','$$'],['\[','\]']],processEscapes:true},svg:{fontCache:'none',displayAlign:'left'},options:{enableMenu:false,enableAssistiveMml:false,skipHtmlTags:['script','noscript','style','textarea','pre','code','input']},startup:{typeset:false}};
+      window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']],processEscapes:true},svg:{fontCache:'none',displayAlign:'left'},options:{enableMenu:false,enableAssistiveMml:false,skipHtmlTags:['script','noscript','style','textarea','pre','code','input']},startup:{typeset:false}};
       MJP=lj(MJU[0]).catch(()=>lj(MJU[1])).then(()=>window.MathJax.startup.promise).then(()=>window.MathJax).catch(e=>{MJP=null;throw e});
       return MJP;
     }
