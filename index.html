@@ -186,11 +186,11 @@ body.exam-active{overflow:hidden}
     async function refreshData(user){
       if(!user){profile=null;me=false;D.exams=[];adminVersions=[];view={n:'auth'};render();return}
       const {data:p,error:pe}=await sb.from('profiles').select('id,email,display_name,user_code,role,status,created_at').eq('id',user.id).single();
-      if(pe||!p){if(!navigator.onLine&&restoreOfflineAttempt(user.id))return;profile=null;me=false;view={n:'auth'};render();notify('Không tải được hồ sơ tài khoản: '+(pe?.message||'chưa có hồ sơ'));return}
+      if(pe||!p){if(restoreOfflineAttempt(user.id))return;profile=null;me=false;view={n:'auth'};render();notify('Không tải được hồ sơ tài khoản: '+(pe?.message||'chưa có hồ sơ'));return}
       profile=p;me=p.role==='admin'&&p.status==='active';
       if(p.status!=='active'){D.exams=[];adminVersions=[];view={n:'home'};render();notify('Tài khoản hiện không hoạt động. Hãy liên hệ quản trị viên.');return}
       const {data:exams,error:ee}=await sb.rpc('list_published_exams');
-      if(ee){D.exams=[];if(!navigator.onLine&&restoreOfflineAttempt(user.id))return;notify('Không tải được danh sách đề: '+ee.message)}
+      if(ee){D.exams=[];if(restoreOfflineAttempt(user.id))return;notify('Không tải được danh sách đề: '+ee.message)}
       else D.exams=(exams||[]).map(x=>({id:x.id,title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs:[],exam_id:x.exam_id,version_no:x.version_no,question_count:x.question_count}));
       if(me){const {data:v,error:ve}=await sb.rpc('admin_list_exam_versions');adminVersions=ve?[]:(v||[]);if(ve)notify('Không tải được danh sách quản trị: '+ve.message)}
       else adminVersions=[];
@@ -254,7 +254,7 @@ body.exam-active{overflow:hidden}
       const nav=visible.map(i=>'<button class="nb'+(i===a.cur?' cur':'')+(any(x.qs[i],a.ans[i])?' dn':'')+(a.fl[i]?' fg':'')+'" data-a="jump" data-i="'+i+'" aria-label="Câu '+(i+1)+(any(x.qs[i],a.ans[i])?', đã trả lời':' , chưa trả lời')+(a.fl[i]?', đã đánh dấu':'')+'">'+(i+1)+'</button>').join('');
       const filters='<div class="exam-filters"><button class="b'+(filter==='all'?' active':'')+'" data-a="filterAll">Tất cả</button><button class="b'+(filter==='unanswered'?' active':'')+'" data-a="filterUnanswered">Chưa làm</button><button class="b'+(filter==='flagged'?' active':'')+'" data-a="filterFlagged">Đánh dấu</button></div>';
       const navPanel='<div class="exam-nav-head"><b>Danh sách câu hỏi</b><span class="exam-nav-count">'+(a.cur+1)+' / '+n+'</span></div>'+filters+'<div class="exam-nav-grid">'+(nav||'<div class="exam-empty-nav">Không có câu hỏi trong bộ lọc này.</div>')+'</div><div class="exam-legend"><span><i class="answered"></i> Đã trả lời</span><span><i></i> Chưa trả lời</span><span><i class="flagged"></i> Đánh dấu</span><span><i class="current"></i> Đang xem</span></div><div class="exam-side-actions"><button class="b'+(a.fl[a.cur]?' fl':'')+'" data-a="flag">'+(a.fl[a.cur]?'⚑ Bỏ đánh dấu':'⚑ Đánh dấu câu')+'</button><button class="b" data-a="next"'+(a.cur<n-1?'':' disabled')+'>Câu tiếp →</button><button class="b bp submit-action" data-a="sub"'+(a.locked||!navigator.onLine?' disabled':'')+'>Nộp bài</button></div>';
-      const syncText=!navigator.onLine?'Mất kết nối. Đáp án đang được giữ trên thiết bị; hệ thống sẽ thử đồng bộ khi có mạng. Để được ghi nhận, máy chủ cần nhận đáp án trước khi hết giờ.':a.syncBlocked==='deadline'?'Một số dữ liệu chưa đồng bộ trước hạn và không thể gửi sau khi hết giờ.':Object.keys(a.dirtyAnswers||{}).length||a.timeQueue?.length?'Đang chờ xác nhận đồng bộ từ máy chủ.':'Đã đồng bộ với máy chủ.';
+      const syncText=!navigator.onLine||a.offlineMode?'Không kết nối được máy chủ. Đáp án đang được giữ trên thiết bị và sẽ thử đồng bộ khi có mạng. Để được ghi nhận, máy chủ cần nhận đáp án trước khi hết giờ.':a.syncBlocked==='deadline'?'Một số dữ liệu chưa đồng bộ trước hạn và không thể gửi sau khi hết giờ.':Object.keys(a.dirtyAnswers||{}).length||a.timeQueue?.length?'Đang chờ xác nhận đồng bộ từ máy chủ.':'Đã đồng bộ với máy chủ.';
       const syncClass=!navigator.onLine?'is-offline':a.syncBlocked==='deadline'?'is-error':Object.keys(a.dirtyAnswers||{}).length||a.timeQueue?.length?'is-pending':'';
       const mobileOpen=!!a.mobilePanelOpen;
       const modal=view.cf?'<div class="exam-confirm-backdrop"><section class="exam-confirm-card" role="dialog" aria-modal="true" aria-labelledby="exam-confirm-title">'+(view.cf===1?'<h2 id="exam-confirm-title">Kiểm tra trước khi nộp</h2><p>Hãy kiểm tra tình trạng bài làm. Bạn vẫn có thể quay lại chỉnh sửa câu trả lời.</p><div class="exam-confirm-stats"><div><strong>'+answered+'</strong><span>Đã trả lời</span></div><div><strong>'+unanswered+'</strong><span>Chưa trả lời</span></div><div><strong>'+flagged+'</strong><span>Đánh dấu</span></div></div><div class="exam-confirm-actions"><button class="b" data-a="no">Quay lại bài thi</button><button class="b bp" data-a="confirmFirst">Tiếp tục</button></div>':'<h2 id="exam-confirm-title">Xác nhận nộp bài lần cuối</h2><p>Sau khi xác nhận, bài thi sẽ được gửi lên máy chủ và không thể tiếp tục chỉnh sửa. Bạn có chắc chắn muốn nộp?</p><div class="exam-confirm-actions"><button class="b" data-a="no">Chưa nộp</button><button class="b bp" data-a="yes">Xác nhận nộp bài</button></div>')+'</section></div>':'';
@@ -314,12 +314,12 @@ body.exam-active{overflow:hidden}
       st.set('tsa-active-attempt',pointer);
     }
     function updateSyncStatus(a){
-      const el=document.getElementById('exam-sync-status');if(!el)return;
+      const els=document.querySelectorAll('.exam-sync-status');if(!els.length)return;
       let message='Đã đồng bộ với máy chủ.',cls='';
-      if(!navigator.onLine){message='Mất kết nối. Đáp án đang được giữ trên thiết bị; sẽ thử đồng bộ khi có mạng.';cls='is-offline'}
+      if(!navigator.onLine||a.offlineMode){message='Không kết nối được máy chủ. Đáp án đang được giữ trên thiết bị và sẽ thử đồng bộ lại.';cls='is-offline'}
       else if(a.syncBlocked==='deadline'){message='Có dữ liệu chưa đồng bộ trước hạn. Máy chủ không nhận thay đổi sau khi hết giờ.';cls='is-error'}
       else if(Object.keys(a.dirtyAnswers||{}).length||(a.timeQueue||[]).length){message='Đang chờ máy chủ xác nhận đồng bộ.';cls='is-pending'}
-      el.textContent=message;el.className='exam-sync-status '+cls;
+      els.forEach(el=>{el.textContent=message;el.className='exam-sync-status '+cls});
     }
     function updateTimeUI(a){
       const now=serverNow(a),remaining=Math.max(0,Math.ceil((a.deadlineAt-now)/1000));
@@ -360,7 +360,7 @@ body.exam-active{overflow:hidden}
       const serverAnswers=state.answers||[];
       serverAnswers.forEach(item=>{const i=a.qids.indexOf(item.exam_version_question_id);if(i>=0&&!a.dirtyAnswers[i])a.ans[i]=item.answer});
       (state.question_times||[]).forEach(item=>{const i=a.qids.indexOf(item.exam_version_question_id);if(i>=0)a.t[i]=Math.max(a.t[i]||0,Number(item.seconds_spent)||0)});
-      a.needsServerReconcile=false;persistAttempt(a);return true;
+      a.needsServerReconcile=false;a.offlineMode=false;persistAttempt(a);return true;
     }
     async function syncPending(a){
       if(!a||a.syncing||!navigator.onLine||a.locked||serverNow(a)>=a.deadlineAt)return false;
@@ -455,7 +455,7 @@ body.exam-active{overflow:hidden}
         lastFlush:performance.now(),dirtyAnswers:cached?.dirtyAnswers||{},timeQueue:cached?.timeQueue||[],
         filter:cached?.filter||'all',mobilePanelOpen:!!cached?.mobilePanelOpen,
         pendingSubmit:!!cached?.pendingSubmit,locked:false,syncing:false,
-        needsServerReconcile:offline,syncBlocked:null,
+        needsServerReconcile:offline,offlineMode:offline,syncBlocked:null,
         examSnapshot:{...exam,questions:exam.questions||[]}
       };
       a.locked=serverNow(a)>=a.deadlineAt;
