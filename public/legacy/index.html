@@ -857,6 +857,8 @@ if('serviceWorker' in navigator){
         D.exams=D.exams.filter(item=>item.id!==exam.id);
         D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no});
         view={n:'take',id:exam.id,at:a};
+        if(!await refreshAttemptState(a))return true;
+        await syncPending(a);
         persistAttempt(a);
         render();
         if(!a.locked)await flushTime(a,a.cur,1);
