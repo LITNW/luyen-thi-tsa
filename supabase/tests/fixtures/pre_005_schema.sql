@@ -39,7 +39,6 @@ AS $function$
   SELECT coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb
 $function$;
 
-CREATE SEQUENCE public.audit_logs_id_seq AS bigint START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 NO CYCLE;
 CREATE SEQUENCE public.tsa_user_code_seq AS bigint START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999 CACHE 1 NO CYCLE;
 CREATE TABLE public.attempt_answers (
   id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -99,7 +98,7 @@ CREATE TABLE public.attempts (
 );
 
 CREATE TABLE public.audit_logs (
-  id bigint NOT NULL,
+  id bigint GENERATED ALWAYS AS IDENTITY,
   actor_id uuid,
   action text NOT NULL,
   target_type text NOT NULL,
