@@ -634,3 +634,304 @@ GRANT ALL PRIVILEGES ON TABLE public.question_answer_keys TO service_role;
 GRANT ALL PRIVILEGES ON TABLE public.question_versions TO service_role;
 
 GRANT ALL PRIVILEGES ON TABLE public.questions TO service_role;
+
+-- Reconstructed pre-005 deadline RPCs.
+-- pg_stat_statements retained the later patch but not the original function bodies.
+-- These definitions are reconstructed from the current live RPCs and reset to the
+-- pre-005 exclusive deadline comparison expected by migration 018. They are a
+-- compatibility fixture, not a claim of byte-for-byte historical source.
+CREATE OR REPLACE FUNCTION public.record_attempt_question_time(p_attempt_id uuid, p_exam_version_question_id uuid, p_seconds integer, p_visit_increment integer)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_attempt record;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.';
+    END IF;
+
+    IF p_seconds < 0 OR p_seconds > 300
+       OR p_visit_increment NOT IN (0, 1) THEN
+        RAISE EXCEPTION 'Giá trị thời gian không hợp lệ.';
+    END IF;
+
+    SELECT
+        a.user_id,
+        a.exam_version_id,
+        a.status,
+        a.started_at,
+        ev.duration_minutes
+    INTO v_attempt
+    FROM public.attempts a
+    JOIN public.exam_versions ev
+        ON ev.id = a.exam_version_id
+    WHERE a.id = p_attempt_id
+    FOR UPDATE OF a;
+
+    IF NOT FOUND
+       OR v_attempt.user_id IS DISTINCT FROM v_uid
+       OR v_attempt.status <> 'in_progress' THEN
+        RAISE EXCEPTION 'Không có quyền ghi thời gian cho lần thi này.';
+    END IF;
+
+    IF clock_timestamp() >
+       v_attempt.started_at + make_interval(mins => v_attempt.duration_minutes) THEN
+        RAISE EXCEPTION 'Đã hết thời gian làm bài.';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.exam_version_questions
+        WHERE id = p_exam_version_question_id
+          AND exam_version_id = v_attempt.exam_version_id
+    ) THEN
+        RAISE EXCEPTION 'Câu hỏi không thuộc lần thi này.';
+    END IF;
+
+    INSERT INTO public.attempt_question_times (
+        attempt_id,
+        exam_version_id,
+        exam_version_question_id,
+        seconds_spent,
+        visit_count
+    )
+    VALUES (
+        p_attempt_id,
+        v_attempt.exam_version_id,
+        p_exam_version_question_id,
+        p_seconds,
+        p_visit_increment
+    )
+    ON CONFLICT (attempt_id, exam_version_question_id)
+    DO UPDATE SET
+        seconds_spent = LEAST(
+            public.attempt_question_times.seconds_spent
+                + EXCLUDED.seconds_spent,
+            v_attempt.duration_minutes * 60
+        ),
+        visit_count = public.attempt_question_times.visit_count
+            + EXCLUDED.visit_count,
+        updated_at = clock_timestamp();
+
+    UPDATE public.attempts
+    SET last_activity_at = clock_timestamp()
+    WHERE id = p_attempt_id;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.save_attempt_answer(p_attempt_id uuid, p_exam_version_question_id uuid, p_answer jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_attempt record;
+    v_question_type text;
+    v_content jsonb;
+    v_option_count integer;
+    v_slot_count integer;
+    v_distinct_slot_count integer;
+    v_count integer;
+    v_distinct_count integer;
+    v_valid boolean;
+    v_number numeric;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.';
+    END IF;
+
+    SELECT
+        a.user_id,
+        a.exam_version_id,
+        a.status,
+        a.started_at,
+        ev.duration_minutes
+    INTO v_attempt
+    FROM public.attempts a
+    JOIN public.exam_versions ev
+        ON ev.id = a.exam_version_id
+    WHERE a.id = p_attempt_id
+    FOR UPDATE OF a;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Không tìm thấy lần làm bài.';
+    END IF;
+
+    IF v_attempt.user_id IS DISTINCT FROM v_uid THEN
+        RAISE EXCEPTION 'Không có quyền sửa lần làm bài này.';
+    END IF;
+
+    IF v_attempt.status <> 'in_progress' THEN
+        RAISE EXCEPTION 'Lần làm bài đã kết thúc.';
+    END IF;
+
+    IF clock_timestamp() >
+       v_attempt.started_at + make_interval(mins => v_attempt.duration_minutes) THEN
+        RAISE EXCEPTION 'Đã hết thời gian làm bài.';
+    END IF;
+
+    SELECT qv.question_type, qv.content
+    INTO v_question_type, v_content
+    FROM public.exam_version_questions evq
+    JOIN public.question_versions qv
+        ON qv.id = evq.question_version_id
+    WHERE evq.id = p_exam_version_question_id
+      AND evq.exam_version_id = v_attempt.exam_version_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Câu hỏi không thuộc phiên bản đề này.';
+    END IF;
+
+    -- JSON null means clear the current answer.
+    IF p_answer IS NULL OR p_answer = 'null'::jsonb THEN
+        DELETE FROM public.attempt_answers
+        WHERE attempt_id = p_attempt_id
+          AND exam_version_question_id = p_exam_version_question_id;
+
+        UPDATE public.attempts
+        SET last_activity_at = clock_timestamp()
+        WHERE id = p_attempt_id;
+
+        RETURN;
+    END IF;
+
+    v_option_count := jsonb_array_length(v_content->'o');
+
+    CASE v_question_type
+
+        WHEN 'mc' THEN
+            IF jsonb_typeof(p_answer) <> 'number' THEN
+                RAISE EXCEPTION 'MC cần một chỉ số phương án.';
+            END IF;
+
+            v_number := (p_answer #>> '{}')::numeric;
+
+            IF v_number <> trunc(v_number)
+               OR v_number < 0
+               OR v_number >= v_option_count THEN
+                RAISE EXCEPTION 'Chỉ số phương án MC không hợp lệ.';
+            END IF;
+
+        WHEN 'ms' THEN
+            IF jsonb_typeof(p_answer) <> 'array' THEN
+                RAISE EXCEPTION 'MS cần một mảng phương án.';
+            END IF;
+
+            SELECT
+                count(*),
+                count(DISTINCT CASE
+                    WHEN value ~ '^[0-9]+$'
+                    THEN value::integer
+                END),
+                COALESCE(bool_and(
+                    CASE
+                        WHEN value ~ '^[0-9]+$'
+                        THEN value::integer BETWEEN 0 AND v_option_count - 1
+                        ELSE false
+                    END
+                ), true)
+            INTO v_count, v_distinct_count, v_valid
+            FROM jsonb_array_elements_text(p_answer) AS x(value);
+
+            IF NOT v_valid OR v_count <> v_distinct_count THEN
+                RAISE EXCEPTION 'Danh sách phương án MS không hợp lệ.';
+            END IF;
+
+        WHEN 'tf' THEN
+            IF jsonb_typeof(p_answer) <> 'array'
+               OR jsonb_array_length(p_answer) <> v_option_count
+               OR EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(p_answer) AS x(value)
+                    WHERE value NOT IN (
+                        'true'::jsonb,
+                        'false'::jsonb,
+                        'null'::jsonb
+                    )
+               ) THEN
+                RAISE EXCEPTION 'Mảng trả lời TF không hợp lệ.';
+            END IF;
+
+        WHEN 'num' THEN
+            IF jsonb_typeof(p_answer) <> 'number' THEN
+                RAISE EXCEPTION 'NUM cần một giá trị số.';
+            END IF;
+
+        WHEN 'dnd' THEN
+            IF jsonb_typeof(p_answer) <> 'array' THEN
+                RAISE EXCEPTION 'DND cần một mảng ghép nối.';
+            END IF;
+
+            SELECT
+                COALESCE(MAX((m)[1]::integer), 0),
+                count(DISTINCT (m)[1]::integer)
+            INTO v_slot_count, v_distinct_slot_count
+            FROM regexp_matches(
+                v_content->>'q',
+                '\[([0-9]+)\]',
+                'g'
+            ) AS x(m);
+
+            IF v_slot_count = 0
+               OR v_slot_count <> v_distinct_slot_count
+               OR jsonb_array_length(p_answer) <> v_slot_count THEN
+                RAISE EXCEPTION 'Cấu trúc vị trí ghép nối không hợp lệ.';
+            END IF;
+
+            SELECT
+                count(*),
+                count(DISTINCT CASE
+                    WHEN value ~ '^[0-9]+$'
+                    THEN value::integer
+                END),
+                COALESCE(bool_and(
+                    CASE
+                        WHEN value ~ '^[0-9]+$'
+                        THEN value::integer BETWEEN 0 AND v_option_count - 1
+                        ELSE false
+                    END
+                ), true)
+            INTO v_count, v_distinct_count, v_valid
+            FROM jsonb_array_elements_text(p_answer) AS x(value)
+            WHERE value IS NOT NULL;
+
+            IF NOT v_valid OR v_count <> v_distinct_count THEN
+                RAISE EXCEPTION
+                    'Ghép nối không hợp lệ: mỗi phương án chỉ được sử dụng một lần.';
+            END IF;
+
+        ELSE
+            RAISE EXCEPTION 'Loại câu hỏi chưa được hỗ trợ.';
+    END CASE;
+
+    INSERT INTO public.attempt_answers (
+        attempt_id,
+        exam_version_id,
+        exam_version_question_id,
+        answer
+    )
+    VALUES (
+        p_attempt_id,
+        v_attempt.exam_version_id,
+        p_exam_version_question_id,
+        p_answer
+    )
+    ON CONFLICT (attempt_id, exam_version_question_id)
+    DO UPDATE SET
+        answer = EXCLUDED.answer,
+        updated_at = clock_timestamp(),
+        is_correct = NULL,
+        earned_points = NULL,
+        graded_at = NULL;
+
+    UPDATE public.attempts
+    SET last_activity_at = clock_timestamp()
+    WHERE id = p_attempt_id;
+END;
+$function$;
