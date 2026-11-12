@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 9d36c204b2f38869b6329fdac65e9bd5
 
 -- Migration 010: secure Admin authoring and reporting RPCs.
 -- No legacy exam/solution rows are modified or deleted.
