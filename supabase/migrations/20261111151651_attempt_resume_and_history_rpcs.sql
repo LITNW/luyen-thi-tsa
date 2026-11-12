@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 41f35a2042aca6571273664fb4a3e7bd
 
 -- Migration 012: add owner-safe attempt resume/history and richer Admin editor payload.
 
