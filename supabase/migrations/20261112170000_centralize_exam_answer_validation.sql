@@ -155,6 +155,32 @@ $function$;
 -- The helper is called only by owner-executed SECURITY DEFINER RPCs.
 REVOKE ALL ON FUNCTION public.validate_question_answer_key(text,jsonb,jsonb) FROM PUBLIC, anon, authenticated;
 
+-- Keep the existing, stricter authoring checks and add the shared contract as a final guard.
+-- Abort safely if the live function body differs from the expected version.
+DO $migration$
+DECLARE
+  v_definition text;
+  v_anchor text := '  if p_question_id is null then';
+BEGIN
+  v_definition := pg_get_functiondef(
+    'public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)'::regprocedure
+  );
+
+  IF position('public.validate_question_answer_key(' IN v_definition) = 0 THEN
+    IF position(v_anchor IN v_definition) = 0 THEN
+      RAISE EXCEPTION 'Không tìm thấy điểm chèn an toàn trong admin_save_question; dừng migration.';
+    END IF;
+
+    v_definition := replace(
+      v_definition,
+      v_anchor,
+      '  PERFORM public.validate_question_answer_key(p_question_type,p_content,p_answer_key);' || chr(10) || v_anchor
+    );
+    EXECUTE v_definition;
+  END IF;
+END;
+$migration$;
+
 CREATE OR REPLACE FUNCTION public.admin_set_question_answer_key(
   p_question_version_id uuid,
   p_answer_key jsonb,
