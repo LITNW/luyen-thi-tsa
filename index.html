@@ -120,6 +120,30 @@
     button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,
     summary:focus-visible{outline:3px solid #244fc8;outline-offset:2px}
     .b:disabled{opacity:.68}
+
+    /* ---- Global text contrast: home, exam, results and admin ---- */
+    :root{--tx:#17233b;--mu:#3f4b5f;--bd:#cbd5e1;--pr:#244fc8;--fl:#805000}
+    #app{color:#17233b}
+    #app .m,#app .metric-card small,#app .admin-action small,#app .exam-description,
+    #app .exam-meta-row,#app .exam-meta,#app .notice-card p,#app .user-pill small{
+      color:#3f4b5f!important;opacity:1
+    }
+    #app .eyebrow:not(.auth-intro .eyebrow):not(.welcome-hero .eyebrow),
+    #app .exam-label,#app .site-footer{color:#40516b!important;opacity:1}
+    #app .nav-link{color:#26364f!important}
+    #app .auth-form label,#app label{color:#263650}
+    #app input,#app textarea,#app select{color:#17233b;background-color:#fff}
+    #app input::placeholder,#app textarea::placeholder{color:#59677d;opacity:1}
+    #app button:not(.bp){color:#17233b}
+    #app .b.fl{color:#754600}
+    #app .o,#app .chip,#app .nb{color:#17233b}
+    #app .status-tag.published{color:#116044}
+    #app .status-tag.draft{color:#80500a}
+    #app .welcome-hero,#app .auth-intro{color:#fff}
+    #app .welcome-hero h1,#app .welcome-hero p:not(.eyebrow),
+    #app .auth-intro h1,#app .auth-intro .auth-lead,
+    #app .auth-intro .auth-points div{color:inherit}
+    #app :focus-visible{outline-color:#244fc8}
     </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
@@ -331,7 +355,7 @@
     const t=Array.isArray(a)?a.map(x=>x==null?'':String(x)).join(' | '):String(a==null?'':a);if(!normAns(t))return null;
     const mp={},dup=[],re=/^\[?\s*(\d+)\s*\]?\s*(?:→|->|=>|:|=)\s*([\s\S]+)$/;
     // Tách các cặp theo |, ;, xuống dòng hoặc dấu phẩy ngay trước khóa số tiếp theo.
-    const parts=splitOpts(t).flatMap(part=>part.split(/;|\n|,(?=\s*\[?\d+\s*(?:→|->|=>|:|=))/).map(x=>x.trim()).filter(Boolean));
+    const parts=splitOpts(t).flatMap(part=>part.split(/;(?=\s*\[?\d+\s*(?:→|->|=>|:|=))|\n(?=\s*\[?\d+\s*(?:→|->|=>|:|=))|,(?=\s*\[?\d+\s*(?:→|->|=>|:|=))/).map(x=>x.trim()).filter(Boolean));
     for(const p of parts){const m=re.exec(p);if(!m||!put(mp,dup,m[1],m[2]))return null}
     return{mp,dup}}
     function qchk(n,sl){const r=[];
