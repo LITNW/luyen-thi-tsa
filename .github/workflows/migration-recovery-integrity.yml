@@ -1,0 +1,24 @@
+name: Migration recovery integrity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/migration_archive/**'
+      - 'supabase/migration-recovery-manifest.json'
+      - 'scripts/verify-migration-recovery.mjs'
+      - '.github/workflows/migration-recovery-integrity.yml'
+
+jobs:
+  verify-recovered-sql:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify recovered SQL against Production checksums
+        run: node scripts/verify-migration-recovery.mjs
