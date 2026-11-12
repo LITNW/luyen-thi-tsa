@@ -253,10 +253,11 @@ body.exam-active{overflow:hidden}
     function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
     async function deleteExamVersion(id,title,status){
       const label=title||'phiên bản đề';
-      if(!window.confirm('Xóa '+label+' ('+(status==='published'?'đã xuất bản':'bản nháp')+')? Thao tác này không thể hoàn tác. Phiên bản đã có lượt làm bài sẽ không được xóa để bảo toàn lịch sử.'))return;
-      const {error}=await sb.rpc('admin_delete_exam_version',{p_exam_version_id:id});if(error)throw error;
+      if(!window.confirm('Xóa '+label+' ('+(status==='published'?'đã xuất bản':'bản nháp')+')? Nếu đã có học sinh làm bài, hệ thống sẽ ẩn đề khỏi danh sách nhưng giữ nguyên lịch sử và kết quả. Nếu chưa có lượt làm, phiên bản sẽ được xóa.'))return;
+      const {data,error}=await sb.rpc('admin_delete_exam_version',{p_exam_version_id:id});if(error)throw error;
       await refreshData((await sb.auth.getSession()).data.session?.user);
-      go({n:'home'});notify('Đã xóa phiên bản đề thi.');
+      go({n:'home'});
+      notify(data?.archived?'Đã ẩn đề khỏi danh sách. Lịch sử '+Number(data.attempt_count||0)+' lượt làm được giữ nguyên.':'Đã xóa phiên bản đề thi.');
     }
     async function openEditor(versionId,status,examId){
       try{let id=versionId;if(status==='published'){const {data:newId,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:examId});if(error)throw error;id=newId}
