@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Expose only the public Supabase URL and publishable key to the browser.
+// The fallback supports projects that already store these under SUPABASE_* names.
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(
+      process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '',
+    ),
+    'import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '',
+    ),
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
