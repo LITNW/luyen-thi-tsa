@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: ae17fe6a3e2943fd2fa1de38688fe571
 -- Preserve historical attempts while allowing admins to remove published exams from circulation.
 ALTER TABLE public.exam_versions
   ADD COLUMN IF NOT EXISTS archived_at timestamptz;
