@@ -220,6 +220,138 @@ body.exam-active{overflow:hidden}
   opacity: 1 !important;
 }
 
+
+/* Unified permanent dark UI: dark surfaces and white text across the whole app. */
+:root {
+  color-scheme: dark !important;
+  --bg: #0b0f16 !important;
+  --cd: #151c28 !important;
+  --tx: #ffffff !important;
+  --mu: #ffffff !important;
+  --bd: #344154 !important;
+  --pr: #315ee8 !important;
+  --ok: #ffffff !important;
+  --no: #ffffff !important;
+  --okb: #14532d !important;
+  --nob: #7f1d1d !important;
+  --fl: #fbbf24 !important;
+}
+html, body, body.exam-active {
+  background: #0b0f16 !important;
+  color: #ffffff !important;
+  color-scheme: dark !important;
+}
+body * {
+  color: #ffffff !important;
+}
+.auth-shell, .auth-panel, .site-shell, .dashboard, .site-header,
+.exam-shell, .exam-main-scroll, .exam-main-inner, .exam-sidebar,
+.exam-mobile-sheet, .exam-mobile-bar, .bar {
+  background-color: #0b0f16 !important;
+}
+.c, .metric-card, .admin-action, .exam-card, .empty-state,
+.notice-card, .signup-box, .exam-question-card, .exam-confirm-card,
+.exam-lock-card, .exam-timer-card, .exam-sync-status,
+.exam-confirm-stats div {
+  background: #151c28 !important;
+  border-color: #344154 !important;
+}
+.admin-action.primary, .exam-mobile-sheet.is-open {
+  background: #151c28 !important;
+}
+input, textarea, select,
+.exam-question-card input, .exam-question-card textarea,
+.exam-question-card select, .exam-question-card .o,
+.exam-question-card .chip, .exam-filters .b,
+.exam-nav-grid .nb, .exam-shell .b, .b {
+  color: #ffffff !important;
+  background: #1c2635 !important;
+  border-color: #46546a !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+input::placeholder, textarea::placeholder {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.exam-question-card .o.on, .exam-question-card .chip.on,
+.exam-filters .b.active {
+  color: #ffffff !important;
+  background: #24458f !important;
+  border-color: #7da2ff !important;
+}
+.exam-nav-grid .nb.dn {
+  color: #ffffff !important;
+  background: #14532d !important;
+  border-color: #238653 !important;
+}
+.exam-nav-grid .nb.fg {
+  color: #ffffff !important;
+  background: #704b12 !important;
+  border: 2px solid #fbbf24 !important;
+}
+.exam-nav-grid .nb.cur {
+  color: #ffffff !important;
+  outline: 2px solid #7da2ff !important;
+}
+.exam-timer-card.is-warning .exam-time-total,
+.exam-timer-card.is-danger .exam-time-total,
+.exam-time-question, .exam-lock-count {
+  color: #ffffff !important;
+}
+.exam-sync-status, .exam-sync-status.is-offline,
+.exam-sync-status.is-pending, .exam-sync-status.is-error {
+  color: #ffffff !important;
+  background: #263449 !important;
+  border: 1px solid #46546a !important;
+}
+.status-tag.published, .status-tag.draft, .role-tag {
+  color: #ffffff !important;
+  background: #263449 !important;
+  border: 1px solid #46546a !important;
+}
+.metric-icon, .user-pill i, .brand-mark {
+  color: #ffffff !important;
+  background: #263449 !important;
+}
+.welcome-hero, .auth-intro {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #101b2d, #172b4d 65%, #24458f) !important;
+}
+.exam-confirm-backdrop, .exam-lock-overlay {
+  background: rgba(0,0,0,.78) !important;
+}
+.exam-question-card mjx-container,
+.exam-question-card mjx-container *,
+.exam-question-card mjx-container svg,
+.exam-question-card mjx-container svg * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+.exam-question-card .q, .exam-question-card .m,
+.exam-question-meta, .exam-side-title, .exam-timer-card small,
+.exam-nav-count, .exam-legend, .exam-time-note,
+.exam-network-note, .exam-progress, .exam-progress strong,
+.exam-confirm-card p, .exam-confirm-stats span,
+.exam-confirm-feedback, .exam-empty-nav, .exam-mobile-time small,
+.metric-card small, .admin-action small, .exam-description,
+.exam-meta-row, .exam-meta, .exam-label, .site-footer,
+.auth-form label, .auth-divider, .nav-link, .brand small {
+  color: #ffffff !important;
+}
+.exam-shell .exam-sidebar {
+  border-left-color: #344154 !important;
+}
+.exam-header, .exam-question-actions {
+  border-color: #344154 !important;
+}
+.exam-question-card .o:disabled, .exam-shell button:disabled,
+.exam-question-card input:disabled {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script>
       if('serviceWorker' in navigator){
         window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{}));
