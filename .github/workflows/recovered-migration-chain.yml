@@ -1,0 +1,53 @@
+name: Recovered migration chain smoke test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/fixtures/pre_005_schema.sql'
+      - 'supabase/tests/recovered_migration_chain_smoke.sql'
+      - 'supabase/migration-recovery-manifest.json'
+      - '.github/workflows/recovered-migration-chain.yml'
+
+jobs:
+  apply-recovered-chain:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tsa_chain_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tsa_chain_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tsa_chain_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Create reconstructed pre-005 schema
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/pre_005_schema.sql
+      - name: Apply all 17 recovered Production migrations in order
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            echo "Applying $file"
+            psql -v ON_ERROR_STOP=1 -f "supabase/migrations/$file"
+          done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
+      - name: Verify resulting schema and RPCs
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
