@@ -105,5 +105,13 @@
       "source_md5": "d2e7b574da5c4068b6d930c126b982af",
       "redacted": false
     }
+  ],
+  "pending": [
+    {
+      "version": "20261112050000",
+      "name": "ai_exam_import_staging",
+      "status": "pending_not_in_production",
+      "renamed_from": "20261111234000"
+    }
   ]
 }
