@@ -319,7 +319,7 @@
       const exact=optHits(v,list),normalized=normAns(v);
       // Ở chế độ mã A-F, chấp nhận cả phần mô tả theo sau mã:
       // "A", "A. nội dung", "A) nội dung", "A - nội dung", "A: nội dung".
-      const codeMatch=idMode?/^([A-F])(?:\\s*(?:[.)\\-:：–—])\\s*|\\s+|$)/i.exec(normalized):null;
+      const codeMatch=idMode?/^([A-F])(?:\s*(?:[.)\-:：–—])\s*|\s+|$)/i.exec(normalized):null;
       const isCode=/^[A-F]$/i.test(normalized);
       let hits=exact;
       if(idMode){
