@@ -42,8 +42,8 @@ BEGIN
     END IF;
 
     IF p_event_id IS NULL
-       OR p_seconds < 0 OR p_seconds > 300
-       OR p_visit_increment NOT IN (0, 1) THEN
+       OR p_seconds IS NULL OR p_seconds < 0 OR p_seconds > 300
+       OR p_visit_increment IS NULL OR p_visit_increment NOT IN (0, 1) THEN
         RAISE EXCEPTION 'Giá trị thời gian không hợp lệ.';
     END IF;
 
