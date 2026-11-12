@@ -1,5 +1,5 @@
 -- Centralized answer-key validation for all authoring and publication paths.
--- This migration does not rewrite existing question data.
+-- This migration changes RPC definitions only; it does not rewrite existing exam data.
 
 CREATE OR REPLACE FUNCTION public.validate_question_answer_key(
   p_question_type text,
@@ -103,27 +103,38 @@ BEGIN
       IF v_option_count < 1 OR jsonb_typeof(p_answer_key) <> 'object' THEN
         RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án DND phải là đối tượng ghép nối.';
       END IF;
-      IF (SELECT count(*) FROM jsonb_each(p_answer_key)) = 0 THEN
-        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Đáp án DND không được để trống.';
+
+      -- Reject malformed/overflowing slot markers before casting them to integer.
+      IF NOT EXISTS (
+        SELECT 1
+        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+      ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Câu DND phải có ít nhất một vị trí ghép [1], [2], ...';
+      END IF;
+      IF EXISTS (
+        SELECT 1
+        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+        WHERE (match_parts)[1]::numeric < 1
+           OR (match_parts)[1]::numeric > 2147483647
+      ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Vị trí ghép DND phải là số nguyên dương hợp lệ.';
       END IF;
 
       SELECT coalesce(array_agg(slot ORDER BY slot), ARRAY[]::integer[])
         INTO v_slot_keys
       FROM (
         SELECT DISTINCT (match_parts)[1]::integer AS slot
-        FROM regexp_matches(p_content->>'q', '\[([0-9]+)\]', 'g') AS matches(match_parts)
+        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
       ) AS slots;
-
-      IF cardinality(v_slot_keys) = 0 OR EXISTS (
-        SELECT 1 FROM unnest(v_slot_keys) AS slot(value) WHERE slot.value < 1
-      ) THEN
-        RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Câu DND phải có ít nhất một vị trí ghép [1], [2], ...';
-      END IF;
 
       FOR v_entry IN SELECT key, value FROM jsonb_each(p_answer_key)
       LOOP
         IF v_entry.key !~ '^[1-9][0-9]*$' THEN
           RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Khóa vị trí DND phải là số nguyên dương.';
+        END IF;
+        v_number := v_entry.key::numeric;
+        IF v_number > 2147483647 THEN
+          RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Khóa vị trí DND vượt giới hạn.';
         END IF;
         IF jsonb_typeof(v_entry.value) <> 'number' THEN
           RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Giá trị ghép DND phải là chỉ số phương án dạng số.';
@@ -152,34 +163,96 @@ BEGIN
 END;
 $function$;
 
--- The helper is called only by owner-executed SECURITY DEFINER RPCs.
 REVOKE ALL ON FUNCTION public.validate_question_answer_key(text,jsonb,jsonb) FROM PUBLIC, anon, authenticated;
 
--- Keep the existing, stricter authoring checks and add the shared contract as a final guard.
--- Abort safely if the live function body differs from the expected version.
-DO $migration$
+-- Replace the complete authoring RPC instead of editing its generated source text.
+-- This retains the original scope, ownership, public-content, and versioning rules.
+CREATE OR REPLACE FUNCTION public.admin_save_question(
+  p_question_id uuid,
+  p_scope text,
+  p_owner_exam_id uuid,
+  p_question_type text,
+  p_content jsonb,
+  p_answer_key jsonb,
+  p_explanation text,
+  p_grading_config jsonb,
+  p_source_metadata jsonb
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
 DECLARE
-  v_definition text;
-  v_anchor text := '  if p_question_id is null then';
+  v_question_id uuid;
+  v_question_version_id uuid;
+  v_existing public.questions%rowtype;
+  v_version_no integer;
 BEGIN
-  v_definition := pg_get_functiondef(
-    'public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)'::regprocedure
+  IF auth.uid() IS NULL OR NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Chỉ Admin mới được tạo hoặc cập nhật câu hỏi.';
+  END IF;
+
+  IF p_scope NOT IN ('bank','exam')
+     OR (p_scope = 'bank' AND p_owner_exam_id IS NOT NULL)
+     OR (p_scope = 'exam' AND p_owner_exam_id IS NULL) THEN
+    RAISE EXCEPTION 'Phạm vi câu hỏi không hợp lệ.';
+  END IF;
+
+  IF p_scope = 'exam' AND NOT EXISTS (
+    SELECT 1 FROM public.exams e WHERE e.id = p_owner_exam_id
+  ) THEN
+    RAISE EXCEPTION 'Đề sở hữu câu hỏi không tồn tại.';
+  END IF;
+
+  IF p_content IS NOT NULL
+     AND jsonb_typeof(p_content) = 'object'
+     AND p_content ?| ARRAY['a','answer','answer_key','e','explanation','fm'] THEN
+    RAISE EXCEPTION 'Không được đưa đáp án, lời giải hoặc metadata đáp án vào nội dung công khai.';
+  END IF;
+
+  PERFORM public.validate_question_answer_key(p_question_type,p_content,p_answer_key);
+
+  IF p_question_id IS NULL THEN
+    INSERT INTO public.questions(scope,owner_exam_id,created_by)
+    VALUES (p_scope,p_owner_exam_id,auth.uid())
+    RETURNING id INTO v_question_id;
+  ELSE
+    SELECT * INTO v_existing
+    FROM public.questions q
+    WHERE q.id = p_question_id
+    FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Không tìm thấy câu hỏi cần cập nhật.';
+    END IF;
+    IF v_existing.scope <> p_scope
+       OR v_existing.owner_exam_id IS DISTINCT FROM p_owner_exam_id THEN
+      RAISE EXCEPTION 'Không được thay đổi phạm vi hoặc đề sở hữu của câu hỏi.';
+    END IF;
+    v_question_id := p_question_id;
+  END IF;
+
+  SELECT coalesce(max(qv.version_no),0)+1
+    INTO v_version_no
+  FROM public.question_versions qv
+  WHERE qv.question_id = v_question_id;
+
+  INSERT INTO public.question_versions(
+    question_id,version_no,question_type,content,created_by
+  ) VALUES (
+    v_question_id,v_version_no,p_question_type,p_content,auth.uid()
+  ) RETURNING id INTO v_question_version_id;
+
+  INSERT INTO public.question_answer_keys(
+    question_version_id,answer_key,explanation,grading_config,source_metadata
+  ) VALUES (
+    v_question_version_id,p_answer_key,coalesce(p_explanation,''),
+    coalesce(p_grading_config,'{}'::jsonb),coalesce(p_source_metadata,'{}'::jsonb)
   );
 
-  IF position('public.validate_question_answer_key(' IN v_definition) = 0 THEN
-    IF position(v_anchor IN v_definition) = 0 THEN
-      RAISE EXCEPTION 'Không tìm thấy điểm chèn an toàn trong admin_save_question; dừng migration.';
-    END IF;
-
-    v_definition := replace(
-      v_definition,
-      v_anchor,
-      '  PERFORM public.validate_question_answer_key(p_question_type,p_content,p_answer_key);' || chr(10) || v_anchor
-    );
-    EXECUTE v_definition;
-  END IF;
+  RETURN v_question_version_id;
 END;
-$migration$;
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_set_question_answer_key(
   p_question_version_id uuid,
@@ -220,7 +293,7 @@ BEGIN
     RAISE EXCEPTION 'Không thể thay đổi đáp án của câu hỏi đã được xuất bản.';
   END IF;
 
-  PERFORM public.validate_question_answer_key(v_type, v_content, p_answer_key);
+  PERFORM public.validate_question_answer_key(v_type,v_content,p_answer_key);
 
   SELECT * INTO v_existing
   FROM public.question_answer_keys ak
@@ -237,11 +310,10 @@ BEGIN
   END IF;
 
   INSERT INTO public.question_answer_keys(
-    question_version_id, answer_key, explanation, grading_config, source_metadata
-  )
-  VALUES (
-    p_question_version_id, p_answer_key, coalesce(p_explanation,''),
-    coalesce(p_grading_config,'{}'::jsonb), coalesce(p_source_metadata,'{}'::jsonb)
+    question_version_id,answer_key,explanation,grading_config,source_metadata
+  ) VALUES (
+    p_question_version_id,p_answer_key,coalesce(p_explanation,''),
+    coalesce(p_grading_config,'{}'::jsonb),coalesce(p_source_metadata,'{}'::jsonb)
   );
 
   RETURN true;
@@ -292,7 +364,7 @@ BEGIN
     END IF;
     BEGIN
       PERFORM public.validate_question_answer_key(
-        v_question.question_type, v_question.content, v_question.answer_key
+        v_question.question_type,v_question.content,v_question.answer_key
       );
     EXCEPTION WHEN SQLSTATE '22023' THEN
       RAISE EXCEPTION 'Câu % không hợp lệ: %', v_question.position, SQLERRM;
@@ -310,10 +382,10 @@ BEGIN
   WHERE id = p_exam_version_id;
 
   RETURN jsonb_build_object(
-    'success', true,
-    'exam_version_id', p_exam_version_id,
-    'question_count', v_total,
-    'published_at', pg_catalog.now()
+    'success',true,
+    'exam_version_id',p_exam_version_id,
+    'question_count',v_total,
+    'published_at',pg_catalog.now()
   );
 END;
 $function$;
