@@ -254,6 +254,9 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb) TO authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION public.admin_set_question_answer_key(
   p_question_version_id uuid,
   p_answer_key jsonb,
@@ -321,7 +324,7 @@ END;
 $function$;
 
 REVOKE ALL ON FUNCTION public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.admin_publish_exam_version(p_exam_version_id uuid)
 RETURNS jsonb
@@ -391,6 +394,6 @@ END;
 $function$;
 
 REVOKE ALL ON FUNCTION public.admin_publish_exam_version(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.admin_publish_exam_version(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_publish_exam_version(uuid) TO authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';
