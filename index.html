@@ -15,6 +15,91 @@
     .st{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}.st div{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center}.st b{display:block;font-size:1.4rem}
     .bk{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}.bk i{display:block;height:100%;background:var(--ok)}
     .ok{background:var(--okb)}.no{background:var(--nob)}.re{white-space:pre-wrap}.fx{padding:10px}.mth{overflow-x:auto;padding:4px 0}.fxi{font-family:ui-monospace,monospace;font-size:.85rem;margin:4px 0}mjx-container{max-width:100%}.sl{display:inline-block;min-width:64px;padding:0 8px;border:2px dashed var(--pr);border-radius:6px;cursor:pointer;text-align:center}.sl.ac{background:var(--okb)}.chip{font:inherit;padding:6px 12px;margin:4px;border:1px solid var(--bd);border-radius:20px;background:var(--cd);color:var(--tx);cursor:grab}.chip.on{border-color:var(--pr);box-shadow:inset 0 0 0 1px var(--pr)}input,textarea{width:100%;font:inherit;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--cd);color:var(--tx);margin:4px 0 10px}textarea{min-height:300px;font-family:ui-monospace,monospace;font-size:.9rem}
+    
+    /* ---- TSA visual refresh ---- */
+    :root{--bg:#f4f6fb;--cd:#fff;--tx:#17233b;--mu:#71809a;--bd:#e3e8f1;--pr:#315ee8;--ok:#15845b;--okb:#e7f7ef;--nob:#fff0ef;--fl:#b7791f;color-scheme:light}
+    body{background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.01em}
+    #app{max-width:none;min-height:100vh;margin:0;padding:0}
+    h1{font-size:clamp(1.8rem,4vw,2.7rem);line-height:1.15;letter-spacing:-.045em}
+    h2{font-size:1.45rem;letter-spacing:-.035em;margin:.15rem 0}
+    h3{letter-spacing:-.02em}
+    .c{border:1px solid var(--bd);border-radius:16px;padding:20px;box-shadow:0 8px 24px rgba(25,42,78,.045)}
+    .b{border-radius:10px;padding:10px 16px;font-weight:650;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+    .b:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(37,73,160,.12)}
+    .bp{background:var(--pr);border-color:var(--pr);box-shadow:0 5px 14px rgba(49,94,232,.2)}
+    input,textarea{border-color:#dce3ef;border-radius:10px;padding:11px 13px;outline:none}
+    input:focus,textarea:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(49,94,232,.12)}
+    .auth-shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(380px,.95fr);background:#fff}
+    .auth-intro{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:clamp(36px,7vw,100px);color:#fff;background:linear-gradient(145deg,#10234b 0%,#183c82 56%,#315ee8 100%)}
+    .auth-intro:after{content:"";position:absolute;width:560px;height:560px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-240px;bottom:-280px;box-shadow:0 0 0 55px rgba(255,255,255,.035),0 0 0 110px rgba(255,255,255,.025)}
+    .brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:#fff;color:#244fc8;font-size:1.35rem;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+    .eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.16em;color:#6f8ce4;margin:0 0 12px}
+    .auth-intro .eyebrow{margin-top:48px;color:#a9c0ff}
+    .auth-intro h1{font-size:clamp(2.4rem,4.6vw,4rem);line-height:1.08;color:#fff;margin:0 0 22px}
+    .auth-intro h1 span,.welcome-hero h1 span{color:#9db6ff}
+    .auth-lead{max-width:480px;color:#d3def7;font-size:1.04rem;line-height:1.8}
+    .auth-points{display:grid;gap:18px;margin-top:46px}
+    .auth-points div{display:flex;align-items:center;gap:16px;color:#e5ecff}
+    .auth-points b{font-size:.72rem;color:#9db6ff;letter-spacing:.1em}
+    .auth-foot{position:absolute;bottom:24px;color:#a9bce8;font-size:.65rem;letter-spacing:.18em}
+    .auth-panel{width:min(100%,520px);align-self:center;justify-self:center;padding:56px clamp(28px,5vw,72px)}
+    .auth-panel-head{margin-bottom:30px}.auth-panel-head h2{font-size:2rem;margin:0 0 8px}
+    .auth-form{display:grid;gap:7px}.auth-form label{font-size:.83rem;font-weight:700;color:#34425d;margin-top:8px}
+    .auth-form input{margin:0 0 8px;min-height:48px}
+    .auth-submit{min-height:50px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;padding-inline:18px}
+    .auth-divider{display:flex;align-items:center;gap:12px;margin:30px 0 14px;color:#94a0b5;font-size:.65rem;font-weight:800;letter-spacing:.1em}
+    .auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:var(--bd)}
+    .signup-box{border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+    .signup-box summary{cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between}.signup-box summary::-webkit-details-marker{display:none}
+    .signup-box[open] summary{margin-bottom:16px}.signup-form{padding-top:4px}
+    .auth-message{min-height:24px;margin-top:14px}
+    .site-shell{max-width:1180px;margin:auto;padding:0 28px}
+    .site-header{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd)}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--tx)}
+    .brand-mark.small{width:38px;height:38px;border-radius:11px;font-size:1.05rem;background:#315ee8;color:white}
+    .brand b{display:block;font-size:1rem}.brand small{display:block;font-size:.58rem;letter-spacing:.13em;color:var(--mu);margin-top:2px}
+    .top-nav{display:flex;align-items:center;gap:22px}.nav-link{border:0;background:none;color:#53627d;font:inherit;font-size:.88rem;font-weight:650;cursor:pointer}
+    .user-pill{display:flex;align-items:center;gap:9px;padding-left:18px;border-left:1px solid var(--bd);font-size:.82rem;font-weight:700}
+    .user-pill i{font-style:normal;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#e8edff;color:#315ee8;font-weight:800}
+    .user-pill small{display:block;font-size:.68rem;color:var(--mu);font-weight:500}
+    .dashboard{padding:34px 0 70px}
+    .welcome-hero{position:relative;overflow:hidden;min-height:245px;padding:42px 48px;border-radius:22px;background:linear-gradient(110deg,#10234b,#1d438e 70%,#315ee8);color:white;display:flex;align-items:center;justify-content:space-between}
+    .welcome-hero .eyebrow{color:#a9c0ff}.welcome-hero h1{color:white;margin:0 0 14px}.welcome-hero p:not(.eyebrow){color:#d5e0fa;margin:0}
+    .hero-decoration{position:relative;width:210px;height:190px;flex:none;margin-right:42px;display:grid;place-items:center}
+    .hero-orbit{position:absolute;border:1px solid rgba(255,255,255,.22);border-radius:50%;transform:rotate(-25deg)}
+    .orbit-one{width:190px;height:110px}.orbit-two{width:150px;height:190px;transform:rotate(55deg)}
+    .hero-core{display:grid;place-items:center;width:86px;height:86px;border-radius:25px;background:linear-gradient(145deg,#fff,#cbd9ff);color:#244fc8;font-weight:900;font-size:1.25rem;box-shadow:0 15px 40px rgba(0,0,0,.2);transform:rotate(-8deg)}
+    .dashboard-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 42px}
+    .metric-card{display:flex;align-items:center;gap:15px;padding:18px 20px;background:white;border:1px solid var(--bd);border-radius:15px}
+    .metric-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#edf1ff;color:#315ee8;font-size:.7rem;font-weight:850}
+    .metric-card b{display:block;font-size:1.15rem}.metric-card small{color:var(--mu);font-size:.75rem}
+    .section-heading{display:flex;align-items:center;justify-content:space-between;margin:38px 0 16px}
+    .section-heading .eyebrow{margin-bottom:5px}.section-heading h2{font-size:1.45rem}.section-heading .m{margin-top:5px}
+    .role-tag,.status-tag,.exam-label{font-size:.64rem;font-weight:800;letter-spacing:.08em}
+    .role-tag{padding:7px 10px;border-radius:8px;background:#eaf0ff;color:#315ee8}
+    .admin-toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .admin-action{display:grid;text-align:left;gap:7px;padding:18px;background:white;border:1px solid var(--bd);border-radius:14px;color:var(--tx);cursor:pointer}
+    .admin-action>span{font-size:1.25rem;color:#315ee8}.admin-action b{font-size:.9rem}.admin-action small{font-size:.73rem;color:var(--mu)}
+    .admin-action.primary{border-color:#cbd7ff;background:#f7f9ff}
+    .exam-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .exam-card{padding:22px;background:white;border:1px solid var(--bd);border-radius:16px;box-shadow:0 8px 24px rgba(25,42,78,.035);min-width:0}
+    .exam-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+    .exam-label{color:#7183ad}.status-tag{padding:6px 9px;border-radius:7px;letter-spacing:0}
+    .status-tag.published{background:#e7f7ef;color:#16805b}.status-tag.draft{background:#fff4df;color:#a76b12}
+    .exam-card h3{font-size:1.12rem;margin:0 0 9px}.exam-description{min-height:44px;color:var(--mu);font-size:.84rem;line-height:1.6}
+    .exam-meta-row,.exam-meta{display:flex;flex-wrap:wrap;gap:14px;color:var(--mu);font-size:.75rem;margin:18px 0}
+    .exam-meta i{font-style:normal;margin:0 4px}.exam-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+    .exam-start{width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+    .empty-state{padding:44px 20px;text-align:center;border:1px dashed #cbd5e5;border-radius:16px;background:rgba(255,255,255,.65);color:var(--mu)}
+    .empty-state b{display:block;color:var(--tx);margin:8px 0}.empty-state p{font-size:.85rem}.empty-symbol{font-size:2rem;color:#315ee8}
+    .notice-card{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;background:#edf3ff;border:1px solid #d8e3ff;border-radius:14px}
+    .notice-card p{font-size:.8rem;color:var(--mu);margin-top:4px}
+    .dashboard-message{margin-top:20px}.site-footer{padding:22px 0;border-top:1px solid var(--bd);font-size:.65rem;font-weight:800;letter-spacing:.12em;color:#8491a7}
+    .site-footer span{float:right;font-weight:500;letter-spacing:0}
+    .bar{background:var(--bg)}
+    @media(max-width:800px){.auth-shell{grid-template-columns:1fr}.auth-intro{min-height:390px;padding:34px 28px}.auth-intro .eyebrow{margin-top:28px}.auth-points{margin-top:25px;gap:12px}.auth-foot{display:none}.auth-panel{width:100%;padding:42px 28px}.hero-decoration{margin-right:0;transform:scale(.8)}.welcome-hero{padding:34px 28px}.site-shell{padding:0 20px}}
+    @media(max-width:600px){.site-shell{padding:0 15px}.site-header{height:70px}.top-nav{gap:10px}.nav-link{font-size:.77rem}.user-pill{padding-left:10px}.user-pill>span{display:none}.welcome-hero{min-height:220px;padding:28px 22px}.welcome-hero h1{font-size:1.8rem}.hero-decoration{position:absolute;right:-55px;bottom:-55px;opacity:.35;transform:scale(.75)}.dashboard-metrics{grid-template-columns:1fr;gap:9px;margin:14px 0 30px}.metric-card{padding:12px 15px}.exam-grid,.admin-toolbar{grid-template-columns:1fr}.section-heading{margin-top:30px}.notice-card{align-items:flex-start;flex-direction:column}.site-footer span{float:none;display:block;margin-top:7px}.auth-intro{min-height:350px}.auth-intro h1{font-size:2.5rem}}
+
     </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
@@ -62,7 +147,7 @@
     const ser=qs=>qs.map(x=>{const k=x.k||'mc';return x.q+(k==='tf'?'\n'+x.o.map((s,i)=>'abcd'[i]+') '+s).join('\n'):k==='dnd'?'\nLựa chọn: '+x.o.map(z=>escBar(z)).join(' | ')+(x.once?'\nQuy tắc: mỗi phương án dùng một lần':''):k==='num'?'':'\n'+x.o.map((s,i)=>L[i]+'. '+s).join('\n'))+(k==='ms'?'\nLoại: nhiều đáp án':'')+'\nĐáp án: '+(k==='mc'?L[x.a]:k==='ms'?x.a.map(i=>L[i]).join(', '):k==='tf'?x.a.map(v=>v?'Đ':'S').join(', '):k==='dnd'?Object.entries(dm(x)).map(([z,v])=>z+': '+escBar(x.o&&x.o[v-1]!=null?x.o[v-1]:v)).join(' | '):String(x.a).replace('.',','))+(x.p&&x.p!==1?'\nĐiểm: '+x.p:'')+(x.e?'\nGiải thích: '+x.e:'')+(x.t?'\nChủ đề: '+x.t:'')}).join('\n---\n');
 
     function notify(s){const n=document.getElementById('global-msg')||document.getElementById('msg');if(n)n.textContent=s;else window.alert(s)}
-    function auth(){return '<h1>Luyện đề thi TSA</h1><div class="c"><h3>Đăng nhập</h3><label>Email</label><input id="login-email" type="email" autocomplete="username" placeholder="Email đăng ký"><label>Mật khẩu</label><input id="login-password" type="password" autocomplete="current-password" placeholder="Mật khẩu"><button class="b bp" data-a="login">Đăng nhập</button></div><div class="c"><h3>Tạo tài khoản học sinh</h3><p class="m">Đăng ký bằng email. Hệ thống sẽ gửi thư xác minh trước khi bạn có thể đăng nhập.</p><label>Tên hiển thị</label><input id="signup-name" maxlength="80" autocomplete="name" placeholder="Tên hiển thị"><label>Email</label><input id="signup-email" type="email" autocomplete="email" placeholder="Email"><label>Mật khẩu</label><input id="signup-password" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự"><button class="b" data-a="signup">Đăng ký</button></div><p id="global-msg" class="m"></p>'}
+    function auth(){return '<main class="auth-shell"><section class="auth-intro"><div class="brand-mark">T</div><p class="eyebrow">NỀN TẢNG LUYỆN THI TSA</p><h1>Chuẩn bị tốt hơn.<br><span>Bứt phá giới hạn.</span></h1><p class="auth-lead">Không gian luyện tập tập trung cho kỳ thi Đánh giá tư duy: làm bài có thời gian, theo dõi tiến độ và xem lại kết quả.</p><div class="auth-points"><div><b>01</b><span>Luyện tập theo đề thi</span></div><div><b>02</b><span>Chấm điểm tự động</span></div><div><b>03</b><span>Lưu lịch sử học tập</span></div></div><p class="auth-foot">TSA PRACTICE PLATFORM</p></section><section class="auth-panel"><div class="auth-panel-head"><span class="eyebrow">BẮT ĐẦU HỌC TẬP</span><h2>Chào mừng trở lại</h2><p class="m">Đăng nhập để tiếp tục hành trình ôn luyện.</p></div><div class="auth-form"><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" placeholder="name@example.com"><label for="login-password">Mật khẩu</label><input id="login-password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu"><button class="b bp auth-submit" data-a="login">Đăng nhập <span>→</span></button></div><div class="auth-divider"><span>CHƯA CÓ TÀI KHOẢN?</span></div><details class="signup-box"><summary>Tạo tài khoản học sinh <span>＋</span></summary><div class="auth-form signup-form"><p class="m">Hệ thống sẽ gửi email xác minh trước khi bạn có thể đăng nhập.</p><label for="signup-name">Tên hiển thị</label><input id="signup-name" maxlength="80" autocomplete="name" placeholder="Tên của bạn"><label for="signup-email">Email</label><input id="signup-email" type="email" autocomplete="email" placeholder="Email đăng ký"><label for="signup-password">Mật khẩu</label><input id="signup-password" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự"><button class="b" data-a="signup">Đăng ký tài khoản</button></div></details><p id="global-msg" class="m auth-message"></p></section></main>'}
     function profilePage(){return '<h1>Tài khoản</h1><div class="c"><h3>'+esc(profile.display_name)+'</h3><p>Email: '+esc(profile.email)+'</p><p>Mã tài khoản: <b>'+esc(profile.user_code)+'</b></p><p>Vai trò: '+(me?'Admin':'Học sinh')+'</p><p>Trạng thái: '+esc(profile.status)+'</p><button class="b" data-a="signout">Đăng xuất</button> <button class="b" data-a="home">Quay lại</button></div><p id="global-msg" class="m"></p>'}
     async function refreshData(user){
       if(!user){profile=null;me=false;D.exams=[];adminVersions=[];view={n:'auth'};render();return}
@@ -104,15 +189,15 @@
     });
     function home(){
       if(!profile)return auth();
-      let out='<div class="bar"><b>Luyện đề thi TSA</b><span>'+esc(profile.display_name)+' · '+esc(profile.user_code)+'</span></div><div class="row"><button class="b" data-a="history">Lịch sử làm bài</button><button class="b" data-a="profile">Tài khoản</button></div>';
-      if(profile.email.toLowerCase()==='lotoynocoriel@gmail.com'&&profile.role==='student')out+='<div class="c n"><b>Kích hoạt quyền quản trị đầu tiên</b><p class="m">Chỉ khả dụng sau khi email đã được xác minh và chưa có Admin nào được thiết lập.</p><button class="b bp" data-a="bootstrap">Kích hoạt Admin</button></div>';
+      let out='<div class="site-shell"><header class="site-header"><a class="brand" href="#" data-a="home"><span class="brand-mark small">T</span><span><b>TSA Practice</b><small>LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></a><nav class="top-nav"><button class="nav-link" data-a="history">Lịch sử</button><button class="nav-link" data-a="profile">Tài khoản</button><span class="user-pill"><i>'+esc((profile.display_name||'U').slice(0,1).toUpperCase())+'</i><span>'+esc(profile.display_name)+'<small>'+esc(profile.user_code)+'</small></span></span></nav></header><main class="dashboard"><section class="welcome-hero"><div><p class="eyebrow">KHÔNG GIAN HỌC TẬP CỦA BẠN</p><h1>Hôm nay, bạn muốn<br><span>chinh phục thử thách nào?</span></h1><p>Chọn một đề thi và bắt đầu rèn luyện tư duy.</p></div><div class="hero-decoration"><div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div><div class="hero-core">TSA</div></div></section><section class="dashboard-metrics"><article class="metric-card"><span class="metric-icon">01</span><div><b>'+D.exams.length+'</b><small>Đề thi khả dụng</small></div></article><article class="metric-card"><span class="metric-icon">02</span><div><b>'+esc(profile.user_code)+'</b><small>Mã học viên</small></div></article><article class="metric-card"><span class="metric-icon">03</span><div><b>Học tập</b><small>Trạng thái tài khoản</small></div></article></section>';
+      if(profile.email.toLowerCase()==='lotoynocoriel@gmail.com'&&profile.role==='student')out+='<section class="notice-card"><div><b>Kích hoạt quyền quản trị đầu tiên</b><p>Chỉ khả dụng sau khi email đã được xác minh và chưa có Admin nào được thiết lập.</p></div><button class="b bp" data-a="bootstrap">Kích hoạt Admin</button></section>';
       if(me){
-        out+='<div class="c"><h3>Khu vực quản trị</h3><div class="row"><button class="b bp" data-a="new">+ Tạo đề mới</button><button class="b" data-a="users">Quản lý tài khoản</button><button class="b" data-a="attempts">Tất cả lượt làm</button></div></div><h3>Phiên bản đề thi</h3>';
-        out+=adminVersions.length?adminVersions.map(x=>'<div class="c"><h3>'+esc(x.title)+'</h3><p class="m">Phiên bản '+x.version_no+' · '+x.question_count+' câu · '+x.duration_minutes+' phút · '+x.attempt_count+' lượt · '+(x.status==='published'?'Đã xuất bản':'Bản nháp')+'</p><button class="b bp" data-a="editVersion" data-i="'+x.exam_version_id+'" data-status="'+x.status+'" data-exam="'+x.exam_id+'">'+(x.status==='published'?'Tạo bản sửa mới':'Mở bản nháp')+'</button>'+(x.status==='published'?' <button class="b" data-a="createVersion" data-exam="'+x.exam_id+'">Tạo phiên bản mới</button>':'')+'</div>').join(''):'<div class="c m">Chưa có phiên bản đề thi.</div>';
+        out+='<section class="section-heading"><div><p class="eyebrow">WORKSPACE</p><h2>Khu vực quản trị</h2></div><span class="role-tag">ADMIN</span></section><section class="admin-toolbar"><button class="admin-action primary" data-a="new"><span>＋</span><b>Tạo đề mới</b><small>Soạn và xuất bản đề thi</small></button><button class="admin-action" data-a="users"><span>♙</span><b>Quản lý tài khoản</b><small>Vai trò và trạng thái người dùng</small></button><button class="admin-action" data-a="attempts"><span>▤</span><b>Tất cả lượt làm</b><small>Theo dõi kết quả học viên</small></button></section><section class="section-heading"><div><p class="eyebrow">CONTENT MANAGEMENT</p><h2>Phiên bản đề thi</h2></div></section>';
+        out+=adminVersions.length?'<section class="exam-grid">'+adminVersions.map(x=>'<article class="exam-card admin-exam"><div class="exam-card-top"><span class="exam-label">PHIÊN BẢN '+x.version_no+'</span><span class="status-tag '+(x.status==='published'?'published':'draft')+'">'+(x.status==='published'?'Đã xuất bản':'Bản nháp')+'</span></div><h3>'+esc(x.title)+'</h3><p class="exam-meta">'+x.question_count+' câu <i>·</i> '+x.duration_minutes+' phút <i>·</i> '+x.attempt_count+' lượt làm</p><div class="exam-card-actions"><button class="b bp" data-a="editVersion" data-i="'+x.exam_version_id+'" data-status="'+x.status+'" data-exam="'+x.exam_id+'">'+(x.status==='published'?'Tạo bản sửa mới':'Mở bản nháp')+'</button>'+(x.status==='published'?'<button class="b" data-a="createVersion" data-exam="'+x.exam_id+'">＋ Phiên bản</button>':'')+'</div></article>').join('')+'</section>':'<div class="empty-state">Chưa có phiên bản đề thi. Tạo đề đầu tiên để bắt đầu.</div>';
       }
-      out+='<h3>Đề đã xuất bản</h3>';
-      out+=D.exams.length?D.exams.map(x=>'<div class="c"><h3>'+esc(x.title)+'</h3><p class="m">'+esc(x.desc)+'</p><p class="m">Phiên bản '+x.version_no+' · '+x.minutes+' phút · '+(x.question_count||0)+' câu</p><button class="b bp" data-a="start" data-i="'+x.id+'">Làm bài</button></div>').join(''):'<div class="c m">Hiện chưa có đề nào được xuất bản.</div>';
-      return out+'<p id="global-msg" class="m"></p>';
+      out+='<section class="section-heading"><div><p class="eyebrow">EXAM LIBRARY</p><h2>Đề thi đã xuất bản</h2><p class="m">Các bài luyện tập hiện có trên hệ thống.</p></div></section>';
+      out+=D.exams.length?'<section class="exam-grid">'+D.exams.map((x,i)=>'<article class="exam-card"><div class="exam-card-top"><span class="exam-label">ĐỀ LUYỆN TẬP '+String(i+1).padStart(2,'0')+'</span><span class="status-tag published">Sẵn sàng</span></div><h3>'+esc(x.title)+'</h3><p class="exam-description">'+esc(x.desc||'Bài luyện tập đánh giá tư duy TSA.')+'</p><div class="exam-meta-row"><span>◷ '+x.minutes+' phút</span><span>▤ '+(x.question_count||0)+' câu hỏi</span><span>v'+x.version_no+'</span></div><button class="b bp exam-start" data-a="start" data-i="'+x.id+'">Bắt đầu làm bài <span>→</span></button></article>').join('')+'</section>':'<div class="empty-state"><div class="empty-symbol">◎</div><b>Chưa có đề thi được xuất bản</b><p>Các đề luyện tập sẽ xuất hiện tại đây khi quản trị viên đăng tải.</p></div>';
+      return out+'<p id="global-msg" class="m dashboard-message"></p></main><footer class="site-footer">TSA PRACTICE PLATFORM <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer></div>';
     }
     function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
     async function openEditor(versionId,status,examId){
