@@ -27,6 +27,6 @@ npm run preview
 
 ## Migration status
 
-The React client contains authentication, account details, the published-exam dashboard, student history, and basic admin views. The previous complete application is retained at `/legacy/index.html` for the exam room, result details, authoring, imports, and advanced workflows while those modules are migrated and tested.
+The React client contains authentication, account details, the published-exam dashboard, student history, submitted-result details, and basic admin views. The previous complete application is retained at `/legacy/index.html` for the exam room, result details, authoring, imports, and advanced workflows while those modules are migrated and tested.
 
 See [the baseline audit](docs/react-migration-audit.md) before changing Supabase schema or migration history.

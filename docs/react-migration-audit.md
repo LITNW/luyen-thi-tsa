@@ -84,6 +84,7 @@ Migrated to React in this branch:
 - Published exam dashboard through `list_published_exams`.
 - Account details and sign-out.
 - Student attempt history through `get_my_attempt_history`.
+- Submitted-result details through `get_my_attempt_state` and `get_published_exam`. The state RPC only returns `result_details` after the server has marked the attempt as submitted; scoring remains entirely server-side.
 - Admin exam-version metadata through `admin_list_exam_versions`.
 - Admin user list and updates through `admin_list_profiles` and `admin_update_profile`.
 - Admin attempt list through `admin_list_attempts`.
