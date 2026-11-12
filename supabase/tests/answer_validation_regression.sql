@@ -147,12 +147,20 @@ BEGIN
   END IF;
 
   -- Publish a valid draft and verify its state transition.
-  INSERT INTO public.exam_versions(id,status)
-  VALUES ('30000000-0000-4000-8000-000000000001','draft');
-  INSERT INTO public.exam_version_questions(exam_version_id,question_version_id,position)
+  INSERT INTO public.exams(id,title,duration_minutes)
+  VALUES ('40000000-0000-4000-8000-000000000001','Test exam',60);
+  INSERT INTO public.exam_versions(id,exam_id,version_no,title,duration_minutes,status)
   VALUES (
     '30000000-0000-4000-8000-000000000001',
-    '20000000-0000-4000-8000-000000000001',1
+    '40000000-0000-4000-8000-000000000001',1,'Test exam',60,'draft'
+  );
+  INSERT INTO public.exam_version_questions(
+    exam_version_id,exam_id,question_version_id,question_id,position
+  ) VALUES (
+    '30000000-0000-4000-8000-000000000001',
+    '40000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',1
   );
 
   v_result := public.admin_publish_exam_version('30000000-0000-4000-8000-000000000001');
@@ -172,12 +180,20 @@ BEGIN
   );
   INSERT INTO public.question_answer_keys(question_version_id,answer_key)
   VALUES ('20000000-0000-4000-8000-000000000002','2'::jsonb);
-  INSERT INTO public.exam_versions(id,status)
-  VALUES ('30000000-0000-4000-8000-000000000002','draft');
-  INSERT INTO public.exam_version_questions(exam_version_id,question_version_id,position)
+  INSERT INTO public.exams(id,title,duration_minutes)
+  VALUES ('40000000-0000-4000-8000-000000000002','Invalid exam',60);
+  INSERT INTO public.exam_versions(id,exam_id,version_no,title,duration_minutes,status)
   VALUES (
     '30000000-0000-4000-8000-000000000002',
-    '20000000-0000-4000-8000-000000000002',1
+    '40000000-0000-4000-8000-000000000002',1,'Invalid exam',60,'draft'
+  );
+  INSERT INTO public.exam_version_questions(
+    exam_version_id,exam_id,question_version_id,question_id,position
+  ) VALUES (
+    '30000000-0000-4000-8000-000000000002',
+    '40000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000002',1
   );
 
   v_rejected := false;
