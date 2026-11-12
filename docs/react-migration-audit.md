@@ -97,3 +97,6 @@ Important schema contract checked read-only against the live database:
 - `admin_list_attempts` emits `id`, user metadata, exam metadata, status, score, elapsed time, timestamps, and result details. The React list does not render answer keys or raw result details.
 - `admin_list_profiles` and `admin_update_profile` both enforce `public.is_admin()` in the database. The React UI also disables role/status changes on the currently signed-in admin account.
 - `list_published_exams` is authenticated and active-profile gated. The React client only requests the public exam metadata RPC; it does not query answer-key tables.
+
+
+Legacy offline compatibility is preserved on Preview with a dedicated service worker at `/legacy/sw.js`, scoped only to `/legacy/`. It caches the legacy entry point and the Supabase JS client for the legacy exam workflow. The old root-scope service worker is not copied into the Vite build, so it cannot cache the React entry point or intercept React routes.
