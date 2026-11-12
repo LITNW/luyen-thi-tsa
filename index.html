@@ -311,7 +311,7 @@
     const t=Array.isArray(a)?a.map(x=>x==null?'':String(x)).join(' | '):String(a==null?'':a);if(!normAns(t))return null;
     const mp={},dup=[],re=/^\[?\s*(\d+)\s*\]?\s*(?:→|->|=>|:|=)\s*([\s\S]+)$/;
     // Tách các cặp theo |, ;, xuống dòng hoặc dấu phẩy ngay trước khóa số tiếp theo.
-    const parts=t.split(/\s*(?:\||;|\n|,(?=\s*\[?\d+\s*(?:→|->|=>|:|=)))\s*/);
+    const parts=splitOpts(t).flatMap(part=>part.split(/;|\n|,(?=\s*\[?\d+\s*(?:→|->|=>|:|=))/).map(x=>x.trim()).filter(Boolean));
     for(const p of parts){const m=re.exec(p);if(!m||!put(mp,dup,m[1],m[2]))return null}
     return{mp,dup}}
     function qchk(n,sl){const r=[];
