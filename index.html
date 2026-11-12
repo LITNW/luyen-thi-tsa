@@ -304,14 +304,22 @@ body.exam-active{overflow:hidden}
         pendingSubmit:!!a.pendingSubmit,savedAt:Date.now()
       };
       st.set('tsa-attempt-'+a.attemptId,cache);
-      const pointer=st.get('tsa-active-attempt')||{};
+      const pointer=st.get('tsa-active-attempt-'+a.attemptId)||{};
       pointer.attemptId=a.attemptId;pointer.examVersionId=a.examVersionId;
       pointer.userId=a.userId||profile?.id||pointer.userId||null;
       pointer.examSnapshot=a.examSnapshot||pointer.examSnapshot;
       pointer.stateSnapshot=a.stateSnapshot||pointer.stateSnapshot;
       pointer.deadlineAt=a.deadlineAt;pointer.autoSubmitAt=a.autoSubmitAt;
       pointer.serverNowAtSync=serverNow(a);pointer.savedAt=Date.now();
-      st.set('tsa-active-attempt',pointer);
+      st.set('tsa-active-attempt-'+a.attemptId,pointer);
+      const ids=st.get('tsa-active-attempt-index')||[];
+      if(!ids.includes(a.attemptId)){ids.push(a.attemptId);st.set('tsa-active-attempt-index',ids)}
+    }
+    function clearAttemptCache(a){
+      const attemptId=typeof a==='string'?a:a?.attemptId;if(!attemptId)return;
+      st.del('tsa-active-attempt-'+attemptId);st.del('tsa-attempt-'+attemptId);
+      const ids=(st.get('tsa-active-attempt-index')||[]).filter(id=>id!==attemptId);
+      st.set('tsa-active-attempt-index',ids);
     }
     function updateSyncStatus(a){
       const els=document.querySelectorAll('.exam-sync-status');if(!els.length)return;
@@ -351,7 +359,7 @@ body.exam-active{overflow:hidden}
       if(state.status==='submitted'){
         a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;
         a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;
-        st.del('tsa-active-attempt');st.del('tsa-attempt-'+a.attemptId);
+        clearAttemptCache(a);
         go({n:'res',id:view.id,at:a});return false;
       }
       a.serverNowAtSync=Date.parse(state.server_now)||Date.now();
@@ -428,7 +436,7 @@ body.exam-active{overflow:hidden}
         const {data:state,error:se}=await sb.rpc('get_my_attempt_state',{p_attempt_id:a.attemptId});if(se)throw se;
         a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;
         a.elapsed_seconds=state.elapsed_seconds;a.submitting=false;a.pendingSubmit=false;
-        st.del('tsa-active-attempt');st.del('tsa-attempt-'+a.attemptId);
+        clearAttemptCache(a);
         go({n:'res',id:view.id,at:a});
       }catch(err){
         a.submitting=false;
@@ -473,8 +481,9 @@ body.exam-active{overflow:hidden}
           const fetchedExam=await sb.rpc('get_published_exam',{p_exam_version_id:id});if(fetchedExam.error)throw fetchedExam.error;exam=fetchedExam.data;
           const fetchedState=await sb.rpc('get_my_attempt_state',{p_attempt_id:attemptId});if(fetchedState.error)throw fetchedState.error;state=fetchedState.data;
         }catch(networkError){
-          const pointer=st.get('tsa-active-attempt');
-          if(!pointer||pointer.examVersionId!==id||pointer.userId!==profile?.id||!pointer.examSnapshot)throw networkError;
+          const ids=st.get('tsa-active-attempt-index')||[];
+          const pointer=ids.map(attemptKey=>st.get('tsa-active-attempt-'+attemptKey)).find(item=>item&&item.examVersionId===id&&item.userId===profile?.id&&item.examSnapshot);
+          if(!pointer)throw networkError;
           const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
           exam=pointer.examSnapshot;attemptId=pointer.attemptId;state=pointer.stateSnapshot||{};
           const {qs,a}=buildAttempt(exam,attemptId,state,cached,true,pointer);
@@ -489,15 +498,17 @@ body.exam-active{overflow:hidden}
         a.stateSnapshot=state;persistAttempt(a);
         if(state.status==='submitted'){
           a.result=state.result_details||[];a.score=state.score;a.max_score=state.max_score;a.elapsed_seconds=state.elapsed_seconds;
-          st.del('tsa-active-attempt');st.del('tsa-attempt-'+attemptId);go({n:'res',id:exam.id,at:a});return;
+          clearAttemptCache(attemptId);go({n:'res',id:exam.id,at:a});return;
         }
         view={n:'take',id:exam.id,at:a};render();
         if(!a.locked)await flushTime(a,a.cur,1);
       }catch(e){notify('Không thể bắt đầu/tiếp tục bài thi: '+e.message)}
     }
     function restoreOfflineAttempt(userId){
-      const pointer=st.get('tsa-active-attempt');
-      if(!pointer||!pointer.attemptId||!pointer.examSnapshot||!userId||pointer.userId!==userId)return false;
+      const ids=st.get('tsa-active-attempt-index')||[];
+      if(!userId)return false;
+      const pointer=ids.map(attemptKey=>st.get('tsa-active-attempt-'+attemptKey)).filter(item=>item&&item.userId===userId&&item.examSnapshot).sort((a,b)=>(b.savedAt||0)-(a.savedAt||0))[0];
+      if(!pointer)return false;
       const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
       const exam=pointer.examSnapshot,state=pointer.stateSnapshot||{};
       const {qs,a}=buildAttempt(exam,pointer.attemptId,state,cached,true,pointer);
