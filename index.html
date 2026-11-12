@@ -316,12 +316,21 @@
     const used=new Map();
     Object.entries(px.mp).forEach(([k,v])=>{
       if(!sl.includes(+k))r.push({k:'Lỗi cấu trúc',m:'đáp án có vị trí '+k+' không có trong đề'});
-      const exact=optHits(v,list),isCode=/^[A-F]$/i.test(normAns(v));
+      const exact=optHits(v,list),normalized=normAns(v);
+      // Ở chế độ mã A-F, chấp nhận cả phần mô tả theo sau mã:
+      // "A", "A. nội dung", "A) nội dung", "A - nội dung", "A: nội dung".
+      const codeMatch=idMode?/^([A-F])(?:\s*(?:[.)\-:：–—])\s*|\s+|$)/i.exec(normalized):null;
+      const isCode=/^[A-F]$/i.test(normalized);
       let hits=exact;
-      if(idMode || (!exact.length&&isCode)){
-        const ix=L.indexOf(normAns(v).toUpperCase());
+      if(idMode){
+        const code=codeMatch?codeMatch[1].toUpperCase():null;
+        const ix=code?L.indexOf(code):-1;
         hits=ix>=0&&ix<list.length?[ix+1]:[];
-        if(!hits.length)r.push({k:'Lỗi đáp án',m:'mã phương án "'+normAns(v).toUpperCase()+'" không tồn tại trong danh sách lựa chọn'});
+        if(!hits.length)r.push({k:'Lỗi đáp án',m:'giá trị "'+normalized+'" không bắt đầu bằng mã phương án A–F hợp lệ hoặc mã không tồn tại'});
+      }else if(!exact.length&&isCode){
+        const ix=L.indexOf(normalized.toUpperCase());
+        hits=ix>=0&&ix<list.length?[ix+1]:[];
+        if(!hits.length)r.push({k:'Lỗi đáp án',m:'mã phương án "'+normalized.toUpperCase()+'" không tồn tại trong danh sách lựa chọn'});
       }else if(!hits.length)r.push({k:'Lỗi đáp án',m:'phương án “'+v+'” của vị trí ['+k+'] không có trong danh sách lựa chọn'});
       else if(hits.length>1)r.push({k:'Lỗi đáp án',m:'phương án “'+v+'” khớp nhiều lựa chọn'});
       if(hits.length===1){
