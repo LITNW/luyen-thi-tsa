@@ -17,12 +17,12 @@ test('legacy exam application inline JavaScript remains syntactically valid', ()
 
 test('legacy HTML document has one closing tag and no leaked source after it', () => {
   const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
-  const closingTags = [...html.matchAll(/<\\/html\\s*>/gi)];
+  const closingTags = [...html.matchAll(/<\/html\s*>/gi)];
   assert.equal(closingTags.length, 1, 'legacy document must close exactly once');
   const closingTag = closingTags[0];
   const documentEnd = closingTag.index + closingTag[0].length;
   assert.equal(html.slice(documentEnd).trim(), '', 'no source or markup may appear after </html>');
-  const scriptOpenCount = [...html.matchAll(/<script\\b/gi)].length;
-  const scriptCloseCount = [...html.matchAll(/<\\/script\\s*>/gi)].length;
+  const scriptOpenCount = [...html.matchAll(/<script\b/gi)].length;
+  const scriptCloseCount = [...html.matchAll(/<\/script\s*>/gi)].length;
   assert.equal(scriptCloseCount, scriptOpenCount, 'script elements must be balanced');
 });
