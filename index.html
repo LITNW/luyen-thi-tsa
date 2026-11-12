@@ -124,27 +124,27 @@
 
     async function place(i){const a=view.at,q=ex(view.id).qs[a.cur],f=a.ans[a.cur]||Array(Math.max(...SL(q))).fill(null),choice=sel;if(choice==null){f[i]=null}else{f.forEach((z,j)=>{if(z===choice)f[j]=null});f[i]=choice}sel=null;a.ans[a.cur]=f;try{await saveCurrentAnswer(a,a.cur)}catch(e){notify('Chưa lưu được đáp án: '+e.message)}render()}
     function go(v){view=v;armed=null;sel=null;render();window.scrollTo(0,0)}
-    function parse(txt){return txt.split(/\n\s*---+\s*\n?/).map(b=>b.trim()).filter(Boolean).map((b,i)=>{let q=[],o=[],a=null,e='',t='',p=1,m,k='mc',ra='',mf=false,oncef=false,idMode=false;
+    function parse(txt){return txt.split(/\n\s*---+\s*\n?/).map(b=>b.trim()).filter(Boolean).map((b,i)=>{let q=[],o=[],a=null,e='',t='',p=1,m,k='mc',ra='',mf=false,oncef=false,idMode=false,explainMode=false,answerSeen=false;
     const lines=b.split('\n').map(s=>s.trim()).filter(Boolean);
-    // Nhận diện ghép nối trước khi đọc từng dòng: không phụ thuộc thứ tự parser gặp nhãn A-F.
     const hasSlots=/\[\s*\d+\s*\]/.test(b),choiceLine=lines.findIndex(s=>/^(?:lựa chọn|lua chon)\s*[:：]/i.test(s)),hasChoiceHeader=choiceLine>=0;
-    // Với định dạng cũ A., B., ... chỉ nhận nhãn sau dòng chứa vị trí ghép nối.
-    // Không suy diễn nhãn từ đầu câu hỏi: "A. con kiến..." là văn bản câu hỏi, không phải phương án.
+    const choiceText=hasChoiceHeader?(lines[choiceLine].match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)||[])[1]||'':'';
     const lastSlotLine=lines.reduce((last,s,j)=>/\[\s*\d+\s*\]/.test(s)?j:last,-1);
+    // Hỗ trợ cả "Lựa chọn: A | B | C" và nhãn A./B./C. trên từng dòng.
     let legacyStart=-1;
-    if(hasSlots&&!hasChoiceHeader)for(let j=lastSlotLine+1;j<lines.length-1;j++){
-      if(/^A[.)]\s+/.test(lines[j])&&/^B[.)]\s+/.test(lines[j+1])){legacyStart=j;break}
+    if(hasSlots&&(!hasChoiceHeader||!choiceText.trim()))for(let j=Math.max(lastSlotLine+1,choiceLine+1);j<lines.length-1;j++){
+      if(/^A[.)]\s*/i.test(lines[j])&&/^B[.)]\s*/i.test(lines[j+1])){legacyStart=j;break}
     }
     const dndLabeled=legacyStart>=0,dndCandidate=hasChoiceHeader||dndLabeled;
     for(let li=0;li<lines.length;li++){const l=lines[li];
-    if(m=l.match(/^(?:đáp án|dap an)\s*[:：]\s*(.*)/i))ra=m[1].trim();
-    else if(m=l.match(/^(?:giải thích|giai thich)\s*[:：]\s*(.*)/i))e=m[1];
+    if(m=l.match(/^(?:đáp án|dap an)\s*[:：]\s*(.*)/i)){ra=m[1].trim();answerSeen=true;explainMode=false}
+    else if(m=l.match(/^(?:giải thích|giai thich|lời giải|loi giai|hướng dẫn giải|huong dan giai|giải chi tiết|giai chi tiet)\s*[:：]\s*(.*)/i)){e+=(e?'\n':'')+m[1];explainMode=true}
     else if(m=l.match(/^(?:chủ đề|chu de)\s*[:：]\s*(.*)/i))t=m[1];
     else if(m=l.match(/^điểm\s*[:：]\s*([\d.,]+)/i))p=parseFloat(m[1].replace(',','.'))||1;
     else if(m=l.match(/^(?:loại|loai)\s*[:：]\s*(.*)/i))mf=/nhiều|nhieu|multi/i.test(m[1]);
     else if(m=l.match(/^(?:quy tắc|quy tac)\s*[:：]\s*(.*)/i))oncef=/một lần|1 lần|once/i.test(m[1]);
-    else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){o=splitOpts(m[1]);k='dnd'}
+    else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){if(m[1].trim())o=splitOpts(m[1]);k='dnd'}
     else if(dndLabeled&&li>=legacyStart&&(m=l.match(/^([A-F])[.)]\s*(.*)/i))){const code=m[1].toUpperCase();if(code!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);k='dnd';idMode=true}
+    else if(explainMode||(answerSeen&&o.length)){e+=(e?'\n':'')+l}
     else if(dndCandidate&&(!dndLabeled||li<legacyStart)){q.push(l)}
     else if(!dndCandidate&&(m=l.match(/^([a-d])[.)]\s*(.*)/))&&m[1]==='abcd'[o.length]){o.push(m[2]);k='tf'}
     else if(!dndCandidate&&(m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length])o.push(m[2])
@@ -157,8 +157,7 @@
     else if(k==='mc'){const lm=LR.exec(ra),ls=lm?[...new Set(lm[1].match(/[A-F]/g))].map(c=>L.indexOf(c)).sort((x,y)=>x-y):[];if(o.length<2||!ls.length||ls.some(z=>z>=o.length))throw bad('cần phương án A., B., … và "Đáp án:" bắt đầu bằng ký hiệu phương án (ví dụ B hoặc C (√2 + 1))');if(ls.length>1||mf){k='ms';a=ls}else a=ls[0]}
     else if(k==='tf'){a=tk.map(s=>/^(đ|d|đúng|dung|t)$/i.test(s)?true:/^(s|sai|f)$/i.test(s)?false:null);if(o.length<2||a.length!==o.length||a.includes(null))throw bad('Đúng/Sai cần 2–4 ý a) b) c) d) và "Đáp án:" dạng Đ, S, Đ, S')}
     else{const sl=SL({q:q.join(' ')}),px=pairsX(ra),pr=chk(o,sl,px,idMode);if(pr.length)throw bad('ghép nối — '+pr.map(z=>z.k+': '+z.m).join('; '));a=Object.fromEntries(sl.map(z=>[z,px.ix[z]]))}
-    return{k,q:q.join('\n'),o,a,e,t,p,once:oncef}})}
-    const ser=qs=>qs.map(x=>{const k=x.k||'mc';return x.q+(k==='tf'?'\n'+x.o.map((s,i)=>'abcd'[i]+') '+s).join('\n'):k==='dnd'?'\nLựa chọn: '+x.o.map(z=>escBar(z)).join(' | ')+(x.once?'\nQuy tắc: mỗi phương án dùng một lần':''):k==='num'?'':'\n'+x.o.map((s,i)=>L[i]+'. '+s).join('\n'))+(k==='ms'?'\nLoại: nhiều đáp án':'')+'\nĐáp án: '+(k==='mc'?L[x.a]:k==='ms'?x.a.map(i=>L[i]).join(', '):k==='tf'?x.a.map(v=>v?'Đ':'S').join(', '):k==='dnd'?Object.entries(dm(x)).map(([z,v])=>z+': '+escBar(x.o&&x.o[v-1]!=null?x.o[v-1]:v)).join(' | '):String(x.a).replace('.',','))+(x.p&&x.p!==1?'\nĐiểm: '+x.p:'')+(x.e?'\nGiải thích: '+x.e:'')+(x.t?'\nChủ đề: '+x.t:'')}).join('\n---\n');
+    return{k,q:q.join('\n'),o,a,e,t,p,once:oncef}})}    const ser=qs=>qs.map(x=>{const k=x.k||'mc';return x.q+(k==='tf'?'\n'+x.o.map((s,i)=>'abcd'[i]+') '+s).join('\n'):k==='dnd'?'\nLựa chọn: '+x.o.map(z=>escBar(z)).join(' | ')+(x.once?'\nQuy tắc: mỗi phương án dùng một lần':''):k==='num'?'':'\n'+x.o.map((s,i)=>L[i]+'. '+s).join('\n'))+(k==='ms'?'\nLoại: nhiều đáp án':'')+'\nĐáp án: '+(k==='mc'?L[x.a]:k==='ms'?x.a.map(i=>L[i]).join(', '):k==='tf'?x.a.map(v=>v?'Đ':'S').join(', '):k==='dnd'?Object.entries(dm(x)).map(([z,v])=>z+': '+escBar(x.o&&x.o[v-1]!=null?x.o[v-1]:v)).join(' | '):String(x.a).replace('.',','))+(x.p&&x.p!==1?'\nĐiểm: '+x.p:'')+(x.e?'\nGiải thích: '+x.e:'')+(x.t?'\nChủ đề: '+x.t:'')}).join('\n---\n');
 
     function notify(s){const n=document.getElementById('global-msg')||document.getElementById('msg');if(n)n.textContent=s;else window.alert(s)}
     function auth(){return '<main class="auth-shell"><section class="auth-intro"><div class="brand-mark">T</div><p class="eyebrow">NỀN TẢNG LUYỆN THI TSA</p><h1>Chuẩn bị tốt hơn.<br><span>Bứt phá giới hạn.</span></h1><p class="auth-lead">Không gian luyện tập tập trung cho kỳ thi Đánh giá tư duy: làm bài có thời gian, theo dõi tiến độ và xem lại kết quả.</p><div class="auth-points"><div><b>01</b><span>Luyện tập theo đề thi</span></div><div><b>02</b><span>Chấm điểm tự động</span></div><div><b>03</b><span>Lưu lịch sử học tập</span></div></div><p class="auth-foot">TSA PRACTICE PLATFORM</p></section><section class="auth-panel"><div class="auth-panel-head"><span class="eyebrow">BẮT ĐẦU HỌC TẬP</span><h2>Chào mừng trở lại</h2><p class="m">Đăng nhập để tiếp tục hành trình ôn luyện.</p></div><div class="auth-form"><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" placeholder="name@example.com"><label for="login-password">Mật khẩu</label><input id="login-password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu"><button class="b bp auth-submit" data-a="login">Đăng nhập <span>→</span></button></div><div class="auth-divider"><span>CHƯA CÓ TÀI KHOẢN?</span></div><details class="signup-box"><summary>Tạo tài khoản học sinh <span>＋</span></summary><div class="auth-form signup-form"><p class="m">Hệ thống sẽ gửi email xác minh trước khi bạn có thể đăng nhập.</p><label for="signup-name">Tên hiển thị</label><input id="signup-name" maxlength="80" autocomplete="name" placeholder="Tên của bạn"><label for="signup-email">Email</label><input id="signup-email" type="email" autocomplete="email" placeholder="Email đăng ký"><label for="signup-password">Mật khẩu</label><input id="signup-password" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự"><button class="b" data-a="signup">Đăng ký tài khoản</button></div></details><p id="global-msg" class="m auth-message"></p></section></main>'}
@@ -311,7 +310,9 @@
     if(a&&typeof a==='object'&&!Array.isArray(a)){const mp={},dup=[];for(const [k,v] of Object.entries(a))if(!put(mp,dup,k,v))return null;return{mp,dup}}
     const t=Array.isArray(a)?a.map(x=>x==null?'':String(x)).join(' | '):String(a==null?'':a);if(!normAns(t))return null;
     const mp={},dup=[],re=/^\[?\s*(\d+)\s*\]?\s*(?:→|->|=>|:|=)\s*([\s\S]+)$/;
-    for(const p of splitOpts(t)){const m=re.exec(p);if(!m||!put(mp,dup,m[1],m[2]))return null}
+    // Tách các cặp theo |, ;, xuống dòng hoặc dấu phẩy ngay trước khóa số tiếp theo.
+    const parts=t.split(/\s*(?:\||;|\n|,(?=\s*\[?\d+\s*(?:→|->|=>|:|=)))\s*/);
+    for(const p of parts){const m=re.exec(p);if(!m||!put(mp,dup,m[1],m[2]))return null}
     return{mp,dup}}
     function qchk(n,sl){const r=[];
     if(n>6)r.push({k:'Lỗi cấu trúc',m:'có '+n+' phương án, tối đa 6'});
@@ -327,18 +328,14 @@
       const exact=optHits(v,list),normalized=normAns(v);
       // Ở chế độ mã A-F, chấp nhận cả phần mô tả theo sau mã:
       // "A", "A. nội dung", "A) nội dung", "A - nội dung", "A: nội dung".
-      const codeMatch=idMode?/^([A-F])(?:\s*(?:[.)\-:：–—])\s*|\s+|$)/i.exec(normalized):null;
+      const codeMatch=/^([A-F])(?:\s*(?:[.)\-:：–—])\s*|\s+|$)/i.exec(normalized);
       const isCode=/^[A-F]$/i.test(normalized);
       let hits=exact;
-      if(idMode){
-        const code=codeMatch?codeMatch[1].toUpperCase():null;
-        const ix=code?L.indexOf(code):-1;
+      if(!exact.length&&(idMode||codeMatch||isCode)){
+        const code=codeMatch?codeMatch[1].toUpperCase():normalized.toUpperCase();
+        const ix=code.length===1?L.indexOf(code):-1;
         hits=ix>=0&&ix<list.length?[ix+1]:[];
         if(!hits.length)r.push({k:'Lỗi đáp án',m:'giá trị "'+normalized+'" không bắt đầu bằng mã phương án A–F hợp lệ hoặc mã không tồn tại'});
-      }else if(!exact.length&&isCode){
-        const ix=L.indexOf(normalized.toUpperCase());
-        hits=ix>=0&&ix<list.length?[ix+1]:[];
-        if(!hits.length)r.push({k:'Lỗi đáp án',m:'mã phương án "'+normalized.toUpperCase()+'" không tồn tại trong danh sách lựa chọn'});
       }else if(!hits.length)r.push({k:'Lỗi đáp án',m:'phương án “'+v+'” của vị trí ['+k+'] không có trong danh sách lựa chọn'});
       else if(hits.length>1)r.push({k:'Lỗi đáp án',m:'phương án “'+v+'” khớp nhiều lựa chọn'});
       if(hits.length===1){
