@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: b3b07eef5b8423cce8e9287af2c78930
 
 create or replace function public.admin_save_exam_content(
   p_exam_version_id uuid,
