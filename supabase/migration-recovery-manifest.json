@@ -1,0 +1,117 @@
+{
+  "source": "Production supabase_migrations.schema_migrations.statements[1]",
+  "recovered_at": "2026-11-12",
+  "note": "MD5 fingerprints are calculated over the original stored SQL statement. The bootstrap migration is redacted in Git; its fingerprint refers to the original pre-redaction SQL.",
+  "migrations": [
+    {
+      "version": "20261111145710",
+      "name": "published_exam_read_access_and_admin_rls",
+      "source_md5": "0926025b8d7636c6f269017460b6d557",
+      "redacted": false
+    },
+    {
+      "version": "20261111145753",
+      "name": "first_admin_verified_email_bootstrap",
+      "source_md5": "0746c9bdf0ac656d65b89c045037580d",
+      "redacted": true
+    },
+    {
+      "version": "20261111145830",
+      "name": "admin_exam_version_workflows",
+      "source_md5": "4ae7b11964bd03dc48e44dcf58e63818",
+      "redacted": false
+    },
+    {
+      "version": "20261111145854",
+      "name": "student_published_exam_read_rpcs",
+      "source_md5": "a8606fa58f9b2652e5e2226846a00afd",
+      "redacted": false
+    },
+    {
+      "version": "20261111145919",
+      "name": "consolidate_profile_update_policy",
+      "source_md5": "2655dc2e53683204041c2b297e04f582",
+      "redacted": false
+    },
+    {
+      "version": "20261111150635",
+      "name": "lock_profile_role_status_updates",
+      "source_md5": "1e98da901c7012fd26b96040ffd6ca08",
+      "redacted": false
+    },
+    {
+      "version": "20261111151348",
+      "name": "admin_authoring_and_reporting",
+      "source_md5": "9d36c204b2f38869b6329fdac65e9bd5",
+      "redacted": false
+    },
+    {
+      "version": "20261111151520",
+      "name": "draft_question_management",
+      "source_md5": "6f08516fc3e6f1bcb887b4486d786e81",
+      "redacted": false
+    },
+    {
+      "version": "20261111151651",
+      "name": "attempt_resume_and_history_rpcs",
+      "source_md5": "41f35a2042aca6571273664fb4a3e7bd",
+      "redacted": false
+    },
+    {
+      "version": "20261111151737",
+      "name": "atomic_exam_authoring",
+      "source_md5": "eae7b4caa2a3c4be8b148667e6d3adc8",
+      "redacted": false
+    },
+    {
+      "version": "20261111151747",
+      "name": "fix_atomic_exam_authoring_mapping_retention",
+      "source_md5": "b3b07eef5b8423cce8e9287af2c78930",
+      "redacted": false
+    },
+    {
+      "version": "20261111152621",
+      "name": "enforce_active_attempt_owner",
+      "source_md5": "be6a231668a37ac51f6287d9c1105d59",
+      "redacted": false
+    },
+    {
+      "version": "20261111152717",
+      "name": "avoid_duplicate_question_versions_on_save",
+      "source_md5": "677a83eba6eb338f4bf2067856d9366c",
+      "redacted": false
+    },
+    {
+      "version": "20261112023553",
+      "name": "exam_room_offline_sync_and_server_timing",
+      "source_md5": "87b7421d83d0a7a43a3ddb92a4c2f58f",
+      "redacted": false
+    },
+    {
+      "version": "20261112023833",
+      "name": "admin_delete_exam_version_safely",
+      "source_md5": "d84f69941bbea4a004a677a931219fa2",
+      "redacted": false
+    },
+    {
+      "version": "20261112024205",
+      "name": "archive_exam_versions_with_attempts",
+      "source_md5": "ae17fe6a3e2943fd2fa1de38688fe571",
+      "redacted": false
+    },
+    {
+      "version": "20261112041845",
+      "name": "normalize_dnd_slot_key_validation",
+      "source_md5": "d2e7b574da5c4068b6d930c126b982af",
+      "redacted": false
+    }
+  ],
+  "pending": [
+    {
+      "version": "20261112050000",
+      "name": "ai_exam_import_staging",
+      "status": "pending_not_in_production",
+      "renamed_from": "20261111234000"
+    }
+  ]
+}
