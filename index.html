@@ -410,13 +410,16 @@
     return out}
     // Nhận diện lệnh LaTeX thường gặp nhưng chưa được bọc trong dấu phân cách toán học.
     // Chỉ cảnh báo, không tự động bọc vì ranh giới giữa công thức và văn xuôi có thể mơ hồ.
-    const RAW_TEX=/\\(?:frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|iint|iiint|oint|lim|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|pi|alpha|beta|gamma|delta|theta|lambda|mu|omega|Delta|Sigma|Omega|Gamma|Phi|forall|exists|infty|in|notin|subset|subseteq|supset|supseteq|cup|cap|setminus|emptyset|mathbb|mathrm|mathbf|mathit|mathcal|operatorname|text|left|right|begin|end|cdot|times|pm|mp|le|leq|ge|geq|ne|neq|approx|equiv|iff|implies|to|rightarrow|Rightarrow|Leftrightarrow|mapsto|overline|underline|widehat|widetilde|vec|overrightarrow|perp|parallel|angle|circ|quad|qquad|dots|ldots|cdots|vdots|ddots|pmod|bmod|cases|matrix|pmatrix|bmatrix|aligned|array)\b/g;
+    const RAW_TEX=/\\(?:frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|iint|iiint|oint|lim|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|pi|alpha|beta|gamma|delta|theta|lambda|mu|omega|Delta|Sigma|Omega|Gamma|Phi|forall|exists|infty|in|notin|subset|subseteq|supset|supseteq|cup|cap|setminus|emptyset|mathbb|mathrm|mathbf|mathit|mathcal|operatorname|text|left|right|begin|end|cdot|times|pm|mp|le|leq|ge|geq|ne|neq|approx|equiv|iff|implies|to|rightarrow|Rightarrow|Leftrightarrow|mapsto|overline|underline|widehat|widetilde|vec|overrightarrow|perp|parallel|angle|circ|quad|qquad|dots|ldots|cdots|vdots|ddots|pmod|bmod|cases|matrix|pmatrix|bmatrix|aligned|array|ec)\b/g;
+    const RAW_TEX_FRAGMENT=/\b(?:ight|ar)\s*(?:\)|\{)/g;
     function rawTexLine(line){
       const masked=String(line).split('');
       fmx(line).forEach(f=>{for(let i=f.s;i<f.e;i++)masked[i]=' '});
       const scan=masked.join(''),out=[];let m,re=new RegExp(RAW_TEX.source,'g');
-      while((m=re.exec(scan)))out.push({cmd:m[0],at:m.index});
-      return out;
+      while((m=re.exec(scan)))out.push({cmd:m[0],at:m.index,kind:'command'});
+      re=new RegExp(RAW_TEX_FRAGMENT.source,'g');
+      while((m=re.exec(scan)))out.push({cmd:m[0],at:m.index,kind:'fragment'});
+      return out.sort((x,y)=>x.at-y.at);
     }
     function locateRaw(text){
       const out=[];let qi=1;
@@ -428,7 +431,7 @@
         else if(/^(?:lựa chọn|lua chon)\s*[:：]/i.test(t))fld='danh sách phương án';
         else if(m=/^([A-F])[.)]\s/.exec(t))fld='phương án '+m[1];
         else if(m=/^([a-d])\)\s/.exec(t))fld='ý '+m[1];
-        const hits=rawTexLine(line);if(hits.length)out.push({qi,fld,line:li+1,cmds:[...new Set(hits.map(x=>x.cmd))],sample:t.slice(Math.max(0,hits[0].at-24),Math.min(t.length,hits[0].at+72))});
+        const hits=rawTexLine(line);if(hits.length)out.push({qi,fld,line:li+1,cmds:[...new Set(hits.filter(x=>x.kind==='command').map(x=>x.cmd))],fragments:[...new Set(hits.filter(x=>x.kind==='fragment').map(x=>x.cmd))],sample:t.slice(Math.max(0,hits[0].at-24),Math.min(t.length,hits[0].at+72))});
       });
       return out;
     }
@@ -446,6 +449,8 @@
     if((t.match(/\\left(?![a-zA-Z])/g)||[]).length!==(t.match(/\\right(?![a-zA-Z])/g)||[]).length)r.push('\\left và \\right không khớp');
     const b=(t.match(/\\begin\{[^}]*\}/g)||[]).map(x=>x.slice(7,-1)),e=(t.match(/\\end\{[^}]*\}/g)||[]).map(x=>x.slice(5,-1));
     if(b.length!==e.length||b.some((x,i)=>x!==e[b.length-1-i]))r.push('cặp \\begin/\\end không khớp');
+    const damaged=[...t.matchAll(new RegExp(RAW_TEX_FRAGMENT.source,'g'))].map(x=>x[0]);
+    if(damaged.length)r.push('có thể thiếu dấu gạch chéo trong lệnh LaTeX: '+[...new Set(damaged)].join(', '));
     if(/\\$/.test(t))r.push('kết thúc bằng dấu \\');
     return r}
     /* ---- Word (OMML) -> LaTeX ---- */
@@ -554,7 +559,7 @@
         const mt=FMETA[f.tex]||{st:'user'},ln=texLint(f.tex),src=QL[f.qi-1]||mt.src||'';
         return '<div class="c fx"><p class="m"><b>Câu '+f.qi+' · '+f.fld+'</b> · '+(ST[mt.st]||mt.st)+(src?' · nguồn: '+esc(src):'')+'</p><div class="mth">'+(f.disp?'$$':'$')+esc(f.tex)+(f.disp?'$$':'$')+'</div><input class="fxi" data-k="'+k+'" value="'+esc(f.tex)+'" spellcheck="false">'+(mt.note?'<p class="m re">⚠ '+esc(mt.note)+'</p>':'')+(mt.raw?'<p class="m">Nhận diện ban đầu: '+esc(mt.raw)+'</p>':'')+'<p class="m re ferr">'+(ln.length?'✗ '+esc(ln.join('; ')):'')+'</p></div>';
       }).join(''):'<p class="m">Chưa tìm thấy công thức có dấu phân cách.</p>';
-      const raw=R.length?'<div class="c" style="border-color:var(--fl)"><b>Phát hiện LaTeX chưa được đánh dấu ('+R.length+' vị trí)</b><p class="m">Các lệnh dưới đây đang nằm ngoài $...$, $$...$$, \\( ... \\) hoặc \\[ ... \\]. Hãy sửa trực tiếp nội dung đề: bọc từng biểu thức toán học bằng dấu phân cách phù hợp. Không nên bọc cả câu văn nếu trong câu chỉ có một phần là công thức.</p>'+R.map(x=>'<p class="m"><b>Câu '+x.qi+' · '+x.fld+'</b> — dòng '+x.line+' — lệnh <code>'+esc(x.cmds.join(', '))+'</code><br>'+esc(x.sample)+'</p>').join('')+'</div>':'<p class="m">Không phát hiện lệnh LaTeX phổ biến nằm ngoài dấu phân cách.</p>';
+      const raw=R.length?'<div class="c" style="border-color:var(--fl)"><b>Phát hiện LaTeX chưa được đánh dấu ('+R.length+' vị trí)</b><p class="m">Các lệnh dưới đây đang nằm ngoài $...$, $$...$$, \\( ... \\) hoặc \\[ ... \\]. Hãy sửa trực tiếp nội dung đề: bọc từng biểu thức toán học bằng dấu phân cách phù hợp. Không nên bọc cả câu văn nếu trong câu chỉ có một phần là công thức.</p>'+R.map(x=>'<p class="m"><b>Câu '+x.qi+' · '+x.fld+'</b> — dòng '+x.line+(x.cmds.length?' — lệnh <code>'+esc(x.cmds.join(', '))+'</code>':'')+(x.fragments.length?' — dấu hiệu có thể mất dấu <code>\\</code>: <code>'+esc(x.fragments.join(', '))+'</code>':'')+'<br>'+esc(x.sample)+'</p>').join('')+'</div>':'<p class="m">Không phát hiện lệnh LaTeX phổ biến nằm ngoài dấu phân cách.</p>';
       box.innerHTML=formulas+raw;
       await mj(box);
       box.querySelectorAll('.fx').forEach(d=>{
@@ -571,7 +576,7 @@
     if(has){try{await loadMJ();ok=true}catch(e){}}
     qs.forEach((q,i)=>{const seen=[];
     [[q.q,'đề'],...(q.o||[]).map((o,j)=>[o,'phương án '+(j+1)]),[q.e||'','lời giải']].forEach(([t,fld])=>{
-      const raw=rawTexLine(t);if(raw.length){const cmds=[...new Set(raw.map(x=>x.cmd))];errs.push('Câu '+(i+1)+' ('+fld+'): phát hiện LaTeX chưa được bọc ('+cmds.join(', ')+'). Hãy đánh dấu rõ phần công thức bằng $...$ hoặc \\( ... \\); hệ thống không tự sửa nội dung.');}
+      const raw=rawTexLine(t);if(raw.length){const cmds=[...new Set(raw.filter(x=>x.kind==='command').map(x=>x.cmd))],fragments=[...new Set(raw.filter(x=>x.kind==='fragment').map(x=>x.cmd))];errs.push('Câu '+(i+1)+' ('+fld+'): '+(cmds.length?'phát hiện LaTeX chưa được bọc ('+cmds.join(', ')+'). ':'')+(fragments.length?'có dấu hiệu mất dấu gạch chéo trong lệnh LaTeX ('+fragments.join(', ')+'). ':'')+'Hãy đánh dấu rõ phần công thức bằng $...$ hoặc \\( ... \\), đồng thời kiểm tra lại các lệnh bị lỗi; hệ thống không tự sửa nội dung.');}
     });
     [[q.q,'đề'],...(q.o||[]).map((o,j)=>[o,'phương án '+(j+1)]),[q.e||'','lời giải']].forEach(([t,fld])=>fmx(t).forEach(f=>{
     let msg=texLint(f.tex)[0];
