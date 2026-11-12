@@ -53,9 +53,9 @@ export default function DashboardPage() {
       <header className="topbar">
         <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></Link>
         <nav className="top-links" aria-label="Điều hướng chính">
-          <Link to="/history">Lịch sử (giao diện hiện tại)</Link>
+          <Link to="/history">Lịch sử</Link>
           <Link to="/account">Tài khoản</Link>
-          {isAdmin && <a href="/legacy/index.html">Quản trị</a>}
+          {isAdmin && <Link to="/admin">Quản trị</Link>}
         </nav>
       </header>
 
@@ -81,9 +81,9 @@ export default function DashboardPage() {
           <section className="section-block">
             <div className="section-heading"><div><p className="eyebrow">WORKSPACE</p><h2>Khu vực quản trị</h2></div><span className="role-chip">ADMIN</span></div>
             <div className="admin-grid">
-              <a className="admin-card featured" href="/legacy/index.html"><b>Tạo và quản lý đề</b><span>Trình soạn đề, phiên bản và nhập đề AI</span></a>
-              <a className="admin-card" href="/legacy/index.html"><b>Quản lý tài khoản</b><span>Vai trò và trạng thái người dùng</span></a>
-              <a className="admin-card" href="/legacy/index.html"><b>Theo dõi lượt làm</b><span>Kết quả và lịch sử học viên</span></a>
+              <Link className="admin-card featured" to="/admin/exams"><b>Quản lý đề thi</b><span>Phiên bản, trạng thái và lượt làm</span></Link>
+              <Link className="admin-card" to="/admin/users"><b>Quản lý tài khoản</b><span>Vai trò và trạng thái người dùng</span></Link>
+              <Link className="admin-card" to="/admin/attempts"><b>Theo dõi lượt làm</b><span>Kết quả và thời gian làm bài</span></Link>
             </div>
             {versions.length > 0 && <div className="version-list">
               <h3>Phiên bản đề thi</h3>
@@ -103,12 +103,12 @@ export default function DashboardPage() {
               <h3>{exam.title}</h3>
               <p className="muted">{exam.description || 'Bài luyện tập đánh giá tư duy TSA.'}</p>
               <div className="exam-meta"><span>{exam.duration} phút</span><span>{exam.questionCount || 0} câu hỏi</span><span>Phiên bản {exam.version}</span></div>
-              <a className="button primary full" href="/legacy/index.html">Mở danh sách đề ở giao diện hiện tại <span aria-hidden="true">→</span></a>
+              <a className="button primary full" href={'/exam/' + encodeURIComponent(exam.id)}>Bắt đầu làm bài <span aria-hidden="true">→</span></a>
             </article>)}</div> :
             <div className="empty-state"><b>Chưa có đề thi được xuất bản</b><p>Các đề luyện tập sẽ xuất hiện tại đây khi quản trị viên đăng tải.</p></div>
           }
         </section>
-        <div className="migration-note"><b>Chuyển đổi theo từng module</b><p>Trang đăng nhập và bảng điều khiển đã chuyển sang React. Phòng thi, trình soạn đề, lịch sử và công cụ quản trị vẫn được giữ nguyên trong giao diện cũ cho đến khi phiên bản mới được kiểm thử đầy đủ.</p><a href="/legacy/index.html">Mở toàn bộ giao diện hiện tại</a></div>
+        <div className="migration-note"><b>Chuyển đổi theo từng module</b><p>Đăng nhập, bảng điều khiển, lịch sử và các màn hình quản trị cơ bản đã chuyển sang React. Phòng thi, trình soạn đề và nhập đề AI vẫn được giữ nguyên trong giao diện cũ cho đến khi phiên bản mới được kiểm thử đầy đủ.</p><a href="/legacy/index.html">Mở toàn bộ giao diện hiện tại</a></div>
       </main>
       <footer className="footer">TSA PRACTICE PLATFORM <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
     </div>

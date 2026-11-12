@@ -1266,5 +1266,11 @@ input::placeholder, textarea::placeholder {
       }catch(err){importUiMessage=err.message||String(err);notify('Trung tâm nhập đề: '+importUiMessage);const m=document.getElementById('import-msg');if(m)m.textContent=importUiMessage}
     });
 
+    const __tsaLegacyBoot=boot;
+    boot=async function(){
+      await __tsaLegacyBoot();
+      const requestedStart=new URLSearchParams(window.location.search).get('start');
+      if(requestedStart&&profile?.status==='active')await start(requestedStart);
+    };
     boot();
     </script></body></html>
