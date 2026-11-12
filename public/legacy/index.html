@@ -429,6 +429,7 @@ if('serviceWorker' in navigator){
       const {data:exams,error:ee}=await sb.rpc('list_published_exams');
       if(ee){D.exams=[];if(restoreOfflineAttempt(user.id))return;notify('Không tải được danh sách đề: '+ee.message)}
       else D.exams=(exams||[]).map(x=>({id:x.id,title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs:[],exam_id:x.exam_id,version_no:x.version_no,question_count:x.question_count}));
+      if(await restoreActiveAttempt(user.id))return;
       if(me){const {data:v,error:ve}=await sb.rpc('admin_list_exam_versions');adminVersions=ve?[]:(v||[]);if(ve)notify('Không tải được danh sách quản trị: '+ve.message)}
       else adminVersions=[];
       if(view.n==='auth')view={n:'home'};
@@ -528,8 +529,9 @@ if('serviceWorker' in navigator){
       if(resumeAttemptPromise)return resumeAttemptPromise;
       if(view.n!=='take'||!view.at)return;
       const a=view.at;
+      lap(a);
+      a.resuming=true;
       resumeAttemptPromise=(async()=>{
-        a.resuming=true;
         try{
           if(!ensureAttemptReady(a)){
             let exam=a.examSnapshot;
@@ -828,6 +830,45 @@ if('serviceWorker' in navigator){
         if(!a.locked)await flushTime(a,a.cur,1);
       }catch(e){notify('Không thể bắt đầu/tiếp tục bài thi: '+e.message)}
     }
+    async function restoreActiveAttempt(userId){
+      if(!userId)return false;
+      const ids=st.get('tsa-active-attempt-index')||[];
+      const pointer=ids.map(attemptKey=>st.get('tsa-active-attempt-'+attemptKey))
+        .filter(item=>item&&item.userId===userId&&item.attemptId&&item.examSnapshot)
+        .sort((a,b)=>(b.savedAt||0)-(a.savedAt||0))[0];
+      if(!pointer)return false;
+      if(!navigator.onLine)return restoreOfflineAttempt(userId);
+      const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
+      try{
+        const {data:state,error}=await sb.rpc('get_my_attempt_state',{p_attempt_id:pointer.attemptId});
+        if(error)throw error;
+        if(state?.status==='submitted'){
+          clearAttemptCache(pointer.attemptId);
+          return false;
+        }
+        if(state?.status!=='in_progress')return false;
+        let exam=pointer.examSnapshot;
+        const {data:published,error:examError}=await sb.rpc('get_published_exam',{p_exam_version_id:pointer.examVersionId});
+        if(!examError&&published)exam=published;
+        if(!exam||!Array.isArray(exam.questions)||!exam.questions.length)throw examError||new Error('Thiếu bản chụp đề thi để khôi phục.');
+        const {qs,a}=buildAttempt(exam,pointer.attemptId,state,cached,false,pointer);
+        if(!qs.length)throw new Error('Đề thi không còn câu hỏi hợp lệ.');
+        a.stateSnapshot=state;
+        D.exams=D.exams.filter(item=>item.id!==exam.id);
+        D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no});
+        view={n:'take',id:exam.id,at:a};
+        persistAttempt(a);
+        render();
+        if(!a.locked)await flushTime(a,a.cur,1);
+        return true;
+      }catch(err){
+        if(restoreOfflineAttempt(userId)){
+          notify('Không thể xác minh lượt thi với máy chủ. Đã mở bản lưu trên thiết bị; dữ liệu sẽ đồng bộ khi có mạng.');
+          return true;
+        }
+        return false;
+      }
+    }
     function restoreOfflineAttempt(userId){
       const ids=st.get('tsa-active-attempt-index')||[];
       if(!userId)return false;
@@ -841,7 +882,7 @@ if('serviceWorker' in navigator){
       view={n:'take',id:exam.id,at:a};render();return true;
     }
     function tick(){
-      const a=view.at;if(!a||a.submitting)return;
+      const a=view.at;if(!a||a.submitting||a.resuming)return;
       const now=serverNow(a);
       if(!a.locked&&now>=a.deadlineAt){
         lap(a);a.locked=true;a.l=performance.now();persistAttempt(a);render();return;
