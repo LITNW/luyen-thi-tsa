@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 6f08516fc3e6f1bcb887b4486d786e81
 
 -- Migration 011: safe replacement of draft question mappings and question-bank lookup.
 
