@@ -57,7 +57,7 @@ export default function AuthPage({ mode = 'login' }) {
           {isRegister && <label>Tên hiển thị<input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} autoComplete="name" required /></label>}
           <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete={isRegister ? 'email' : 'username'} required /></label>
           <label>Mật khẩu<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} autoComplete={isRegister ? 'new-password' : 'current-password'} required /></label>
-          <button className="button primary full" type="submit" disabled={busy || !!configError}>{busy ? 'Đang xử lý…' : isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập'}</button>
+          <button className="button primary full" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập'}</button>
         </form>
         {message && <p className="form-message" role="status">{message}</p>}
         <div className="auth-switch">{isRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'} <Link to={isRegister ? '/login' : '/register'}>{isRegister ? 'Đăng nhập' : 'Tạo tài khoản'}</Link></div>
