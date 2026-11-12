@@ -100,3 +100,8 @@ Important schema contract checked read-only against the live database:
 
 
 Legacy offline compatibility is preserved on Preview with a dedicated service worker at `/legacy/sw.js`, scoped only to `/legacy/`. It caches the legacy entry point and the Supabase JS client for the legacy exam workflow. The old root-scope service worker is not copied into the Vite build, so it cannot cache the React entry point or intercept React routes.
+
+
+## Automated checks
+
+A GitHub Actions workflow now runs on pushes to `feature/react-migration` and pull requests targeting `main`. It installs dependencies, runs Node's built-in test runner, and performs a production Vite build. The result-answer formatting and score-summary functions have unit tests for MC, MS, TF, numeric, matching, blank, and partial-credit cases.

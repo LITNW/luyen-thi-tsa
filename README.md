@@ -21,6 +21,7 @@ Use only the Supabase publishable/anon key in the browser. Never use `service_ro
 ## Build
 
 ```bash
+npm test
 npm run build
 npm run preview
 ```
