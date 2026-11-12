@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: eae7b4caa2a3c4be8b148667e6d3adc8
 
 -- Migration 013: atomic Admin save of an entire draft exam.
 -- A failed question validation rolls back the whole save.
