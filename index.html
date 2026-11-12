@@ -546,11 +546,23 @@
     async function srcp(){const b=document.getElementById('src');if(!b)return;if(!SRC.length){b.innerHTML='';return}
     for(const s of SRC)if(!s.u)s.u=await Promise.all(s.b.map(du));
     b.innerHTML='<details><summary>Đối chiếu trang/ảnh gốc đã gửi cho Claude ('+SRC.length+' phần)</summary>'+SRC.map(s=>'<p class="m">'+esc(s.lab)+'</p>'+s.u.map(u=>'<img alt="" src="'+u+'" style="max-width:100%;border:1px solid var(--bd);margin:4px 0">').join('')).join('')+'</details>'}
-    async function fpanel(){const ta=document.getElementById('f-q'),box=document.getElementById('fp');if(!ta||!box)return;const F=locate(ta.value),R=locateRaw(ta.value);
-    const formulas=F.length?F.map((f,k)=>{const mt=FMETA[f.tex]||{st:'user'},ln=texLint(f.tex),src=QL[f.qi-1]||mt.src||'';
-    return '<div class="c fx"><p class="m"><b>Câu '+f.qi+' · '+f.fld+'</b> · '+(ST[mt.st]||mt.st)+(src?' · nguồn: '+esc(src):'')+'</p><div class="mth">'+(f.disp?'$':'
-    box.querySelectorAll('.fx').forEach(d=>{const er=d.querySelector('.mth [data-mjx-error]');if(er){d.querySelector('.ferr').textContent='✗ Lỗi hiển thị: '+(er.getAttribute('data-mjx-error')||'cú pháp LaTeX không hợp lệ');d.style.borderColor='var(--no)'}});
-    await srcp()}
+    async function fpanel(){
+      const ta=document.getElementById('f-q'),box=document.getElementById('fp');
+      if(!ta||!box)return;
+      const F=locate(ta.value),R=locateRaw(ta.value);
+      const formulas=F.length?F.map((f,k)=>{
+        const mt=FMETA[f.tex]||{st:'user'},ln=texLint(f.tex),src=QL[f.qi-1]||mt.src||'';
+        return '<div class="c fx"><p class="m"><b>Câu '+f.qi+' · '+f.fld+'</b> · '+(ST[mt.st]||mt.st)+(src?' · nguồn: '+esc(src):'')+'</p><div class="mth">'+(f.disp?'$$':'$')+esc(f.tex)+(f.disp?'$$':'$')+'</div><input class="fxi" data-k="'+k+'" value="'+esc(f.tex)+'" spellcheck="false">'+(mt.note?'<p class="m re">⚠ '+esc(mt.note)+'</p>':'')+(mt.raw?'<p class="m">Nhận diện ban đầu: '+esc(mt.raw)+'</p>':'')+'<p class="m re ferr">'+(ln.length?'✗ '+esc(ln.join('; ')):'')+'</p></div>';
+      }).join(''):'<p class="m">Chưa tìm thấy công thức có dấu phân cách.</p>';
+      const raw=R.length?'<div class="c" style="border-color:var(--fl)"><b>Phát hiện LaTeX chưa được đánh dấu ('+R.length+' vị trí)</b><p class="m">Các lệnh dưới đây đang nằm ngoài $...$, $$...$$, \\( ... \\) hoặc \\[ ... \\]. Hãy sửa trực tiếp nội dung đề: bọc từng biểu thức toán học bằng dấu phân cách phù hợp. Không nên bọc cả câu văn nếu trong câu chỉ có một phần là công thức.</p>'+R.map(x=>'<p class="m"><b>Câu '+x.qi+' · '+x.fld+'</b> — dòng '+x.line+' — lệnh <code>'+esc(x.cmd)+'</code><br>'+esc(x.sample)+'</p>').join('')+'</div>':'<p class="m">Không phát hiện lệnh LaTeX phổ biến nằm ngoài dấu phân cách.</p>';
+      box.innerHTML=formulas+raw;
+      await mj(box);
+      box.querySelectorAll('.fx').forEach(d=>{
+        const er=d.querySelector('.mth [data-mjx-error]');
+        if(er){d.querySelector('.ferr').textContent='✗ Lỗi hiển thị: '+(er.getAttribute('data-mjx-error')||'cú pháp LaTeX không hợp lệ');d.style.borderColor='var(--no)'}
+      });
+      await srcp();
+    }
     function fedit(k,v){const ta=document.getElementById('f-q'),f=locate(ta.value)[k];if(!f)return;v=v.replace(/\s*\n\s*/g,' ').trim();if(!v||v===f.tex)return;
     const old=FMETA[f.tex]||{};FMETA[v]={...old,st:'edited',raw:old.raw||f.tex,note:null};
     ta.value=ta.value.slice(0,f.s)+f.o+v+f.c+ta.value.slice(f.e);fpanel()}
