@@ -99,6 +99,21 @@ BEGIN
   EXCEPTION WHEN SQLSTATE '22023' THEN NULL;
   END;
 
+  -- NULL scope must be rejected explicitly, not deferred to a table constraint.
+  v_rejected := false;
+  BEGIN
+    PERFORM public.admin_save_question(
+      NULL,NULL,NULL,'mc',
+      '{"q":"Question?","o":["A","B"]}'::jsonb,'0'::jsonb,
+      '', '{}'::jsonb, '{}'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN
+    v_rejected := true;
+  END;
+  IF NOT v_rejected THEN
+    RAISE EXCEPTION 'admin_save_question accepted a NULL scope.';
+  END IF;
+
   -- Exercise the real authoring RPC: a DND question must save successfully.
   v_saved_version := public.admin_save_question(
     NULL,'bank',NULL,'dnd',
