@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: d2e7b574da5c4068b6d930c126b982af
 CREATE OR REPLACE FUNCTION public.admin_save_question(p_question_id uuid, p_scope text, p_owner_exam_id uuid, p_question_type text, p_content jsonb, p_answer_key jsonb, p_explanation text, p_grading_config jsonb, p_source_metadata jsonb)
  RETURNS uuid
  LANGUAGE plpgsql
