@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: 2655dc2e53683204041c2b297e04f582
 
 begin;
 
