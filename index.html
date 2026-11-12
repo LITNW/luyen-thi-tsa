@@ -396,7 +396,7 @@ body.exam-active{overflow:hidden}
     async function flushTime(a,index,visit){
       if(!a.qids||!a.qids[index])return;
       let seconds=index===a.cur?(a.pendingTime||0):0;
-      if(!seconds&&!visit)return;
+      if(!seconds&&!visit){await syncPending(a);return}
       if(index===a.cur)a.pendingTime=0;
       let first=true;
       while(seconds>0||first&&visit){
@@ -409,7 +409,9 @@ body.exam-active{overflow:hidden}
     async function saveCurrentAnswer(a,index){
       const i=index==null?a.cur:index;
       a.dirtyAnswers=a.dirtyAnswers||{};a.dirtyAnswers[i]=true;
-      persistAttempt(a);await syncPending(a);
+      persistAttempt(a);
+      if(!navigator.onLine){updateSyncStatus(a);return false}
+      await syncPending(a);
     }
     async function finish(autoSubmit=false){
       const a=view.at;if(!a||a.submitting)return;
@@ -476,6 +478,7 @@ body.exam-active{overflow:hidden}
           const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
           exam=pointer.examSnapshot;attemptId=pointer.attemptId;state=pointer.stateSnapshot||{};
           const {qs,a}=buildAttempt(exam,attemptId,state,cached,true,pointer);
+          if(!a.locked)a.timeQueue.push({id:makeUuid(),index:a.cur,seconds:0,visit:1});
           D.exams=D.exams.filter(x=>x.id!==exam.id);
           D.exams.push({id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no});
           view={n:'take',id:exam.id,at:a};render();notify('Đang làm việc ở chế độ ngoại tuyến. Đáp án được giữ trên thiết bị; máy chủ sẽ xác nhận khi có mạng.');return;
@@ -498,6 +501,7 @@ body.exam-active{overflow:hidden}
       const cached=st.get('tsa-attempt-'+pointer.attemptId)||{};
       const exam=pointer.examSnapshot,state=pointer.stateSnapshot||{};
       const {qs,a}=buildAttempt(exam,pointer.attemptId,state,cached,true,pointer);
+      if(!a.locked)a.timeQueue.push({id:makeUuid(),index:a.cur,seconds:0,visit:1});
       D.exams=[{id:exam.id,title:exam.title,desc:exam.description||'',minutes:Number(state.duration_minutes)||exam.duration_minutes,qs,exam_id:exam.exam_id,version_no:exam.version_no}];
       view={n:'take',id:exam.id,at:a};render();return true;
     }
