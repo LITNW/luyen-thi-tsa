@@ -100,6 +100,26 @@
     @media(max-width:800px){.auth-shell{grid-template-columns:1fr}.auth-intro{min-height:390px;padding:34px 28px}.auth-intro .eyebrow{margin-top:28px}.auth-points{margin-top:25px;gap:12px}.auth-foot{display:none}.auth-panel{width:100%;padding:42px 28px}.hero-decoration{margin-right:0;transform:scale(.8)}.welcome-hero{padding:34px 28px}.site-shell{padding:0 20px}}
     @media(max-width:600px){.site-shell{padding:0 15px}.site-header{height:70px}.top-nav{gap:10px}.nav-link{font-size:.77rem}.user-pill{padding-left:10px}.user-pill>span{display:none}.welcome-hero{min-height:220px;padding:28px 22px}.welcome-hero h1{font-size:1.8rem}.hero-decoration{position:absolute;right:-55px;bottom:-55px;opacity:.35;transform:scale(.75)}.dashboard-metrics{grid-template-columns:1fr;gap:9px;margin:14px 0 30px}.metric-card{padding:12px 15px}.exam-grid,.admin-toolbar{grid-template-columns:1fr}.section-heading{margin-top:30px}.notice-card{align-items:flex-start;flex-direction:column}.site-footer span{float:none;display:block;margin-top:7px}.auth-intro{min-height:350px}.auth-intro h1{font-size:2.5rem}}
 
+
+    /* ---- Contrast and readability pass: dashboard, admin and shared UI ---- */
+    :root{--tx:#152238;--mu:#4b5870;--bd:#d5ddea;--pr:#244fc8;--fl:#865000}
+    body,#app{color:var(--tx)}
+    .m,.metric-card small,.admin-action small,.exam-description,.exam-meta-row,.exam-meta,
+    .notice-card p,.user-pill small{color:var(--mu)}
+    .eyebrow,.exam-label,.site-footer{color:#435575}
+    .nav-link{color:#34435d}
+    .role-tag,.metric-icon,.admin-action>span,.empty-symbol{color:#2447a8}
+    .status-tag.published{background:#e4f5ec;color:#116044}
+    .status-tag.draft{background:#fff0cf;color:#80500a}
+    .auth-divider{color:#58657a}
+    .auth-form label{color:#263650}
+    .b.fl{color:#754600}
+    .admin-action,.exam-card,.metric-card,.c{color:var(--tx)}
+    input,textarea,select{color:var(--tx)}
+    input::placeholder,textarea::placeholder{color:#647086;opacity:1}
+    button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,
+    summary:focus-visible{outline:3px solid #244fc8;outline-offset:2px}
+    .b:disabled{opacity:.68}
     </style></head><body><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
@@ -142,7 +162,7 @@
     else if(m=l.match(/^điểm\s*[:：]\s*([\d.,]+)/i))p=parseFloat(m[1].replace(',','.'))||1;
     else if(m=l.match(/^(?:loại|loai)\s*[:：]\s*(.*)/i))mf=/nhiều|nhieu|multi/i.test(m[1]);
     else if(m=l.match(/^(?:quy tắc|quy tac)\s*[:：]\s*(.*)/i))oncef=/một lần|1 lần|once/i.test(m[1]);
-    else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){if(m[1].trim())o=splitOpts(m[1]);k='dnd'}
+    else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){const raw=m[1].trim(),cut=raw.search(/\s+\$d\s*\(/i);if(cut>=0){o=splitOpts(raw.slice(0,cut));e+=(e?'\n':'')+raw.slice(cut).trim();explainMode=true}else if(raw)o=splitOpts(raw);k='dnd'}
     else if(dndLabeled&&li>=legacyStart&&(m=l.match(/^([A-F])[.)]\s*(.*)/i))){const code=m[1].toUpperCase();if(code!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);k='dnd';idMode=true}
     else if(explainMode||(answerSeen&&o.length)){e+=(e?'\n':'')+l}
     else if(dndCandidate&&(!dndLabeled||li<legacyStart)){q.push(l)}
