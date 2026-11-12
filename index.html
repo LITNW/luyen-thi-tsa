@@ -125,7 +125,11 @@
     async function place(i){const a=view.at,q=ex(view.id).qs[a.cur],f=a.ans[a.cur]||Array(Math.max(...SL(q))).fill(null);if(sel!=null)f.forEach((z,j)=>{if(z===sel)f[j]=null});f[i]=sel!=null?sel:null;sel=null;a.ans[a.cur]=f;try{await saveCurrentAnswer(a,a.cur)}catch(e){notify('Chưa lưu được đáp án: '+e.message)}render()}
     function go(v){view=v;armed=null;sel=null;render();window.scrollTo(0,0)}
     function parse(txt){return txt.split(/\n\s*---+\s*\n?/).map(b=>b.trim()).filter(Boolean).map((b,i)=>{let q=[],o=[],a=null,e='',t='',p=1,m,k='mc',ra='',mf=false,oncef=false,idMode=false;
-    for(const l of b.split('\n').map(s=>s.trim()).filter(Boolean)){
+    const lines=b.split('\n').map(s=>s.trim()).filter(Boolean);
+    // Nhận diện ghép nối trước khi đọc từng dòng: không phụ thuộc thứ tự parser gặp nhãn A-F.
+    const hasSlots=/\[\s*\d+\s*\]/.test(b),hasChoiceHeader=/^(?:lựa chọn|lua chon)\s*[:：]/im.test(b);
+    const dndLabeled=hasSlots&&hasChoiceHeader&&lines.filter(s=>/^[A-F][.)]\s*/i.test(s)).length>=2;
+    for(const l of lines){
     if(m=l.match(/^(?:đáp án|dap an)\s*[:：]\s*(.*)/i))ra=m[1].trim();
     else if(m=l.match(/^(?:giải thích|giai thich)\s*[:：]\s*(.*)/i))e=m[1];
     else if(m=l.match(/^(?:chủ đề|chu de)\s*[:：]\s*(.*)/i))t=m[1];
@@ -133,10 +137,11 @@
     else if(m=l.match(/^(?:loại|loai)\s*[:：]\s*(.*)/i))mf=/nhiều|nhieu|multi/i.test(m[1]);
     else if(m=l.match(/^(?:quy tắc|quy tac)\s*[:：]\s*(.*)/i))oncef=/một lần|1 lần|once/i.test(m[1]);
     else if(m=l.match(/^(?:lựa chọn|lua chon)\s*[:：]\s*(.*)/i)){o=splitOpts(m[1]);k='dnd'}
+    else if(dndLabeled&&(m=l.match(/^([A-F])[.)]\s*(.*)/i))){const code=m[1].toUpperCase();if(code!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);k='dnd';idMode=true}
     else if((m=l.match(/^([a-d])[.)]\s*(.*)/))&&m[1]==='abcd'[o.length]){o.push(m[2]);k='tf'}
-    else if(k==='dnd'&&(m=l.match(/^([A-F])[.)]\s*(.*)/))){if(m[1]!==L[o.length])throw new Error('Câu '+(i+1)+': mã phương án ghép nối phải theo thứ tự A, B, C, D, E, F');o.push(m[2]);idMode=true}
     else if((m=l.match(/^([A-F])[.)]\s*(.*)/))&&m[1]===L[o.length])o.push(m[2])
     else if(o.length)o[o.length-1]+=' '+l;else q.push(l)}
+    if(dndLabeled){k='dnd';idMode=true}
     if(!q.length)throw new Error('Câu '+(i+1)+': thiếu nội dung');
     const bad=s=>new Error('Câu '+(i+1)+': '+s),tk=ra.split(/[\s,;]+/).filter(Boolean);
     if(!ra||ra==='?')throw bad('chưa có đáp án (đang để dấu ?), hãy điền trước khi đăng');
