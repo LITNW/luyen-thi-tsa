@@ -193,7 +193,7 @@ BEGIN
     RAISE EXCEPTION 'Chỉ Admin mới được tạo hoặc cập nhật câu hỏi.';
   END IF;
 
-  IF p_scope NOT IN ('bank','exam')
+  IF p_scope IS NULL OR p_scope NOT IN ('bank','exam')
      OR (p_scope = 'bank' AND p_owner_exam_id IS NOT NULL)
      OR (p_scope = 'exam' AND p_owner_exam_id IS NULL) THEN
     RAISE EXCEPTION 'Phạm vi câu hỏi không hợp lệ.';
