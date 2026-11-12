@@ -1,5 +1,5 @@
--- Minimal isolated PostgreSQL schema for migration regression tests.
--- This is a test fixture, not a production schema migration.
+-- Isolated PostgreSQL fixture matching the live columns used by this migration.
+-- This is test-only schema; it does not create or modify Production objects.
 
 DO $roles$
 BEGIN
@@ -31,14 +31,23 @@ AS $function$
 $function$;
 
 CREATE TABLE public.exams (
-  id uuid PRIMARY KEY
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  duration_minutes integer NOT NULL,
+  questions_public jsonb NOT NULL DEFAULT '[]'::jsonb,
+  is_published boolean NOT NULL DEFAULT false,
+  created_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.questions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   scope text NOT NULL,
   owner_exam_id uuid,
-  created_by uuid
+  created_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.question_versions (
@@ -47,7 +56,8 @@ CREATE TABLE public.question_versions (
   version_no integer NOT NULL,
   question_type text NOT NULL,
   content jsonb NOT NULL,
-  created_by uuid
+  created_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.question_answer_keys (
@@ -55,19 +65,33 @@ CREATE TABLE public.question_answer_keys (
   answer_key jsonb NOT NULL,
   explanation text NOT NULL DEFAULT '',
   grading_config jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
   source_metadata jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE public.exam_versions (
-  id uuid PRIMARY KEY,
-  status text NOT NULL,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  exam_id uuid NOT NULL REFERENCES public.exams(id),
+  version_no integer NOT NULL,
+  title text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  duration_minutes integer NOT NULL,
+  status text NOT NULL DEFAULT 'draft',
+  created_by uuid,
   published_by uuid,
-  published_at timestamptz
+  created_at timestamptz NOT NULL DEFAULT now(),
+  published_at timestamptz,
+  archived_at timestamptz
 );
 
 CREATE TABLE public.exam_version_questions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   exam_version_id uuid NOT NULL REFERENCES public.exam_versions(id),
+  exam_id uuid NOT NULL REFERENCES public.exams(id),
   question_version_id uuid NOT NULL REFERENCES public.question_versions(id),
+  question_id uuid NOT NULL REFERENCES public.questions(id),
   position integer NOT NULL,
-  PRIMARY KEY (exam_version_id,question_version_id)
+  points numeric NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
