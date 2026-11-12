@@ -22,7 +22,14 @@ The Supabase migration ledger contains the SQL statements, but the original GitH
 
 The first recovered Production migration is labelled `005` in its SQL comments. The database already had the base `profiles`, `exams`, `exam_solutions`, `attempts`, and `audit_logs` structures before that point. Earlier setup work (including the question-bank/versioning and attempt/scoring setup commonly referred to as migrations 003 and 004) was run through the Supabase SQL Editor and is not represented in the 17-row migration ledger.
 
-The live database currently has the profile extension objects, question/version tables, answer-key tables, attempt answer/time tables, helper functions, triggers, and RLS policies. The original SQL for the pre-005 setup has not yet been recovered as a complete, reproducible chain. Do not claim this repository can initialize a completely empty Supabase project until that baseline is reconstructed and tested.
+The live database currently has the profile extension objects, question/version tables, answer-key tables, attempt answer/time tables, helper functions, triggers, and RLS policies. `pg_stat_statements` still retains a partial set of earlier DDL statements, including original `CREATE TABLE` statements for `profiles`, `exams`, `attempts`, and `audit_logs`, plus selected function, trigger, index, and policy definitions. This is corroborating evidence, not a complete historical archive: statements can be absent from the statistics, and later changes may have replaced earlier definitions. No complete, exact SQL chain for historical migrations 001–004 has been recovered.
+
+Two explicitly test-only compatibility fixtures are maintained:
+
+- `tests/fixtures/pre_005_schema.sql` supplies the reconstructed pre-005 schema and lightweight Auth stubs for plain PostgreSQL 16 tests.
+- `tests/fixtures/pre_005_supabase_schema.sql` supplies the same reconstructed public-schema baseline while leaving Supabase-managed `auth`, `storage`, and platform roles intact. It is used only against an isolated Supabase local stack.
+
+These fixtures are reconstructions of the schema state needed to exercise the recovered chain, not renamed historical migrations 001–004. The PostgreSQL 16 chain test validates SQL ordering and dependencies against the reconstructed schema. The Supabase clean-install workflow additionally starts an isolated local Supabase stack and applies the baseline, all 17 recovered migrations, pending AI-import migration, and PR #22 answer-validation migration before running smoke/regression checks. A passing run demonstrates compatibility with that tested local stack; it does not establish that the original historical SQL was recovered byte-for-byte or that Production was modified.
 
 ## Safety status
 
