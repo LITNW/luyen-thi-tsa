@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import HistoryPage from './pages/HistoryPage.jsx';
+import ResultsPage from './pages/ResultsPage.jsx';
 import { AdminHomePage, AdminExamsPage, AdminUsersPage, AdminAttemptsPage } from './pages/AdminPages.jsx';
 
 function LegacyRedirect() {
@@ -41,7 +42,7 @@ export default function App() {
       <Route path="/admin/attempts" element={<RouteGuard admin><AdminAttemptsPage /></RouteGuard>} />
       <Route path="/admin/import" element={<RouteGuard admin><LegacyRedirect /></RouteGuard>} />
       <Route path="/exam/:id" element={<RouteGuard><LegacyExamRedirect /></RouteGuard>} />
-      <Route path="/results/:attemptId" element={<RouteGuard><LegacyRedirect /></RouteGuard>} />
+      <Route path="/results/:attemptId" element={<RouteGuard><ResultsPage /></RouteGuard>} />
       <Route path="/legacy" element={<Navigate to="/legacy/index.html" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

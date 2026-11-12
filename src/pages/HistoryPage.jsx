@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase.js';
 
 function duration(seconds = 0) {
   const value = Math.max(0, Number(seconds) || 0);
-  return Math.floor(value / 60) + ':' + String(value % 60).padStart(2, '0');
+  return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
 }
 
 const statusText = {
@@ -46,7 +46,7 @@ export default function HistoryPage() {
         <p className="muted">Danh sách lượt làm được lấy từ máy chủ. Kết quả và trạng thái gốc không bị thay đổi bởi giao diện React.</p>
         {error && <div className="alert" role="alert">{error}</div>}
         {loading ? <div className="loading-line"><span className="spinner" /> Đang tải lịch sử…</div> :
-          items.length ? <div className="history-list">{items.map((item) => <article className="history-card" key={item.attempt_id}>
+          items.length ? <div className="history-list">{items.map((item) => <article className="history-card exam-card" key={item.attempt_id}>
             <div className="card-top"><span className="eyebrow">PHIÊN BẢN {item.version_no}</span><span className={'status ' + (item.status === 'submitted' ? 'published' : item.status === 'in_progress' ? 'draft' : '')}>{statusText[item.status] || item.status}</span></div>
             <h2>{item.title}</h2>
             <p className="muted">{item.started_at ? new Date(item.started_at).toLocaleString('vi-VN') : 'Không có thời gian bắt đầu'}</p>
@@ -54,7 +54,8 @@ export default function HistoryPage() {
               {item.status === 'submitted' && <b>{item.score} / {item.max_score} điểm</b>}
               <span>Thời gian: {duration(item.elapsed_seconds)}</span>
             </div>
-            {item.status === 'in_progress' && item.exam_version_id && <a className="button primary full" href={'/legacy/index.html?start=' + encodeURIComponent(item.exam_version_id)}>Tiếp tục làm bài <span aria-hidden="true">→</span></a>}
+            {item.status === 'in_progress' && item.exam_version_id && <a className="button primary full" href={'/exam/' + encodeURIComponent(item.exam_version_id)}>Tiếp tục làm bài <span aria-hidden="true">→</span></a>}
+            {item.status === 'submitted' && item.attempt_id && <Link className="button secondary full" to={'/results/' + encodeURIComponent(item.attempt_id)}>Xem chi tiết kết quả</Link>}
           </article>)}</div> :
           <div className="empty-state"><b>Chưa có lượt làm bài nào</b><p>Khi bạn bắt đầu một đề thi, lịch sử sẽ xuất hiện tại đây.</p></div>
         }
