@@ -12,6 +12,25 @@ DECLARE
 BEGIN
   PERFORM set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
 
+  -- Verify RPC grants match the existing Supabase contract and the helper stays private.
+  IF has_function_privilege('anon','public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR has_function_privilege('anon','public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR has_function_privilege('anon','public.admin_publish_exam_version(uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'Anonymous role unexpectedly has access to an admin RPC.';
+  END IF;
+  IF NOT has_function_privilege('authenticated','public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR NOT has_function_privilege('authenticated','public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR NOT has_function_privilege('authenticated','public.admin_publish_exam_version(uuid)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.admin_set_question_answer_key(uuid,jsonb,text,jsonb,jsonb)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.admin_publish_exam_version(uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'Expected Supabase RPC grants are missing.';
+  END IF;
+  IF has_function_privilege('authenticated','public.validate_question_answer_key(text,jsonb,jsonb)','EXECUTE')
+     OR has_function_privilege('anon','public.validate_question_answer_key(text,jsonb,jsonb)','EXECUTE') THEN
+    RAISE EXCEPTION 'Internal answer validator must not be directly executable by API roles.';
+  END IF;
+
   -- Verify all server-side paths use the same validator.
   IF position('public.validate_question_answer_key(' IN pg_get_functiondef(
        'public.admin_save_question(uuid,text,uuid,text,jsonb,jsonb,text,jsonb,jsonb)'::regprocedure
