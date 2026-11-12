@@ -107,13 +107,13 @@ BEGIN
       -- Reject malformed/overflowing slot markers before casting them to integer.
       IF NOT EXISTS (
         SELECT 1
-        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+        FROM regexp_matches(p_content->>'q', '\[([0-9]+)\]', 'g') AS matches(match_parts)
       ) THEN
         RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Câu DND phải có ít nhất một vị trí ghép [1], [2], ...';
       END IF;
       IF EXISTS (
         SELECT 1
-        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+        FROM regexp_matches(p_content->>'q', '\[([0-9]+)\]', 'g') AS matches(match_parts)
         WHERE (match_parts)[1]::numeric < 1
            OR (match_parts)[1]::numeric > 2147483647
       ) THEN
@@ -124,7 +124,7 @@ BEGIN
         INTO v_slot_keys
       FROM (
         SELECT DISTINCT (match_parts)[1]::integer AS slot
-        FROM regexp_matches(p_content->>'q', '\\[([0-9]+)\\]', 'g') AS matches(match_parts)
+        FROM regexp_matches(p_content->>'q', '\[([0-9]+)\]', 'g') AS matches(match_parts)
       ) AS slots;
 
       FOR v_entry IN SELECT key, value FROM jsonb_each(p_answer_key)
