@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: be6a231668a37ac51f6287d9c1105d59
 
 -- Migration 014: enforce active account ownership at the attempt-table trigger boundary.
 -- This also blocks a suspended student from continuing an already-open attempt.
