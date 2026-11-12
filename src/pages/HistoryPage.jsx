@@ -46,7 +46,7 @@ export default function HistoryPage() {
         <p className="muted">Danh sách lượt làm được lấy từ máy chủ. Kết quả và trạng thái gốc không bị thay đổi bởi giao diện React.</p>
         {error && <div className="alert" role="alert">{error}</div>}
         {loading ? <div className="loading-line"><span className="spinner" /> Đang tải lịch sử…</div> :
-          items.length ? <div className="history-list">{items.map((item) => <article className="history-card" key={item.id}>
+          items.length ? <div className="history-list">{items.map((item) => <article className="history-card" key={item.attempt_id}>
             <div className="card-top"><span className="eyebrow">PHIÊN BẢN {item.version_no}</span><span className={'status ' + (item.status === 'submitted' ? 'published' : item.status === 'in_progress' ? 'draft' : '')}>{statusText[item.status] || item.status}</span></div>
             <h2>{item.title}</h2>
             <p className="muted">{item.started_at ? new Date(item.started_at).toLocaleString('vi-VN') : 'Không có thời gian bắt đầu'}</p>

@@ -72,3 +72,27 @@ Security advisor findings observed:
 5. Migrate auth/dashboard first. Migrate exam authoring/import and the exam engine only after dedicated parity tests.
 6. Preserve attempt snapshots, server-authoritative timing, idempotent submission, and historical results.
 7. Treat all future database changes as separate, backward-compatible migrations after migration-ledger reconciliation.
+
+
+## React migration progress
+
+Initial implementation is isolated on `feature/react-migration` and has produced successful Vercel Preview builds. The build is split into React, router, and Supabase vendor chunks; the first oversized-bundle warning is no longer present.
+
+Migrated to React in this branch:
+- Login and registration through the existing Supabase Auth project.
+- Profile lookup and active-account/admin route guards.
+- Published exam dashboard through `list_published_exams`.
+- Account details and sign-out.
+- Student attempt history through `get_my_attempt_history`.
+- Admin exam-version metadata through `admin_list_exam_versions`.
+- Admin user list and updates through `admin_list_profiles` and `admin_update_profile`.
+- Admin attempt list through `admin_list_attempts`.
+- Direct exam-start bridge: React routes to the retained legacy exam page with the selected published version ID. The legacy client then calls the existing `start_exam_attempt`, `get_published_exam`, and `get_my_attempt_state` RPCs.
+
+The following still remain on the legacy interface and must not be removed until React parity and end-to-end tests pass: question authoring/import, AI import review, MathJax/DOCX/PDF processing, exam room, timer and offline sync, submission/grading, result details, and recovery flows.
+
+Important schema contract checked read-only against the live database:
+- `get_my_attempt_history` emits `attempt_id` (not `id`), `exam_version_id`, `title`, `version_no`, `status`, `score`, `max_score`, `elapsed_seconds`, and timestamps.
+- `admin_list_attempts` emits `id`, user metadata, exam metadata, status, score, elapsed time, timestamps, and result details. The React list does not render answer keys or raw result details.
+- `admin_list_profiles` and `admin_update_profile` both enforce `public.is_admin()` in the database. The React UI also disables role/status changes on the currently signed-in admin account.
+- `list_published_exams` is authenticated and active-profile gated. The React client only requests the public exam metadata RPC; it does not query answer-key tables.
