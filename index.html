@@ -14,7 +14,7 @@
     .nb{width:38px;height:38px;border:1px solid var(--bd);border-radius:8px;background:var(--cd);color:var(--tx);cursor:pointer;font:inherit}.nb.dn{background:var(--okb)}.nb.fg{border-color:var(--fl);border-width:2px}.nb.cur{outline:2px solid var(--pr)}
     .st{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}.st div{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center}.st b{display:block;font-size:1.4rem}
     .bk{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}.bk i{display:block;height:100%;background:var(--ok)}
-    .ok{background:var(--okb)}.no{background:var(--nob)}.re{white-space:pre-wrap}.fx{padding:10px}.mth{overflow-x:auto;padding:4px 0}.fxi{font-family:ui-monospace,monospace;font-size:.85rem;margin:4px 0}mjx-container{max-width:100%}.sl{display:inline-block;min-width:64px;padding:0 8px;border:2px dashed var(--pr);border-radius:6px;cursor:pointer;text-align:center}.sl.ac{background:var(--okb)}.chip{font:inherit;padding:6px 12px;margin:4px;border:1px solid var(--bd);border-radius:20px;background:var(--cd);color:var(--tx);cursor:grab}.chip.on{border-color:var(--pr);box-shadow:inset 0 0 0 1px var(--pr)}input,textarea{width:100%;font:inherit;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--cd);color:var(--tx);margin:4px 0 10px}textarea{min-height:300px;font-family:ui-monospace,monospace;font-size:.9rem}
+    .ok{background:var(--okb)}.no{background:var(--nob)}.re{white-space:pre-wrap}.fx{padding:10px}.mth{overflow-x:auto;padding:4px 0}.fxi{font-family:ui-monospace,monospace;font-size:.85rem;margin:4px 0}mjx-container{max-width:100%}mjx-container[jax="SVG"]{max-width:100%;overflow-x:auto;overflow-y:hidden}mjx-container[jax="SVG"][display="true"]{display:block;margin:.55em 0}.sl{display:inline-block;min-width:64px;padding:0 8px;border:2px dashed var(--pr);border-radius:6px;cursor:pointer;text-align:center}.sl.ac{background:var(--okb)}.chip{font:inherit;padding:6px 12px;margin:4px;border:1px solid var(--bd);border-radius:20px;background:var(--cd);color:var(--tx);cursor:grab}.chip.on{border-color:var(--pr);box-shadow:inset 0 0 0 1px var(--pr)}input,textarea{width:100%;font:inherit;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--cd);color:var(--tx);margin:4px 0 10px}textarea{min-height:300px;font-family:ui-monospace,monospace;font-size:.9rem}
     
     /* ---- TSA visual refresh ---- */
     :root{--bg:#f4f6fb;--cd:#fff;--tx:#17233b;--mu:#71809a;--bd:#e3e8f1;--pr:#315ee8;--ok:#15845b;--okb:#e7f7ef;--nob:#fff0ef;--fl:#b7791f;color-scheme:light}
@@ -241,7 +241,7 @@
     function adminUsers(){return '<h1>Quản lý tài khoản</h1>'+adminProfiles.map(p=>'<div class="c"><h3>'+esc(p.display_name)+' · '+esc(p.user_code)+'</h3><p class="m">'+esc(p.email)+' · '+esc(p.role)+' · '+esc(p.status)+'</p><button class="b" data-a="toggleRole" data-i="'+p.id+'">'+(p.role==='admin'?'Hạ xuống học sinh':'Cấp quyền Admin')+'</button> <button class="b" data-a="toggleStatus" data-i="'+p.id+'">'+(p.status==='active'?'Tạm khóa':'Kích hoạt')+'</button></div>').join('')+'<button class="b" data-a="home">Quay lại</button>'}
     async function loadAdminAttempts(){const {data,error}=await sb.rpc('admin_list_attempts',{p_limit:200,p_offset:0});if(error)throw error;adminAttempts=data||[];view={n:'adminAttempts'};render()}
     function adminAttemptsPage(){return '<h1>Tất cả lượt làm bài</h1>'+adminAttempts.map(a=>'<div class="c"><h3>'+esc(a.title)+'</h3><p class="m">'+esc(a.display_name)+' · '+esc(a.user_code)+' · '+esc(a.email)+'</p><p>'+esc(a.status)+' · '+(a.status==='submitted'?a.score+'/'+a.max_score+' điểm':'Chưa nộp')+' · '+fmt(a.elapsed_seconds||0)+'</p><p class="m">'+new Date(a.started_at).toLocaleString('vi-VN')+'</p></div>').join('')+'<button class="b" data-a="home">Quay lại</button>'}
-    function render(){clearInterval(T);const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};A.innerHTML=(pages[view.n]||auth)();if(view.n==='take'){T=setInterval(tick,1000);tick()}mj()}
+    function render(){clearInterval(T);if(window.MathJax&&typeof window.MathJax.typesetClear==='function'){try{window.MathJax.typesetClear([A])}catch(e){}}const pages={auth,home,edit,take,res,history,profilePage,adminUsers,adminAttempts:adminAttemptsPage};A.innerHTML=(pages[view.n]||auth)();if(view.n==='take'){T=setInterval(tick,1000);tick()}mj(A)}
     function tick(){const a=view.at;if(!a||a.submitting)return;const r=Math.round((a.end-Date.now())/1000),e=document.getElementById('tm');if(r<=0){finish();return}if(e){e.textContent=fmt(r);e.style.color=r<60?'var(--no)':''}if(Date.now()-(a.lastFlush||0)>15000){lap(a);a.lastFlush=Date.now();flushTime(a,a.cur,0).catch(()=>{})}}
     function lap(a){const n=Date.now(),delta=Math.max(0,Math.floor((n-a.l)/1000));a.t[a.cur]=(a.t[a.cur]||0)+delta;a.pendingTime=(a.pendingTime||0)+delta;a.l=n}
     async function flushTime(a,index,visit){if(!a.qids||!a.qids[index])return;const seconds=index===a.cur?(a.pendingTime||0):0;if(!seconds&&!visit)return;const {error}=await sb.rpc('record_attempt_question_time',{p_attempt_id:a.attemptId,p_exam_version_question_id:a.qids[index],p_seconds:seconds,p_visit_increment:visit||0});if(!error&&index===a.cur)a.pendingTime=0;if(error)throw error}
@@ -481,12 +481,34 @@
     if(!W.n&&/<m:t[ >]/.test(xml))IW.push(nm+': có công thức Word nhưng không chuyển được, hãy xuất file sang PDF rồi tải PDF lên');
     return ps.join('\n')}
     /* ---- hiển thị công thức (MathJax SVG: không cần CSS/phông ngoài) ---- */
-    function loadMJ(){if(window.MathJax&&window.MathJax.tex2svg)return Promise.resolve();if(MJP)return MJP;
-    window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']],processEscapes:true},svg:{fontCache:'none',displayAlign:'left'},options:{enableMenu:false,enableAssistiveMml:false,skipHtmlTags:['script','noscript','style','textarea','pre','code','input']},startup:{typeset:false}};
-    MJP=lj(MJU[0]).catch(()=>lj(MJU[1])).then(()=>MathJax.startup.promise).catch(e=>{MJP=null;throw e});return MJP}
-    async function mj(el){el=el||A;if(!/\$|\\[(\[]/.test(el.textContent))return;const tk=++MJT;
-    try{await loadMJ();if(el===A&&tk!==MJT)return;MathJax.typesetClear([el]);await MathJax.typesetPromise([el])}
-    catch(e){if(el===A&&!document.getElementById('mjw'))A.insertAdjacentHTML('afterbegin','<p id="mjw" class="m">Không hiển thị được công thức (thư viện chưa tải được); công thức đang hiện dưới dạng mã LaTeX.</p>')}}
+    function loadMJ(){
+      if(MJP)return MJP;
+      if(window.MathJax&&window.MathJax.startup&&window.MathJax.startup.promise){
+        MJP=Promise.resolve(window.MathJax.startup.promise).then(()=>window.MathJax);
+        return MJP;
+      }
+      if(window.MathJax&&window.MathJax.tex2svg&&window.MathJax.typesetPromise)return Promise.resolve(window.MathJax);
+      window.MathJax={tex:{inlineMath:[['$','$'],['\(','\)']],displayMath:[['$$','$$'],['\[','\]']],processEscapes:true},svg:{fontCache:'none',displayAlign:'left'},options:{enableMenu:false,enableAssistiveMml:false,skipHtmlTags:['script','noscript','style','textarea','pre','code','input']},startup:{typeset:false}};
+      MJP=lj(MJU[0]).catch(()=>lj(MJU[1])).then(()=>window.MathJax.startup.promise).then(()=>window.MathJax).catch(e=>{MJP=null;throw e});
+      return MJP;
+    }
+    async function mj(el){
+      el=el||A;
+      if(!el||!fmx(el.textContent).length)return;
+      const tk=++MJT;
+      try{
+        const MJ=await loadMJ();
+        if(!el.isConnected||(el===A&&tk!==MJT))return;
+        if(!MJ||typeof MJ.typesetPromise!=='function')throw new Error('MathJax chưa khởi tạo xong');
+        MJ.typesetClear([el]);
+        await MJ.typesetPromise([el]);
+      }catch(e){
+        if(el.isConnected){
+          const id=el===A?'mjw':'mjw-local';
+          if(!document.getElementById(id))el.insertAdjacentHTML('afterbegin','<p id="'+id+'" class="m">Không hiển thị được công thức (thư viện toán học chưa tải hoặc khởi tạo được); công thức đang hiện dưới dạng mã LaTeX.</p>');
+        }
+      }
+    }
     /* ---- siêu dữ liệu, bảng kiểm tra công thức ---- */
     function mark(x,o,e){const src=x.lab;[x.q,...o,e].forEach(t=>fmx(flat(t||'')).forEach(f=>{if(!FMETA[f.tex])FMETA[f.tex]={st:'ai',src}}));
     (x.fm||[]).forEach(f=>{if(f&&f.tex)FMETA[String(f.tex).replace(/^\$+|\$+$/g,'').trim()]={st:'unsure',raw:f.raw||null,note:f.note||'AI không chắc chắn',src}})}
