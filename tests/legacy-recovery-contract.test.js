@@ -21,3 +21,9 @@ test('tab resume checkpoints elapsed time and pauses the timer during reconcilia
 test('the exam renderer guards against a missing current question', () => {
   assert.match(html, /if\(!a\|\|!ensureAttemptReady\(a\)\)return[\s\S]*?Đang khôi phục phòng thi/);
 });
+
+test('concurrent answer edits cannot clear the dirty marker for a newer revision', () => {
+  assert.match(html, /const revision=a\.dirtyAnswers\[key\];[\s\S]*?if\(a\.dirtyAnswers\[key\]===revision\)delete a\.dirtyAnswers\[key\]/);
+  assert.match(html, /while\(true\)\{\s*const key=Object\.keys\(a\.dirtyAnswers\|\|\{\}\)\.filter\(k=>a\.dirtyAnswers\[k\]\)/);
+  assert.match(html, /a\.dirtyAnswers\[i\]=\(Number\(a\.dirtyAnswers\[i\]\)\|\|0\)\+1/);
+});
