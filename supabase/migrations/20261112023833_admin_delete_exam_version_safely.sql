@@ -1,5 +1,5 @@
 -- Recovered from Supabase Production migration ledger.
--- Original statement MD5: undefined
+-- Original statement MD5: d84f69941bbea4a004a677a931219fa2
 
 -- Allow administrators to remove an exam version only through the guarded RPC.
 CREATE OR REPLACE FUNCTION public.protect_exam_version()
