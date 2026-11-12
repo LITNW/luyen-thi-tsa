@@ -593,7 +593,7 @@ CREATE POLICY attempt_question_times_read_owner_admin ON public.attempt_question
 
 CREATE POLICY attempts_read_self_or_admin ON public.attempts AS PERMISSIVE FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)) OR ( SELECT is_admin() AS is_admin));
 
-CREATE POLICY audit_logs_admin_read ON public.audit_logs AS PERMISSIVE FOR SELECT TO authenticated USING ( SELECT is_admin() AS is_admin);
+CREATE POLICY audit_logs_admin_read ON public.audit_logs AS PERMISSIVE FOR SELECT TO authenticated USING (( SELECT is_admin() AS is_admin));
 
 CREATE POLICY exams_read_published_or_admin ON public.exams AS PERMISSIVE FOR SELECT TO authenticated USING ((is_published = true) OR ( SELECT is_admin() AS is_admin));
 
