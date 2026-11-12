@@ -111,9 +111,9 @@
     const ex=id=>D.exams.find(x=>x.id===id),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
     const TL={mc:'Trắc nghiệm',ms:'Nhiều đáp án',tf:'Đúng/Sai',num:'Điền số',dnd:'Ghép nối'},K=q=>q.k||'mc',P=q=>q.p||1,mx=x=>x.qs.reduce((s,q)=>s+P(q),0),num=s=>parseFloat(String(s).replace(',','.'));
     const any=(q,v)=>v!=null&&(Array.isArray(v)?v.some(z=>z!=null):v!=='');
-    function frac(q,v){if(!any(q,v))return 0;const k=K(q);if(k==='mc')return v===q.a?1:0;if(k==='ms'){const s0=new Set(v);return s0.size===q.a.length&&q.a.every(z=>s0.has(z))?1:0}if(k==='num'){const x=num(v);return isFinite(x)&&Math.abs(x-q.a)<=1e-6*Math.max(1,Math.abs(q.a))?1:0}if(k==='dnd'){const m=dm(q),ks=Object.keys(m);return ks.length>0&&ks.every(z=>v[z-1]===m[z]-1)?1:0}return q.a.filter((z,i)=>v[i]===z).length/q.a.length}
+    function frac(q,v){if(!any(q,v))return 0;const k=K(q);if(k==='mc')return v===q.a?1:0;if(k==='ms'){const s0=new Set(v);return s0.size===q.a.length&&q.a.every(z=>s0.has(z))?1:0}if(k==='num'){const x=num(v);return isFinite(x)&&Math.abs(x-q.a)<=1e-6*Math.max(1,Math.abs(q.a))?1:0}if(k==='dnd'){const m=dm(q),ks=Object.keys(m);return ks.length>0&&ks.every(z=>v[z-1]===m[z])?1:0}return q.a.filter((z,i)=>v[i]===z).length/q.a.length}
     const ans=(q,v)=>{const k=K(q);if(!any(q,v))return '(bỏ trống)';if(k==='mc')return L[v]+'. '+esc(q.o[v]);if(k==='ms')return v.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; ');if(k==='num')return esc(v);if(k==='tf')return v.map((z,i)=>'abcd'[i]+') '+(z==null?'–':z?'Đ':'S')).join(' · ');return SL(q).map(z=>'['+z+']→'+(v[z-1]==null?'–':L[v[z-1]]+'. '+esc(q.o[v[z-1]]))).join(' ; ')};
-    const key=q=>{const k=K(q);return k==='mc'?L[q.a]+'. '+esc(q.o[q.a]):k==='ms'?q.a.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; '):k==='num'?String(q.a).replace('.',','):k==='tf'?q.a.map((z,i)=>'abcd'[i]+') '+(z?'Đ':'S')).join(' · '):Object.entries(dm(q)).map(([z,v])=>'['+z+']→'+L[v-1]+'. '+esc(q.o[v-1])).join(' ; ')};
+    const key=q=>{const k=K(q);return k==='mc'?L[q.a]+'. '+esc(q.o[q.a]):k==='ms'?q.a.map(i=>L[i]+'. '+esc(q.o[i])).join(' ; '):k==='num'?String(q.a).replace('.',','):k==='tf'?q.a.map((z,i)=>'abcd'[i]+') '+(z?'Đ':'S')).join(' · '):Object.entries(dm(q)).map(([z,v])=>'['+z+']→'+L[v]+'. '+esc(q.o[v])).join(' ; ')};
     const qt=(q,v)=>K(q)==='dnd'?esc(q.q).replace(/\[(\d+)\]/g,(m,n)=>'<span class="sl'+(sel!=null?' ac':'')+'" data-a="slot" data-i="'+(n-1)+'">'+(v&&v[n-1]!=null?L[v[n-1]]+'. '+esc(q.o[v[n-1]]):'['+n+']')+'</span>'):esc(q.q);
     function inp(q,v){const k=K(q);
     if(k==='mc')return q.o.map((s,i)=>'<button class="o'+(v===i?' on':'')+'" data-a="pick" data-i="'+i+'"><b>'+L[i]+'.</b> '+esc(s)+'</button>').join('');
@@ -363,7 +363,7 @@
     if(kk==='tf'){const r=tfInfo(c.a,o);if(r.full){const s=r.full.map(b=>b?'Đ':'S');return{t:'full',v:s.join(''),s:s.join(', '),full:r.full,d:s.join(', ')}}if(r.cons)return{t:'part',cons:r.cons,d:d0};return un()}
     if(kk==='dnd'){const px=pairsX(c.a),sl=SL(x),oo=x.o||[];if(!px)return un('Lỗi định dạng: đáp án phải có dạng "1: 6 | 2: 4 | 3: 2" (N: nội dung phương án)');
     const pr=chk(oo,sl,px).filter(z=>off||!/^thiếu/.test(z.m));if(pr.length)return un(pr.map(z=>z.k+': '+z.m).join('; '));
-    const raw=k=>px.ix&&px.ix[k]!=null?normAns(oo[px.ix[k]-1]):normAns(px.mp[k]);
+    const raw=k=>px.ix&&px.ix[k]!=null?normAns(oo[px.ix[k]]):normAns(px.mp[k]);
     if(sl.every(k=>px.ix&&px.ix[k]!=null)){const s=sl.map(k=>k+': '+escBar(raw(k))).join(' | '),map=Object.fromEntries(sl.map(k=>[k,raw(k)]));return{t:'full',v:s,s,map,d:s}}
     return{t:'part',cons:Object.fromEntries(Object.keys(px.mp).map(k=>[k,raw(k)])),d:d0}}
     const m=/-?\d+(?:[.,]\d+)?/.exec(d0);if(!m||/[:→=]/.test(d0))return un();if(!off&&c.full!==true)return{t:'none'};return{t:'full',v:String(num(m[0])),s:m[0],d:d0}}
