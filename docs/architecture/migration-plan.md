@@ -12,7 +12,7 @@ Strategy: Expand → Backfill → Dual-read/dual-write where required → Switch
 - New migration timestamps must be later than `20261112170000` and must be unique.
 - Do not add a reconstructed historical baseline to the active migration directory.
 - The test-only pre-005 fixtures remain test-only.
-- Do not change or delete data in `attempts`, `attempt_answers`, `exam_version_questions`, `question_versions`, or `question_answer_keys) in P0/P1.
+- Do not change or delete data in `attempts`, `attempt_answers`, `exam_version_questions`, `question_versions`, or `question_answer_keys` in P0/P1.
 
 ## 2. P0 — before the first schema migration
 
