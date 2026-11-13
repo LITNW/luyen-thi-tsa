@@ -38,14 +38,14 @@ This discriminator is part of the persisted exam-version contract, not a fronten
 | `admin_reorder_exam_questions` | Reorders flat mapping positions | Does not reorder section/group hierarchy | Restrict to v1; v2 reorders section items and group children |
 | `admin_update_question_points` | Changes points on a mapping | Potentially safe for mapping, but must preserve draft and group context | May remain usable only if it verifies v2 mapping membership and draft status; otherwise expose v2 equivalent |
 | `admin_create_exam_version` | Clones exam version and flat question mappings | New version would omit section/group structure | For v1 only; add v2 clone path that remaps every copied `exam_version_question.id` into new section-item child rows |
-| `admin_delete_exam_version` | Deletes/archives versions with attempt-aware safeguards | New FK relationships may block deletion or leave orphan layout rows | Extend deletion order/constraints; preserve attempt and published-version protections |
+| `admin_delete_exam_version` | If no attempts, deletes `exam_version_questions` before `exam_versions`; otherwise archives | New section-item child rows can RESTRICT deletion of mappings | Delete draft-owned section/item/child rows before deleting mappings; keep reusable group/stimulus versions; preserve attempt-aware archive behavior |
 | `admin_publish_exam_version` | Validates answer keys and publishes a flat mapping set | Does not validate section/item/group completeness | Branch by `content_model_version`; v2 publication also validates complete structure and group membership |
-| `list_published_exams` | Returns published exam cards | Client may route v2 exam to legacy runtime | Include a runtime/content-model version in the listing response or add a compatible dashboard RPC |
+| `list_published_exams` | Returns published exam cards and question count; no content-model version | Client may route v2 exam to legacy runtime | Add `content_model_version` to the card payload or a compatible v2 listing RPC |
 | `start_exam_attempt` | Creates attempt using `exam_version_questions` and total points | No inherent issue if every v2 question still has a mapping | Keep mapping-based behavior; route to v2 runtime before loading the attempt |
 | `save_attempt_answer` | Saves answer by mapping ID and attempt | No inherent issue | Preserve signature and owner/deadline checks |
 | `record_attempt_question_time_v2` | Records timing by mapping ID | No inherent issue | Preserve mapping IDs and idempotency |
 | `submit_exam_attempt` | Scores each mapping by question type | Structure does not change scoring identity | Keep mapping iteration; later refactor type grading separately |
-| `get_my_attempt_state` / history RPCs | Resume/history/result state | Must know which renderer to restore for an in-progress attempt | Return content-model version through an authorized field; do not replace the attempt's exam version |
+| `get_my_attempt_state` / history RPCs | State returns exact `exam_version_id`, answers, timing, and post-submit results; it does not return layout version | Resume flow may reopen a v2 attempt in the legacy renderer | Include `content_model_version` from the attempt's exact `exam_version_id`; preserve existing answer/timing fields and history payload shape where possible |
 
 ## 4. Required v2 RPC set
 
@@ -101,10 +101,10 @@ A v2 clone creates:
 - copied sections and top-level items
 - copied `exam_section_item_questions` rows remapped to the new mapping IDs
 
-It reuses immutable question, group, and stimulus versions. It does not copy answer keys or mutate question content.
+It reuses immutable question, group, and stimulus versions. It does not copy answer keys or mutate question content. The current `admin_create_exam_version` copies only flat question mappings, so it must remain v1-only; a v2 clone must remap the entire layout.
 
 ### Delete/archive
-- Draft-only child structure can cascade with the draft exam version if no attempt references it.
+- The current delete RPC removes `exam_version_questions` before `exam_versions`. For v2, it must first remove the draft-owned section/item/child rows (or use a verified cascade order), then mappings. Draft-only child structure can cascade with the draft exam version if no attempt references it.
 - Group and stimulus versions are reusable assets and must not cascade-delete with an exam.
 - Published versions with attempts are archived under existing safeguards, not hard-deleted.
 - Deletion tests must include a draft v2 exam, a published v2 exam with no attempts, and a published v2 exam with attempts.
