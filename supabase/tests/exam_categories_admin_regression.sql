@@ -190,6 +190,20 @@ begin
     raise exception 'Active category RPC must return only active categories.';
   end if;
 
+  update public.exam_categories
+  set name='Student attempted rename'
+  where slug='de-thi-thu';
+  get diagnostics v_count = row_count;
+  if v_count <> 0 then
+    raise exception 'Student UPDATE of an exam category was unexpectedly accepted.';
+  end if;
+
+  delete from public.exam_categories where slug='de-thi-thu';
+  get diagnostics v_count = row_count;
+  if v_count <> 0 then
+    raise exception 'Student DELETE of an exam category was unexpectedly accepted.';
+  end if;
+
   begin
     insert into public.exam_categories(name,slug)
     values ('Student forbidden','student-forbidden');
