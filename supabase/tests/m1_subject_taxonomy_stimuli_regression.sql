@@ -218,7 +218,6 @@ begin
 end;
 $tests$;
 
-rollback;
 -- Exercise table grants and RLS under the actual authenticated database role.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
@@ -264,4 +263,4 @@ begin
 end;
 $student_rls$;
 reset role;
-
+rollback;
