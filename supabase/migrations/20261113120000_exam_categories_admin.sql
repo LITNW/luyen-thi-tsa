@@ -278,16 +278,21 @@ language plpgsql
 security definer
 set search_path = ''
 as $function$
+declare
+  v_locked_category_id uuid;
 begin
   if auth.uid() is null or not public.is_admin() then
     raise exception 'Only an active Admin may assign an exam category.';
   end if;
 
-  if p_category_id is not null and not exists (
-    select 1 from public.exam_categories c
+  if p_category_id is not null then
+    select c.id into v_locked_category_id
+    from public.exam_categories c
     where c.id=p_category_id and c.is_active
-  ) then
-    raise exception 'The selected exam category does not exist or is inactive.';
+    for share;
+    if not found then
+      raise exception 'The selected exam category does not exist or is inactive.';
+    end if;
   end if;
 
   update public.exams
@@ -321,16 +326,20 @@ as $function$
 declare
   v_result jsonb;
   v_exam_id uuid;
+  v_locked_category_id uuid;
 begin
   if auth.uid() is null or not public.is_admin() then
     raise exception 'Only an active Admin may save an exam with a category.';
   end if;
 
-  if p_category_id is not null and not exists (
-    select 1 from public.exam_categories c
+  if p_category_id is not null then
+    select c.id into v_locked_category_id
+    from public.exam_categories c
     where c.id=p_category_id and c.is_active
-  ) then
-    raise exception 'The selected exam category does not exist or is inactive.';
+    for share;
+    if not found then
+      raise exception 'The selected exam category does not exist or is inactive.';
+    end if;
   end if;
 
   v_result := public.admin_save_exam_content(
