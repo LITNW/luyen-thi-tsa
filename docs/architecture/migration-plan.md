@@ -71,6 +71,8 @@ Add:
 Enforce immutable published group versions and unique ordered membership. Mixed question types are allowed; answer-key validation remains per question.
 
 ### M4 — exam sections and structure
+Add an additive `exam_versions.content_model_version` field (default 1 for existing rows; 2 for structured versions). This is mandatory to prevent legacy flat RPCs from mutating v2 exam layouts.
+
 Add:
 - `exam_sections`
 - `exam_section_items`
@@ -90,12 +92,14 @@ Before applying:
 The backfill is a deterministic representation of the existing flat layout, not an editorial change to published exams.
 
 ### M5 — structured RPCs
+Before enabling v2, guard every old flat mutation RPC (`admin_save_exam_content`, add/remove/replace/reorder question, points update, version clone, and delete) so it rejects incompatible v2 versions or handles them through an explicitly reviewed v2 path. The old flat save must fail before any write when `content_model_version = 2`.
+
 Add versioned RPCs without changing old RPC signatures:
 - `get_published_exam_v2`
 - `admin_get_exam_structure_v2`
 - `admin_save_exam_structure_v2`
 
-The v2 save path must be one transaction. It must lock the draft exam version, validate the section/item tree, reconcile mappings without replacing unchanged mapping IDs, validate group membership and answer keys, and publish only after complete validation.
+The v2 clone path must create new `exam_version_questions` mapping IDs and remap all section/group child rows; it must reuse immutable question/group/stimulus versions. The v2 save path must be one transaction. It must lock the draft exam version, validate the section/item tree, reconcile mappings without replacing unchanged mapping IDs, validate group membership and answer keys, and publish only after complete validation.
 
 Do not let old `admin_save_exam_content` accept a structured payload by guessing from JSON shape. Keep it flat and explicit until the old editor is retired.
 
