@@ -1,6 +1,14 @@
 # Education Architecture Reset — Delivery Plan
 
-Status: Approved direction; implementation is staged and gated.
+Status: Approved direction; implementation in progress. Last updated: 2026-11-13.
+
+## Current execution status
+- Phase 0: initial Production inventory complete; code-reference audit continues before any object retirement.
+- Phase 1: target architecture and KEEP/MODIFY/REPLACE/REMOVE register drafted.
+- Phase 2: relational model and constraints specified.
+- Phase 3: additive schema, RLS, placement RPCs and regression tests applied to Staging only; direct Staging regression suites pass.
+- Phase 4: Student level/context/subject navigation, Admin education management, Admin exam placement and legacy editor integration implemented on the architecture branch; automated build and browser E2E still required.
+- Phases 5–6: not started. Production enforcement and rollout remain gated on full E2E and explicit classification of existing Production exams.
 Rule: No Production destructive operation without a verified Staging run, explicit data diff, backup and rollback path.
 
 ## Delivery units
