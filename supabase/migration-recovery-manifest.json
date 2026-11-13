@@ -135,6 +135,13 @@
       "status": "repository_only_not_applied_to_production",
       "source": "M1 additive foundation migration proposed in stacked PR after architecture PR #24",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113120000",
+      "name": "exam_categories_admin",
+      "status": "repository_only_not_applied_to_production",
+      "source": "M2 Admin-managed exam category feature proposed after M1 foundation",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
