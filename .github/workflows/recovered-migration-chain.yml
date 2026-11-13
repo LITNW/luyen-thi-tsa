@@ -77,6 +77,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160130_education_exam_placement_and_scoped_catalogue.sql
       - name: Apply education exam placement history guard
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
+      - name: Apply atomic education-aware editor save
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -116,3 +118,6 @@ jobs:
 
       - name: Run education exam placement regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql
+
+      - name: Run atomic education-aware editor save regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_atomic_editor_save_regression.sql
