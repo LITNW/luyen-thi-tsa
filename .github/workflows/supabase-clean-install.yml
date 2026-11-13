@@ -2,9 +2,9 @@ name: Supabase clean-install compatibility
 
 on:
   push:
-    branches: [feature/m1-subject-taxonomy-stimuli, feature/exam-categories-admin]
+    branches: [feature/m1-subject-taxonomy-stimuli, feature/exam-categories-admin, feature/exam-category-editor-integration]
   pull_request:
-    branches: [main, architecture/multi-subject-foundation]
+    branches: [main, architecture/multi-subject-foundation, feature/exam-categories-admin]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
@@ -102,6 +102,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
+      - name: Apply M2 follow-up for archived category preservation
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
+      - name: Apply M2 follow-up for archived version listing
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
 
       - name: Seed isolated test admin and run answer-validation regression
         env:
