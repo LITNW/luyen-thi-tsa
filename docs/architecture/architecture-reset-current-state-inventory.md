@@ -103,3 +103,31 @@ The category feature is not currently populated in Production. The approved targ
 - Existing exam education placement requires explicit Admin classification.
 - CI migration recovery manifest must match the live Production ledger.
 - Browser E2E of Production was not performed by the assistant; Preview checks in prior work were user-confirmed.
+
+
+## 8. Education architecture reset — Staging implementation update
+
+Staging-only migrations applied and recorded in the Staging ledger:
+
+- `20261113155228_education_hierarchy_foundation`
+- `20261113155356_education_hierarchy_active_profile_read_policies`
+- `20261113155742_education_hierarchy_identity_guards`
+- `20261113160130_education_exam_placement_and_scoped_catalogue`
+- `20261113160231_education_exam_placement_identity_guard`
+- `20261113161654_education_atomic_editor_save`
+
+Staging now has:
+- 2 education levels: THPT and Đại học.
+- 0 context nodes, 0 education-subject offerings, 0 classified exams (intentionally not guessed).
+- Original Staging exam/version/attempt/answer counts remain unchanged after rollback-based regression fixtures.
+
+Regression coverage executed directly against Staging and passed:
+- Education hierarchy parent/level consistency, cycle prevention, active-path constraints, stable identity protection.
+- Active-profile catalogue read policies, anonymous denial and Student write denial.
+- Scoped Student published-exam catalogue excludes archived versions.
+- Exam placement cannot be changed once a classified exam has attempts.
+- Atomic editor save persists placement before optional publication; save without a placement is rejected.
+
+The editor and Student/Admin UI changes are present on Draft PR #28. React migration CI has passed on the previously checked head; latest changes are awaiting the next CI run. Browser E2E is not yet completed.
+
+No Production schema or data was changed by these Staging migrations.
