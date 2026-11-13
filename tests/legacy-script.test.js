@@ -14,3 +14,23 @@ test('legacy exam application inline JavaScript remains syntactically valid', ()
     assert.doesNotThrow(() => new vm.Script(source), 'inline script ' + (index + 1) + ' must parse');
   }
 });
+
+
+test('legacy Admin editor loads categories and saves through the category-aware RPC', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /list_active_exam_categories/);
+  assert.match(html, /id="f-category"/);
+  assert.match(html, /admin_save_exam_content_with_category/);
+  assert.match(html, /p_category_id:categoryId/);
+  assert.match(html, /category_id:currentCategory\?\.category_id\|\|null/);
+  assert.match(html, /category_id:categoryId/);
+  assert.match(html, /view\.category_id\|\|null/);
+});
+
+test('legacy editor preserves uncategorized and archived category assignments until explicitly changed', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /category_id:currentCategory\?\.category_id\|\|null/);
+  assert.match(html, /Không phân loại/);
+  assert.match(html, /Danh mục đã ẩn/);
+  assert.match(html, /giữ nguyên/);
+});
