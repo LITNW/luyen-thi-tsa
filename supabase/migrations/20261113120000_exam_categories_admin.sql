@@ -327,18 +327,31 @@ declare
   v_result jsonb;
   v_exam_id uuid;
   v_locked_category_id uuid;
+  v_category_is_active boolean;
+  v_existing_category_id uuid;
 begin
   if auth.uid() is null or not public.is_admin() then
     raise exception 'Only an active Admin may save an exam with a category.';
   end if;
 
   if p_category_id is not null then
-    select c.id into v_locked_category_id
+    select c.id,c.is_active into v_locked_category_id,v_category_is_active
     from public.exam_categories c
-    where c.id=p_category_id and c.is_active
+    where c.id=p_category_id
     for share;
     if not found then
-      raise exception 'The selected exam category does not exist or is inactive.';
+      raise exception 'The selected exam category does not exist.';
+    end if;
+
+    if p_exam_version_id is not null then
+      select e.category_id into v_existing_category_id
+      from public.exam_versions ev
+      join public.exams e on e.id=ev.exam_id
+      where ev.id=p_exam_version_id;
+    end if;
+
+    if not v_category_is_active and v_existing_category_id is distinct from p_category_id then
+      raise exception 'An inactive category can only be preserved when it is already assigned to this exam.';
     end if;
   end if;
 
