@@ -19,6 +19,7 @@ declare
   v_save jsonb;
   v_list jsonb;
   v_count integer;
+  v_rejected boolean;
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
 
@@ -105,12 +106,15 @@ begin
   end if;
 
   -- Inactive categories cannot be assigned to exams.
+  v_rejected := false;
   begin
     perform public.admin_set_exam_category(v_exam_id,v_inactive_id);
-    raise exception 'Inactive category was unexpectedly assignable.';
   exception when raise_exception then
-    null;
+    v_rejected := true;
   end;
+  if not v_rejected then
+    raise exception 'Inactive category was unexpectedly assignable.';
+  end if;
 
   -- The category-aware wrapper creates/saves the exam and assigns its category atomically.
   v_save := public.admin_save_exam_content_with_category(
@@ -178,7 +182,9 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000003',true);
 do $student_rls$
-declare v_count integer;
+declare
+  v_count integer;
+  v_rejected boolean;
 begin
   select count(*) into v_count from public.exam_categories;
   if v_count <> 2 then
@@ -212,14 +218,17 @@ begin
     null;
   end;
 
+  v_rejected := false;
   begin
     perform public.admin_save_exam_category(
       'Student forbidden','student-forbidden',null,'',null,true,9
     );
-    raise exception 'Student invoked an Admin category write RPC.';
   exception when raise_exception then
-    null;
+    v_rejected := true;
   end;
+  if not v_rejected then
+    raise exception 'Student invoked an Admin category write RPC.';
+  end if;
 end;
 $student_rls$;
 reset role;
