@@ -7,7 +7,7 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import HistoryPage from './pages/HistoryPage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
-import { AdminHomePage, AdminExamsPage, AdminUsersPage, AdminAttemptsPage } from './pages/AdminPages.jsx';
+import { AdminHomePage, AdminExamsPage, AdminCategoriesPage, AdminUsersPage, AdminAttemptsPage } from './pages/AdminPages.jsx';
 
 function LegacyRedirect() {
   useEffect(() => { window.location.replace('/legacy/index.html'); }, []);
@@ -38,6 +38,7 @@ export default function App() {
       <Route path="/history" element={<RouteGuard><HistoryPage /></RouteGuard>} />
       <Route path="/admin" element={<RouteGuard admin><AdminHomePage /></RouteGuard>} />
       <Route path="/admin/exams" element={<RouteGuard admin><AdminExamsPage /></RouteGuard>} />
+      <Route path="/admin/categories" element={<RouteGuard admin><AdminCategoriesPage /></RouteGuard>} />
       <Route path="/admin/users" element={<RouteGuard admin><AdminUsersPage /></RouteGuard>} />
       <Route path="/admin/attempts" element={<RouteGuard admin><AdminAttemptsPage /></RouteGuard>} />
       <Route path="/admin/import" element={<RouteGuard admin><LegacyRedirect /></RouteGuard>} />
