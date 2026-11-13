@@ -74,8 +74,11 @@ Counts are observational only and will change as the platform is used.
 ### RPC contracts
 - `get_published_exam(uuid)` returns a flat question list with mapping ID, position, points, type, and public content.
 - `admin_get_exam_version(uuid)` returns flat questions and answer-key fields for admin authoring.
-- `admin_save_exam_content(..., p_questions jsonb, ...)` accepts a flat array and reconciles mapping IDs.
+- `admin_save_exam_content(..., p_questions jsonb, ...)` accepts a flat array and reconciles mapping IDs; it deletes mappings omitted from the submitted array.
+- `admin_create_exam_version` clones flat mappings only. `admin_delete_exam_version` deletes mappings before the parent version when no attempts exist.
+- `list_published_exams` does not return a content-model/runtime version. `get_my_attempt_state` returns the exact exam version ID but not its layout version.
 - `submit_exam_attempt(uuid)` grades by iterating `exam_version_questions`; it remains the authoritative score writer.
+- The flat add/remove/replace/reorder RPCs mutate `exam_version_questions` directly. The points-only RPC updates a mapping without understanding section/group structure.
 - Answer-save, resume, time-tracking, and history RPCs rely on existing mapping and attempt identifiers.
 
 ## 5. Immutability, import, and media observations
