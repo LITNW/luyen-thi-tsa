@@ -9,6 +9,8 @@ declare
   v_student uuid := '00000000-0000-4000-8000-000000000002';
   v_thpt uuid;
   v_uni uuid;
+  v_inactive_level uuid := '65000000-0000-4000-8000-000000000010';
+  v_science uuid;
   v_grade uuid := '65000000-0000-4000-8000-000000000001';
   v_institution uuid := '65000000-0000-4000-8000-000000000002';
   v_program uuid := '65000000-0000-4000-8000-000000000003';
@@ -31,13 +33,38 @@ begin
   select id into v_thpt from public.education_levels where code='thpt';
   select id into v_uni from public.education_levels where code='university';
   select id into v_math from public.subjects where code='mathematics';
+  select id into v_science from public.subjects where code='science';
 
-  if v_thpt is null or v_uni is null or v_math is null then
+  if v_thpt is null or v_uni is null or v_math is null or v_science is null then
     raise exception 'Expected education levels or canonical Mathematics subject were not seeded.';
   end if;
 
   if (select count(*) from public.education_levels where code in ('thpt','university')) <> 2 then
     raise exception 'Education level seeds must be idempotent and unique.';
+  end if;
+
+  -- Education-level codes are stable identifiers.
+  v_rejected := false;
+  begin
+    update public.education_levels set code='thpt-renamed' where id=v_thpt;
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Education level code was unexpectedly mutable.';
+  end if;
+
+  insert into public.education_levels(id,code,name,is_active)
+  values(v_inactive_level,'inactive_test','Inactive test level',false);
+  v_rejected := false;
+  begin
+    insert into public.education_nodes(education_level_id,node_type,code,name)
+    values(v_inactive_level,'custom','invalid-active-node','Invalid active node');
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Active node under inactive level was unexpectedly accepted.';
   end if;
 
   -- THPT can use a direct level -> subject -> exam path (node is NULL).
@@ -46,6 +73,16 @@ begin
   ) values (
     v_offer,v_thpt,null,v_math,'MATH-THPT','Toán'
   );
+
+  v_rejected := false;
+  begin
+    update public.education_levels set is_active=false where id=v_thpt;
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Education level with active offerings was unexpectedly deactivated.';
+  end if;
 
   -- University can use optional institution -> program -> major context nodes.
   insert into public.education_nodes(
@@ -68,6 +105,17 @@ begin
   ) values (
     v_university_offer,v_uni,v_major,v_math,'ME-CALC-1','Giải tích 1'
   );
+
+  -- A node's stable hierarchy identity cannot be changed after an offering depends on it.
+  v_rejected := false;
+  begin
+    update public.education_nodes set parent_id=null where id=v_major;
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Referenced education node identity was unexpectedly mutable.';
+  end if;
 
   -- A grade node is also valid as a top-level THPT context.
   insert into public.education_nodes(
@@ -161,6 +209,17 @@ begin
   update public.exams set education_subject_id=v_offer where id=v_exam;
   if (select education_subject_id from public.exams where id=v_exam) is distinct from v_offer then
     raise exception 'Education subject offering assignment did not persist.';
+  end if;
+
+  -- The offering's education identity cannot be rewritten once an exam references it.
+  v_rejected := false;
+  begin
+    update public.education_subjects set subject_id=v_science where id=v_offer;
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Referenced education subject offering identity was unexpectedly mutable.';
   end if;
 
 end;
