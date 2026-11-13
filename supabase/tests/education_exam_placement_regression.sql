@@ -50,10 +50,10 @@ begin
 
   -- Legacy exams can be classified once even if historical attempts exist; once classified, placement is immutable.
   insert into public.attempts(
-    id,user_id,exam_id,exam_version_id,answers,score,max_score,elapsed_seconds,result_details,status,started_at,last_activity_at
+    id,user_id,exam_id,exam_version_id,answers,score,max_score,elapsed_seconds,result_details,status,started_at,submitted_at,finished_at,last_activity_at
   ) values(
     '66000000-0000-4000-8000-000000000005',
-    v_student,v_exam,v_published,'[]'::jsonb,0,0,0,'{}'::jsonb,'submitted',now(),now()
+    v_student,v_exam,v_published,'[]'::jsonb,0,1,0,'[]'::jsonb,'submitted',now(),now(),now(),now()
   );
 
   v_rejected:=false;
