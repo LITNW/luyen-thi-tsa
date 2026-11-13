@@ -1,8 +1,10 @@
 name: Supabase clean-install compatibility
 
 on:
+  push:
+    branches: [feature/m1-subject-taxonomy-stimuli]
   pull_request:
-    branches: [main]
+    branches: [main, architecture/multi-subject-foundation]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
@@ -91,6 +93,11 @@ jobs:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
 
+      - name: Apply M1 subject/taxonomy/stimulus foundation migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
+
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
@@ -124,6 +131,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/legacy_exam_contract_regression.sql
+
+      - name: Run M1 subject/taxonomy/stimulus regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/m1_subject_taxonomy_stimuli_regression.sql
 
       - name: Stop clean Supabase services
         if: always()

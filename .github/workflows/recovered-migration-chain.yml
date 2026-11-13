@@ -1,8 +1,10 @@
 name: Recovered migration chain smoke test
 
 on:
+  push:
+    branches: [feature/m1-subject-taxonomy-stimuli]
   pull_request:
-    branches: [main]
+    branches: [main, architecture/multi-subject-foundation]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
@@ -56,6 +58,8 @@ jobs:
           test -s supabase/tests/answer_validation_regression.sql
       - name: Apply centralized answer-validation migration after recovered chain
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
+      - name: Apply M1 subject/taxonomy/stimulus foundation migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -83,3 +87,6 @@ jobs:
           SQL
       - name: Run answer-validation regression suite on recovered schema
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/answer_validation_regression.sql
+
+      - name: Run M1 subject/taxonomy/stimulus regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/m1_subject_taxonomy_stimuli_regression.sql

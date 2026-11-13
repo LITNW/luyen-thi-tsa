@@ -128,6 +128,13 @@
       "status": "applied_in_production",
       "source": "merged PR #22 migration",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113100000",
+      "name": "m1_subject_taxonomy_stimuli",
+      "status": "repository_only_not_applied_to_production",
+      "source": "M1 additive foundation migration proposed in stacked PR after architecture PR #24",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
