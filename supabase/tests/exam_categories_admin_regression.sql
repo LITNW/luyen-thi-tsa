@@ -152,6 +152,22 @@ begin
     raise exception 'Admin exam-version list did not include category metadata.';
   end if;
 
+  -- Soft-archived versions must stay out of the active Admin list, as in the legacy RPC.
+  insert into public.exam_versions(
+    id,exam_id,version_no,title,description,duration_minutes,status,created_by,archived_at
+  ) values (
+    '64000000-0000-4000-8000-000000000005',
+    v_new_exam_id,99,'Archived fixture version','Must not appear in active list',30,
+    'published',v_admin,now()
+  );
+  v_list := public.admin_list_exam_versions_with_categories();
+  if exists (
+    select 1 from jsonb_array_elements(v_list) x(value)
+    where value->>'exam_version_id'='64000000-0000-4000-8000-000000000005'
+  ) then
+    raise exception 'Admin category-aware list exposed a soft-archived exam version.';
+  end if;
+
   -- An archived category already assigned to an exam remains preservable when editing that exam.
   perform public.admin_save_exam_category(
     'Đề thi thử','de-thi-thu',v_child_id,'Đề thi mô phỏng',v_parent_id,false,2
