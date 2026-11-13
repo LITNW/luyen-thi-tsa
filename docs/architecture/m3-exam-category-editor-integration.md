@@ -18,7 +18,7 @@ Production: No migration or deployment has been performed.
 
 - Existing uncategorized exams open with “Không phân loại”. Saving without selecting a category sends `NULL`, so the exam remains uncategorized.
 - Existing active category assignments are preselected; choosing “Không phân loại” explicitly unassigns the category.
-- If an assigned category has since been archived, the editor shows a disabled current-value option. The wrapper permits preserving that exact existing assignment while editing the exam, but rejects assigning an inactive category to a different exam.
+- If an assigned category has since been archived, the editor shows a disabled current-value option. The M2 wrapper permits preserving that exact existing assignment while editing the exam, but rejects assigning an inactive category to a different exam. This behavior is delivered by the append-only follow-up migration `20261113140000_exam_category_archived_assignment_preservation.sql`; the original M2 migration `20261113120000_exam_categories_admin.sql` remains unchanged.
 - Question mapping identity logic remains unchanged: the editor continues to carry forward existing `mapping_id` and `question_id` values when constructing the save payload.
 
 ## Student access semantics
