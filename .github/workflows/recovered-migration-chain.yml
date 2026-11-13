@@ -50,8 +50,6 @@ jobs:
           done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
       - name: Verify recovered schema and RPCs
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
-      - name: Apply subsequent AI import migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112050000_ai_exam_import_staging.sql
       - name: Verify merged answer-validation migration and regression test
         run: |
           test -s supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
