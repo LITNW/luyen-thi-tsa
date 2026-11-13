@@ -15,7 +15,7 @@ This audit used read-only schema, migration-ledger, RPC, constraint, and row-cou
 - `20261112050000_ai_exam_import_staging.sql` is pending, not in the Production ledger.
 - `20261112170000_centralize_exam_answer_validation.sql` is the answer-validation migration now merged to main.
 - PR #23 and PR #22 are merged.
-- The clean-install workflow currently validates the recovered chain and PR #22 migration. Its workflow source should be reviewed for any lingering dependence on a feature branch rather than the merged migration file.
+- The clean-install workflow originally fetched PR #22 from its feature branch. PR #24 removes that dependency and applies the migration/test files from the checked-out commit; it also broadens test path filters to `supabase/tests/**`.
 
 The reconstructed pre-005 fixture is a compatibility fixture, not a recovered exact historical baseline for migrations 001–004.
 
