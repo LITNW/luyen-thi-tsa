@@ -8,15 +8,26 @@ const manifest = JSON.parse(
 const migrationDir = "supabase/migrations";
 const errors = [];
 const expected = new Set();
+const recovered = manifest.migrations ?? [];
+const subsequent = manifest.subsequent_migrations ?? [];
 
-if (manifest.migrations.length !== 17) {
-  errors.push(`Expected 17 recovered Production migrations; found ${manifest.migrations.length}.`);
+if (recovered.length !== 17) {
+  errors.push(`Expected 17 recovered Production migrations; found ${recovered.length}.`);
 }
 
-for (const migration of manifest.migrations) {
+let previousVersion = "";
+for (const migration of recovered) {
   const filename = `${migration.version}_${migration.name}.sql`;
   const filepath = join(migrationDir, filename);
+  if (expected.has(filename)) {
+    errors.push(`Duplicate migration manifest entry: ${filename}`);
+  }
   expected.add(filename);
+
+  if (previousVersion && migration.version <= previousVersion) {
+    errors.push(`Recovered migration order is not strictly increasing at ${filename}.`);
+  }
+  previousVersion = migration.version;
 
   let content;
   try {
@@ -64,11 +75,21 @@ for (const migration of manifest.migrations) {
   }
 }
 
-for (const pending of manifest.pending ?? []) {
-  const filename = `${pending.version}_${pending.name}.sql`;
+for (const migration of subsequent) {
+  const filename = `${migration.version}_${migration.name}.sql`;
+  const filepath = join(migrationDir, filename);
+  if (expected.has(filename)) {
+    errors.push(`Duplicate migration entry across manifest sections: ${filename}`);
+  }
   expected.add(filename);
-  if (!readdirSync(migrationDir).includes(filename)) {
-    errors.push(`Missing pending migration: ${join(migrationDir, filename)}`);
+
+  if (migration.version <= previousVersion) {
+    errors.push(`Subsequent migration ${filename} must sort after the recovered chain.`);
+  }
+  previousVersion = migration.version;
+
+  if (!readFileExists(filepath)) {
+    errors.push(`Missing subsequent migration: ${filepath}`);
   }
 }
 
@@ -84,6 +105,15 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Verified ${manifest.migrations.length} recovered Production migrations and ${(manifest.pending ?? []).length} pending migration(s).`
+    `Verified ${recovered.length} recovered Production migration fingerprints and ${subsequent.length} subsequent migration file(s).`
   );
+}
+
+function readFileExists(filepath) {
+  try {
+    readFileSync(filepath);
+    return true;
+  } catch {
+    return false;
+  }
 }
