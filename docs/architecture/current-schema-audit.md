@@ -81,7 +81,8 @@ Counts are observational only and will change as the platform is used.
 ## 5. Immutability, import, and media observations
 
 - Triggers prevent UPDATE/DELETE on `questions`, `question_versions`, and `question_answer_keys`; published exam versions and their question mappings are protected as well. New stimulus links must be written when creating a new question version, not by rewriting historical rows.
-- All 16 observed public application tables have RLS enabled. RLS is not forced; service-role/server-side paths still require careful authorization and secret handling.
+- All 16 observed public application tables have RLS enabled, but `FORCE ROW LEVEL SECURITY` is not enabled. Service-role/server-side paths still require careful authorization and secret handling. Several sensitive tables intentionally have no direct student SELECT policy and are mediated through RPCs.
+- The current `storage.objects` policies grant admin-only access to the private `tsa-imports` bucket; there is no student media-read policy to reuse for stimuli.
 - The existing private Storage bucket `tsa-imports` has a 25 MiB file-size limit and no MIME allowlist. Keep it dedicated to import source files; do not mix reusable stimulus assets into it.
 - The import staging model (`import_jobs`, `import_questions`, `import_events`) stores extracted question content/answer keys and source metadata but has no first-class stimulus or question-group references. The importer must be extended deliberately after the content model is stable.
 - All 231 observed question versions contain a string prompt and options array; none has a detected top-level `stimulus` field. Do not assume that historical content already has reusable passages or media.
