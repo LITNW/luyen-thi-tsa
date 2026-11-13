@@ -197,6 +197,22 @@
       "staging_status": "applied_in_staging",
       "source": "Ensures exam education placement cannot be changed after it has attempts",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113160130",
+      "name": "education_exam_placement_and_scoped_catalogue",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Adds Admin education-subject assignment and Student exam catalogue scoped to one active offering",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113160231",
+      "name": "education_exam_placement_identity_guard",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Ensures exam education placement cannot be changed after it has attempts",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
