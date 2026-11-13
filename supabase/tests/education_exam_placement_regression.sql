@@ -53,7 +53,7 @@ begin
     id,user_id,exam_id,exam_version_id,answers,score,max_score,elapsed_seconds,result_details,status,started_at,last_activity_at
   ) values(
     '66000000-0000-4000-8000-000000000005',
-    v_student,v_exam,v_published,'{}'::jsonb,0,0,0,'{}'::jsonb,'submitted',now(),now()
+    v_student,v_exam,v_published,'[]'::jsonb,0,0,0,'{}'::jsonb,'submitted',now(),now()
   );
 
   v_rejected:=false;
