@@ -229,10 +229,15 @@ set local role anon;
 do $anon$
 declare v_count integer;
 begin
-  select count(*) into v_count from public.education_levels;
-  if v_count <> 0 then
-    raise exception 'Anonymous role unexpectedly read education levels.';
-  end if;
+  begin
+    select count(*) into v_count from public.education_levels;
+    if v_count <> 0 then
+      raise exception 'Anonymous role unexpectedly read education levels.';
+    end if;
+  exception when insufficient_privilege then
+    -- No table privilege is also a valid deny-by-default outcome.
+    null;
+  end;
 end;
 $anon$;
 reset role;
