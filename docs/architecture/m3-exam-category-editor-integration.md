@@ -8,7 +8,7 @@ Production: No migration or deployment has been performed.
 
 - Creating an exam loads active categories through `list_active_exam_categories()`.
 - Opening an existing version loads the exam's current category from `admin_list_exam_versions_with_categories()`.
-- The category select allows an empty value. Empty means the exam remains unclassified (`exams.category_id IS NULL`).
+- The category select allows an empty value. On a new or already unclassified exam, empty means `exams.category_id IS NULL`; on an already classified exam, choosing “Không phân loại” explicitly removes the assignment.
 - Existing published versions still follow the legacy workflow: the editor creates a draft version before editing.
 - Saving uses `admin_save_exam_content_with_category(...)`; the six-argument legacy `admin_save_exam_content` contract is not modified.
 - The selected category is retained in the editor state after saving a draft.
@@ -17,7 +17,7 @@ Production: No migration or deployment has been performed.
 ## Backward compatibility
 
 - Existing uncategorized exams open with “Không phân loại”. Saving without selecting a category sends `NULL`, so the exam remains uncategorized.
-- Existing active category assignments are preselected.
+- Existing active category assignments are preselected; choosing “Không phân loại” explicitly unassigns the category.
 - If an assigned category has since been archived, the editor shows a disabled current-value option. The wrapper permits preserving that exact existing assignment while editing the exam, but rejects assigning an inactive category to a different exam.
 - Question mapping identity logic remains unchanged: the editor continues to carry forward existing `mapping_id` and `question_id` values when constructing the save payload.
 
