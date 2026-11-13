@@ -1,6 +1,8 @@
 name: Supabase clean-install compatibility
 
 on:
+  push:
+    branches: [feature/m1-subject-taxonomy-stimuli]
   pull_request:
     branches: [main, architecture/multi-subject-foundation]
     paths:
