@@ -2,7 +2,7 @@ name: Supabase clean-install compatibility
 
 on:
   push:
-    branches: [feature/m1-subject-taxonomy-stimuli]
+    branches: [feature/m1-subject-taxonomy-stimuli, feature/exam-categories-admin]
   pull_request:
     branches: [main, architecture/multi-subject-foundation]
     paths:
@@ -98,6 +98,11 @@ jobs:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
 
+      - name: Apply M2 exam category migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
+
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
@@ -136,6 +141,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/m1_subject_taxonomy_stimuli_regression.sql
+
+      - name: Run M2 exam category regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/exam_categories_admin_regression.sql
 
       - name: Stop clean Supabase services
         if: always()
