@@ -373,7 +373,7 @@ if('serviceWorker' in navigator){
 }
 </script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
-    let editorCategories=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
+    let editorCategories=[],editorEducationSubjects=[],editorEducationLevels=[],editorEducationNodes=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
     const SB_CONFIG=window.__SUPABASE_CONFIG__||{};
     const SB_URL=SB_CONFIG.url||'';
     const SB_KEY=SB_CONFIG.publishableKey||'';
@@ -486,29 +486,53 @@ if('serviceWorker' in navigator){
       if(error)throw error;
       editorCategories=Array.isArray(data)?data:[];
     }
+    async function loadEditorEducationSubjects(){
+      const [offerings,levels,nodes]=await Promise.all([
+        sb.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,is_active'),
+        sb.from('education_levels').select('id,name,code,is_active'),
+        sb.from('education_nodes').select('id,name,parent_id,education_level_id,is_active')
+      ]);
+      const failed=[offerings,levels,nodes].find(x=>x.error);if(failed)throw failed.error;
+      editorEducationSubjects=offerings.data||[];
+      editorEducationLevels=levels.data||[];
+      editorEducationNodes=nodes.data||[];
+    }
+    function editorEducationLabel(offering){
+      if(!offering)return '';
+      const level=editorEducationLevels.find(x=>x.id===offering.education_level_id);
+      const path=[];let node=offering.education_node_id?editorEducationNodes.find(x=>x.id===offering.education_node_id):null,guard=0;
+      while(node&&guard<12){path.unshift(node.name);node=node.parent_id?editorEducationNodes.find(x=>x.id===node.parent_id):null;guard++}
+      return [level?.name,...path,offering.display_name].filter(Boolean).join(' / ');
+    }
     async function openNewEditor(){
       try{
-        await loadEditorCategories();
-        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
+        await loadEditorCategories();await loadEditorEducationSubjects();
+        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
         go(view);
       }catch(e){notify('Không tải được danh mục đề thi: '+e.message)}
     }
     async function openEditor(versionId,status,examId){
       try{let id=versionId;if(status==='published'){const {data:newId,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:examId});if(error)throw error;id=newId}
         const {data:x,error}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:id});if(error)throw error;
-        await loadEditorCategories();
+        await loadEditorCategories();await loadEditorEducationSubjects();
         const {data:versions,error:ve}=await sb.rpc('admin_list_exam_versions_with_categories');if(ve)throw ve;
         const currentCategory=(versions||[]).find(item=>item.exam_id===x.exam_id);
+        const {data:examMeta,error:eme}=await sb.from('exams').select('education_subject_id').eq('id',x.exam_id).single();if(eme)throw eme;
         const qs=(x.questions||[]).map(mapAdminQuestion);
-        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
+        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
       }catch(e){notify('Không mở được trình soạn đề: '+e.message)}
     }
     function edit(){
       const x=view.exam||{title:'',desc:'',minutes:60,qs:[]};
       const categoryOptions=editorCategories.map(category=>'<option value="'+esc(category.id)+'"'+(category.id===view.category_id?' selected':'')+'>'+esc(category.name)+'</option>').join('');
       const archivedCategory=view.category_id&&!editorCategories.some(category=>category.id===view.category_id)?'<option value="'+esc(view.category_id)+'" selected disabled>'+esc(view.category_name||'Danh mục đã ẩn')+' (đã ẩn — giữ nguyên)</option>':'';
-      const categoryField='<label for="f-category">Danh mục đề thi</label><select id="f-category"><option value="">Không phân loại</option>'+archivedCategory+categoryOptions+'</select><p class="m">Có thể để trống. Đề cũ chưa phân loại vẫn giữ nguyên; chỉ thay đổi khi bạn chọn danh mục khác.</p>';
-      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'">'+categoryField+'<label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
+      const categoryField='<label for="f-category">Loại đề (tùy chọn)</label><select id="f-category"><option value="">Không phân loại</option>'+archivedCategory+categoryOptions+'</select><p class="m">Chỉ là metadata phụ, không quyết định cấp học hoặc môn học.</p>';
+      const activeEducationSubjects=editorEducationSubjects.filter(item=>item.is_active);
+      const educationOptions=activeEducationSubjects.map(item=>'<option value="'+esc(item.id)+'"'+(item.id===view.education_subject_id?' selected':'')+'>'+esc(editorEducationLabel(item))+'</option>').join('');
+      const currentEducation=editorEducationSubjects.find(item=>item.id===view.education_subject_id);
+      const archivedEducation=view.education_subject_id&&!currentEducation?.is_active?'<option value="'+esc(view.education_subject_id)+'" selected disabled>'+esc(currentEducation?editorEducationLabel(currentEducation):'Vị trí học tập đã ẩn')+' (đã ẩn)</option>':'';
+      const educationField='<label for="f-education-subject">Cấp học và môn học *</label><select id="f-education-subject" required><option value="">Chọn cấp học / môn học</option>'+archivedEducation+educationOptions+'</select><p class="m">Bắt buộc. Nếu chưa thấy môn học, hãy tạo cấp học và môn học trong Quản trị → Cấu trúc học tập.</p>';
+      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'">'+educationField+categoryField+'<label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea><button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
     function ensureAttemptReady(a){
       const x=ex(view.id);
@@ -956,8 +980,9 @@ if('serviceWorker' in navigator){
     async function save(publishNow){
       const g=i=>document.getElementById(i).value,m=document.getElementById('msg');let qs;
       try{qs=parse(g('f-q'));if(!qs.length)throw new Error('Chưa có câu hỏi nào')}catch(e){m.textContent=e.message;return}
-      const mi=parseInt(g('f-m')),title=g('f-t').trim(),description=g('f-d').trim();
+      const mi=parseInt(g('f-m')),title=g('f-t').trim(),description=g('f-d').trim(),educationSubjectId=g('f-education-subject')?.value||'';
       if(!title||!(mi>0)||mi>600){m.textContent='Cần nhập tên đề và thời lượng từ 1 đến 600 phút.';return}
+      if(!educationSubjectId){m.textContent='Hãy chọn cấp học và môn học trước khi lưu hoặc xuất bản.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
       if(fe.length){m.textContent='Chưa lưu được: '+fe.length+' lỗi công thức. '+fe.slice(0,4).join(' | ');fpanel();return}
       const usedOld=new Set(),oldList=view.questions||[];
@@ -969,7 +994,7 @@ if('serviceWorker' in navigator){
         return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
-      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_category',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
+      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_education',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_education_subject_id:educationSubjectId,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;view.education_subject_id=educationSubjectId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
         let importLinkWarning='';
         const importMeta=view.importQuestionMeta||[];
         if(importMeta.length){
@@ -987,7 +1012,7 @@ if('serviceWorker' in navigator){
           }catch(linkError){importLinkWarning=' Đề đã lưu nhưng trạng thái liên kết bản nhập chưa đồng bộ: '+(linkError.message||String(linkError))}
         }
         if(publishNow){await refreshData((await sb.auth.getSession()).data.session?.user);go({n:'home'});notify('Đã xuất bản phiên bản đề thi.'+importLinkWarning)}
-        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
+        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,education_subject_id:educationSubjectId,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
       }catch(e){m.textContent='Không lưu được: '+e.message}
     }
     function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf')return {method:'all_or_nothing'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'partial_mapping',no_option_reuse:true,allow_unused_options:true}}
