@@ -968,7 +968,7 @@ if('serviceWorker' in navigator){
         return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
-      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||view.category_id||null;const saved=await sb.rpc('admin_save_exam_content_with_category',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
+      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_category',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
         let importLinkWarning='';
         const importMeta=view.importQuestionMeta||[];
         if(importMeta.length){
