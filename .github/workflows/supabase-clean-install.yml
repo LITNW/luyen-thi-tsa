@@ -120,6 +120,11 @@ jobs:
           SQL
           psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/answer_validation_regression.sql
 
+      - name: Run legacy exam RPC contract regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/legacy_exam_contract_regression.sql
+
       - name: Stop clean Supabase services
         if: always()
         working-directory: /tmp/tsa-supabase-clean
