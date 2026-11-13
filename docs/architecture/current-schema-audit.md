@@ -98,5 +98,5 @@ The clean-install workflow source on main fetches PR #22's migration and test fr
 ## 7. Open PR disposition
 
 - PR #18: separate hotfix for the obsolete `supabase-migration` branch. Its own description explicitly says not to retarget it to main. Leave it isolated; do not merge it into this architecture work.
-- PR #20: structural regression test for the active legacy exam HTML. Its CI run for the current PR head completed successfully. It is unrelated to the database restructuring and should remain a small independent PR or be superseded only by an equivalent test already merged to main.
+- PR #20: structural regression test for the active legacy exam HTML. Its CI run for the PR head completed successfully, but its branch is now 84 commits behind and 2 commits ahead of current main. Do not merge that stale branch wholesale. Port the 12-line test onto a fresh branch from current main, then close PR #20 as superseded, or leave it draft until that isolated replacement is ready.
 - PR #22 and #23: merged; their migration files and tests are now part of the baseline.
