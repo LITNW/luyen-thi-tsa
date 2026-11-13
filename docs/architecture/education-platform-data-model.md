@@ -1,7 +1,7 @@
 # Education Platform — Database Model and API Contract
 
 Status: Implemented additively on Staging; not applied to Production.
-Staging migrations: 20261113155228, 20261113155356, 20261113155742, 20261113160130, 20261113160231.
+Staging migrations: 20261113155228, 20261113155356, 20261113155742, 20261113160130, 20261113160231, 20261113161654.
 
 ## 1. Entity relationship
 
@@ -87,6 +87,14 @@ attempts and attempt_answers remain attached to their existing exam/version/ques
 - Active Admin only.
 - Assigns or clears placement on a stable exam identity.
 - Database trigger validates active offering and prevents reclassification after attempts once a non-NULL placement exists.
+
+### `admin_save_exam_content_with_education(...)`
+- New legacy-editor save contract.
+- Requires a non-NULL education-subject offering.
+- Saves the question content and optional category as a draft first.
+- Assigns education placement within the same transaction.
+- Publishes only after placement has been assigned when `p_publish=true`.
+- Prevents the previous two-step failure mode where a published exam could be left unplaced if assignment failed.
 
 ### `list_published_exams_for_education_subject(p_education_subject_id uuid)`
 Returns:
