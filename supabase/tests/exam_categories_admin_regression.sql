@@ -152,6 +152,33 @@ begin
     raise exception 'Admin exam-version list did not include category metadata.';
   end if;
 
+  -- An archived category already assigned to an exam remains preservable when editing that exam.
+  perform public.admin_save_exam_category(
+    'Đề thi thử','de-thi-thu',v_child_id,'Đề thi mô phỏng',v_parent_id,false,2
+  );
+  v_save := public.admin_save_exam_content_with_category(
+    (v_save->>'exam_version_id')::uuid,
+    'M2 category-aware save edited',
+    'Disposable CI fixture edited',
+    35,
+    jsonb_build_array(jsonb_build_object(
+      'scope','bank',
+      'type','mc',
+      'content',jsonb_build_object('q','M2 category wrapper question?','o',jsonb_build_array('A','B')),
+      'answer_key',1,
+      'explanation','',
+      'grading_config','{}'::jsonb,
+      'source_metadata','{}'::jsonb,
+      'points',1
+    )),
+    v_child_id,
+    false
+  );
+  if (v_save->>'category_id') is distinct from v_child_id::text
+     or (select category_id from public.exams where id=v_new_exam_id) is distinct from v_child_id then
+    raise exception 'Editing an exam must preserve its already assigned archived category.';
+  end if;
+
   -- Admin category list includes inactive rows; student access is limited to active rows.
   if jsonb_array_length(public.admin_list_exam_categories()) <> 3 then
     raise exception 'Admin category list should include active and inactive categories.';
@@ -187,13 +214,13 @@ declare
   v_rejected boolean;
 begin
   select count(*) into v_count from public.exam_categories;
-  if v_count <> 2 then
-    raise exception 'Student direct SELECT must expose only the two active categories.';
+  if v_count <> 1 then
+    raise exception 'Student direct SELECT must expose only the one remaining active category.';
   end if;
 
   select count(*) into v_count from public.list_active_exam_categories();
-  if v_count <> 2 then
-    raise exception 'Active category RPC must return only active categories.';
+  if v_count <> 1 then
+    raise exception 'Active category RPC must return only the one remaining active category.';
   end if;
 
   update public.exam_categories
