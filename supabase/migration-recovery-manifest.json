@@ -149,6 +149,13 @@
       "status": "repository_only_not_applied_to_production",
       "source": "M2 follow-up migration: preserve existing inactive category assignment while editing its exam",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113150000",
+      "name": "exam_category_admin_list_archived_version_filter",
+      "status": "repository_only_not_applied_to_production",
+      "source": "M2 follow-up: preserve legacy Admin list behavior by excluding soft-archived exam versions",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
