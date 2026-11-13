@@ -19,6 +19,7 @@ DECLARE
   v_admin_payload jsonb;
   v_public_payload jsonb;
   v_submit_result jsonb;
+  v_submit_retry jsonb;
   v_attempt_state jsonb;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub',v_admin::text,true);
@@ -193,6 +194,13 @@ BEGIN
      OR (v_submit_result->>'score')::numeric <> 1
      OR (v_submit_result->>'max_score')::numeric <> 1 THEN
     RAISE EXCEPTION 'Legacy attempt grading changed unexpectedly: %',v_submit_result;
+  END IF;
+
+  v_submit_retry := public.submit_exam_attempt(v_attempt_id);
+  IF v_submit_retry->>'status' IS DISTINCT FROM 'submitted'
+     OR (v_submit_retry->>'score')::numeric <> 1
+     OR (v_submit_retry->>'max_score')::numeric <> 1 THEN
+    RAISE EXCEPTION 'Legacy submission idempotency changed unexpectedly: %',v_submit_retry;
   END IF;
 
   v_attempt_state := public.get_my_attempt_state(v_attempt_id);
