@@ -4,7 +4,7 @@ on:
   push:
     branches: [feature/m1-subject-taxonomy-stimuli, feature/exam-categories-admin, feature/exam-category-editor-integration]
   pull_request:
-    branches: [main, architecture/multi-subject-foundation]
+    branches: [main, architecture/multi-subject-foundation, feature/exam-categories-admin]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/migration_archive/**'
