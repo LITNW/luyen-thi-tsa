@@ -113,6 +113,10 @@ jobs:
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
       - name: Apply education hierarchy identity guards
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
+      - name: Apply education exam placement and scoped catalogue
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160130_education_exam_placement_and_scoped_catalogue.sql
+      - name: Apply education exam placement history guard
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
 
       - name: Seed isolated test admin and run answer-validation regression
         env:
@@ -162,6 +166,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
+
+      - name: Run education exam placement regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql
 
       - name: Stop clean Supabase services
         if: always()
