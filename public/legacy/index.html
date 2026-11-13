@@ -1383,6 +1383,7 @@ if('serviceWorker' in navigator){
       return null;
     }
     async function importToEditor(){
+      await loadEditorCategories();
       const approved=importQuestions.filter(q=>q.status==='approved');
       if(!approved.length)throw new Error('Chưa có câu nào được duyệt.');
       const qs=[];
