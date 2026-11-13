@@ -71,6 +71,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
       - name: Apply education hierarchy active-profile read policies
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
+      - name: Apply education hierarchy identity guards
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
