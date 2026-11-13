@@ -11,9 +11,10 @@ This audit used read-only schema, migration-ledger, RPC, constraint, and row-cou
 
 ## 2. Current migration baseline
 
-- The recovered Production migration chain contains 17 ledger migrations through `20261112041845`.
-- `20261112050000_ai_exam_import_staging.sql` is pending, not in the Production ledger.
-- `20261112170000_centralize_exam_answer_validation.sql` is the answer-validation migration now merged to main.
+- The original recovery snapshot contains 17 recovered Production ledger migrations through `20261112041845`.
+- The current read-only Production ledger check on 2026-11-13 contains 19 applied entries.
+- The two subsequent applied entries are `20261112050000_ai_exam_import_staging` and `20261112170000_centralize_exam_answer_validation`.
+- The recovery manifest's `pending` entry describes its 2026-11-12 snapshot; it is not the current Production status.
 - PR #23 and PR #22 are merged.
 - The clean-install workflow originally fetched PR #22 from its feature branch. PR #24 removes that dependency and applies the migration/test files from the checked-out commit; it also broadens test path filters to `supabase/tests/**`.
 
