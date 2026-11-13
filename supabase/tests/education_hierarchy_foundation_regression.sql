@@ -166,6 +166,18 @@ begin
 end;
 $tests$;
 
+set local role anon;
+do $anon$
+declare v_count integer;
+begin
+  select count(*) into v_count from public.education_levels;
+  if v_count <> 0 then
+    raise exception 'Anonymous role unexpectedly read education levels.';
+  end if;
+end;
+$anon$;
+reset role;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
 
@@ -173,9 +185,6 @@ do $rls$
 begin
   if (select count(*) from public.education_levels where is_active) < 2 then
     raise exception 'Authenticated student could not read active education levels.';
-  end if;
-  if has_table_privilege('anon','public.education_levels','SELECT') then
-    raise exception 'anon must not have direct SELECT on education_levels.';
   end if;
 
   begin
