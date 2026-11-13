@@ -66,6 +66,11 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
       - name: Apply M2 follow-up for archived version listing
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
+
+      - name: Apply education hierarchy foundation
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160000_education_hierarchy_foundation.sql
+      - name: Apply education hierarchy active-profile read policies
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161000_education_hierarchy_active_profile_read_policies.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -99,3 +104,6 @@ jobs:
 
       - name: Run M2 exam category regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/exam_categories_admin_regression.sql
+
+      - name: Run education hierarchy foundation regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
