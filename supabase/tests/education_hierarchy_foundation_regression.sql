@@ -22,6 +22,11 @@ declare
   v_rejected boolean;
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
+  insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
+  values (
+    v_student,'education-student@example.test',now(),
+    '{"display_name":"Education Student"}'::jsonb
+  );
 
   select id into v_thpt from public.education_levels where code='thpt';
   select id into v_uni from public.education_levels where code='university';
