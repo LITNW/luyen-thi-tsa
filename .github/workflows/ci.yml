@@ -2,7 +2,7 @@ name: React migration CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feature/exam-categories-admin]
   push:
     branches: [feature/react-migration, feature/exam-categories-admin, feature/exam-category-editor-integration]
 
