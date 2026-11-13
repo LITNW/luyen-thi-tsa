@@ -62,6 +62,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
+      - name: Apply M2 follow-up for archived category preservation
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
