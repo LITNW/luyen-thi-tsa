@@ -38,8 +38,10 @@ The live system currently has the following relevant entities:
 Observed live data at architecture review: 119 question identities, 231 question versions, 231 answer-key rows, 318 exam-question mappings, 15 attempts, and 16 attempt-answer rows. These are a point-in-time baseline, not constants.
 
 Important constraints:
+- `question_versions` and `question_answer_keys` have immutability triggers. Existing question versions must not be updated to attach a stimulus; create a new version when the content/stimulus relationship changes.
+- `exam_versions` and `exam_version_questions` are protected after publication. New section/group tables must implement equivalent draft-only mutation rules.
 - `question_versions.question_type` currently allows only `mc`, `ms`, `tf`, `num`, and `dnd`.
-- `question_versions.content` must be a JSON object containing `q`.
+- `question_versions.content` must be a JSON object containing `q`; the current centralized validator additionally requires `o` to be an array for all five existing types. New types such as fill-in and constructed response require per-type content schemas rather than a global `o` requirement.
 - `exam_version_questions` has unique question position per exam version and unique question-version membership per exam version.
 - `attempt_answers` is tied to both `attempts` and `exam_version_questions` through composite foreign keys that include `exam_version_id`.
 - `attempts` retains the exact exam version used for the attempt.
@@ -48,6 +50,8 @@ Important constraints:
 - `submit_exam_attempt` grades from `exam_version_questions` and writes authoritative scores to `attempt_answers` and `attempts`.
 
 The new architecture must wrap these contracts before replacing any of them.
+
+All 231 observed question versions currently have a string prompt and an options array; none has a detected `stimulus` property. Existing content should not be reinterpreted or bulk-converted. The import staging tables currently store question content and answer keys but do not model reusable stimulus/group entities, so import-pipeline support must be added in a later phase.
 
 ## 4. Target domain model
 
@@ -115,7 +119,7 @@ Immutable content versions:
 - `created_at timestamptz`
 - unique (`stimulus_id`, `version_no`)
 
-Content is structured JSON with a versioned schema. Large files are stored in Supabase Storage and referenced by opaque asset IDs/paths; binary data is never embedded in JSONB. Storage bucket visibility and signed-URL policy must be decided per asset classification, not assumed public.
+Content is structured JSON with a versioned schema. Large files are stored in Supabase Storage and referenced by opaque asset IDs/paths; binary data is never embedded in JSONB. The current `tsa-imports` bucket is private, has a 25 MiB limit, and has no MIME allowlist. Do not reuse it for stimulus media: create a dedicated private stimulus bucket with explicit MIME/size policy and controlled signed access in the storage phase. Bucket creation is not part of this architecture-only PR.
 
 A stimulus version referenced by a published exam cannot be edited or deleted. Corrections create a new version.
 
