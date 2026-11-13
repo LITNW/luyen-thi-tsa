@@ -197,6 +197,14 @@
       "staging_status": "applied_in_staging",
       "source": "Ensures exam education placement cannot be changed after it has attempts",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113161654",
+      "name": "education_atomic_editor_save",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Adds atomic legacy editor save wrapper that persists education placement before optional publish",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
