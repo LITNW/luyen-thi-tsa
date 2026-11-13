@@ -5,8 +5,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
-      - 'supabase/tests/fixtures/pre_005_schema.sql'
-      - 'supabase/tests/recovered_migration_chain_smoke.sql'
+      - 'supabase/tests/**'
       - 'supabase/migration-recovery-manifest.json'
       - '.github/workflows/recovered-migration-chain.yml'
 
@@ -51,20 +50,14 @@ jobs:
           done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
       - name: Verify recovered schema and RPCs
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
-      - name: Fetch reviewed answer-validation PR at its current tested head
+      - name: Apply subsequent AI import migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112050000_ai_exam_import_staging.sql
+      - name: Verify merged answer-validation migration and regression test
         run: |
-          set -euo pipefail
-          git fetch --no-tags origin fix/exam-answer-validation-guard
-          actual="$(git rev-parse FETCH_HEAD)"
-          expected="196de93af114652c7a567b2535c07b00def3de5a"
-          test "$actual" = "$expected" || {
-            echo "PR #22 head changed: expected $expected, got $actual"
-            exit 1
-          }
-          git show FETCH_HEAD:supabase/migrations/20261112170000_centralize_exam_answer_validation.sql > /tmp/answer-validation.sql
-          git show FETCH_HEAD:supabase/tests/answer_validation_regression.sql > /tmp/answer-validation-regression.sql
-      - name: Apply answer-validation migration after recovered chain
-        run: psql -v ON_ERROR_STOP=1 -f /tmp/answer-validation.sql
+          test -s supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
+          test -s supabase/tests/answer_validation_regression.sql
+      - name: Apply centralized answer-validation migration after recovered chain
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -91,4 +84,4 @@ jobs:
           $assert$;
           SQL
       - name: Run answer-validation regression suite on recovered schema
-        run: psql -v ON_ERROR_STOP=1 -f /tmp/answer-validation-regression.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/answer_validation_regression.sql
