@@ -142,6 +142,13 @@
       "status": "repository_only_not_applied_to_production",
       "source": "M2 Admin-managed exam category feature proposed after M1 foundation",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113140000",
+      "name": "exam_category_archived_assignment_preservation",
+      "status": "repository_only_not_applied_to_production",
+      "source": "M2 follow-up migration: preserve existing inactive category assignment while editing its exam",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
