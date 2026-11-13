@@ -111,6 +111,8 @@ jobs:
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
       - name: Apply education hierarchy active-profile read policies
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
+      - name: Apply education hierarchy identity guards
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
 
       - name: Seed isolated test admin and run answer-validation regression
         env:
