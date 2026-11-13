@@ -14,6 +14,7 @@ declare
   v_root uuid := '61000000-0000-4000-8000-000000000001';
   v_topic uuid := '61000000-0000-4000-8000-000000000002';
   v_skill uuid := '61000000-0000-4000-8000-000000000003';
+  v_topic2 uuid := '61000000-0000-4000-8000-000000000004';
   v_stimulus uuid := '62000000-0000-4000-8000-000000000001';
   v_stimulus_version uuid := '62000000-0000-4000-8000-000000000002';
   v_exam uuid := '63000000-0000-4000-8000-000000000001';
@@ -63,6 +64,8 @@ begin
   values (v_topic,v_math,v_root,'topic','linear_equations','Phương trình tuyến tính');
   insert into public.taxonomy_nodes(id,subject_id,parent_id,node_type,code,name)
   values (v_skill,v_math,v_topic,'skill','solve_systems','Giải hệ phương trình');
+  insert into public.taxonomy_nodes(id,subject_id,parent_id,node_type,code,name)
+  values (v_topic2,v_math,v_root,'topic','quadratics','Phương trình bậc hai');
 
   -- Composite FK must reject a parent from another subject.
   begin
@@ -170,7 +173,7 @@ begin
   begin
     insert into public.question_version_taxonomy(
       question_version_id,taxonomy_node_id,relation_type
-    ) values (v_question_version,v_root,'primary_topic');
+    ) values (v_question_version,v_topic2,'primary_topic');
     raise exception 'A second primary topic was unexpectedly accepted.';
   exception when unique_violation then
     null;
@@ -205,7 +208,7 @@ begin
   begin
     insert into public.question_version_taxonomy(
       question_version_id,taxonomy_node_id,relation_type
-    ) values (v_question_version,v_root,'secondary_topic');
+    ) values (v_question_version,v_topic2,'secondary_topic');
     raise exception 'Published question taxonomy insertion was unexpectedly accepted.';
   exception when check_violation then
     null;
