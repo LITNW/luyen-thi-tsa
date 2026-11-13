@@ -163,6 +163,11 @@ export default function AdminEducationPage() {
     display_order: node.display_order, is_active: node.is_active,
   });
 
+  const editLevel = (level) => setLevelForm({
+    id: level.id, code: level.code, name: level.name, description: level.description || '',
+    display_order: level.display_order, is_active: level.is_active,
+  });
+
   const editOffering = (item) => setOfferingForm({
     id: item.id, education_level_id: item.education_level_id, education_node_id: item.education_node_id || '',
     subject_id: item.subject_id, local_code: item.local_code || '', display_name: item.display_name,
@@ -178,9 +183,15 @@ export default function AdminEducationPage() {
       <section className="section-block admin-education-section">
         <div className="section-heading"><div><p className="eyebrow">LEVELS</p><h2>Cấp học</h2></div></div>
         <div className="education-admin-levels">
-          {levels.map((level) => <button type="button" key={level.id} className={selectedLevel === level.id ? 'education-admin-level selected' : 'education-admin-level'} onClick={() => { setSelectedLevel(level.id); setNodeForm({ ...emptyNode, education_level_id: level.id }); setOfferingForm({ ...emptyOffering, education_level_id: level.id }); }}>
-            <b>{level.name}</b><small>{level.code} · {level.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small>
-          </button>)}
+          {levels.map((level) => <article key={level.id} className={selectedLevel === level.id ? 'education-admin-level selected' : 'education-admin-level'}>
+            <button type="button" className="education-admin-level-select" onClick={() => { setSelectedLevel(level.id); setNodeForm({ ...emptyNode, education_level_id: level.id }); setOfferingForm({ ...emptyOffering, education_level_id: level.id }); }}>
+              <b>{level.name}</b><small>{level.code} · {level.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small>
+            </button>
+            <div className="user-actions">
+              <button type="button" className="button secondary" onClick={() => editLevel(level)}>Sửa</button>
+              <button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_levels', level, !level.is_active)}>{level.is_active ? 'Ẩn' : 'Kích hoạt'}</button>
+            </div>
+          </article>)}
         </div>
         <form className="category-form form-stack" onSubmit={saveLevel}>
           <h3>{levelForm.id ? 'Chỉnh sửa cấp học' : 'Thêm cấp học'}</h3>
@@ -248,8 +259,10 @@ export default function AdminEducationPage() {
         <form className="category-form form-stack" onSubmit={saveOffering}>
           <h3>{offeringForm.id ? 'Chỉnh sửa môn học trong ngữ cảnh' : 'Gán môn học vào cấp học/ngữ cảnh'}</h3>
           <div className="admin-form-grid">
-            <label>Môn học<input list="education-subject-options" value={subjects.find((s) => s.id === offeringForm.subject_id)?.name || ''} onChange={(e) => { const s = subjects.find((x) => x.name === e.target.value || x.code === e.target.value); setOfferingForm({ ...offeringForm, subject_id: s?.id || '' }); }} placeholder="Chọn tên môn trong danh mục" /></label>
-            <datalist id="education-subject-options">{subjects.filter((s) => s.is_active).map((s) => <option key={s.id} value={s.name}>{s.code}</option>)}</datalist>
+            <label>Môn học<select required value={offeringForm.subject_id} onChange={(e) => setOfferingForm({ ...offeringForm, subject_id: e.target.value })}>
+              <option value="">Chọn môn học trong danh mục</option>
+              {subjects.filter((subject) => subject.is_active).map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}
+            </select></label>
             <label>Ngữ cảnh<select value={offeringForm.education_node_id} onChange={(e) => setOfferingForm({ ...offeringForm, education_node_id: e.target.value })}>
               <option value="">Trực tiếp dưới cấp học</option>
               {levelNodes.filter((node) => node.is_active).map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
