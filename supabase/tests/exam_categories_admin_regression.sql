@@ -179,6 +179,69 @@ begin
     raise exception 'Editing an exam must preserve its already assigned archived category.';
   end if;
 
+  -- Explicitly selecting "Unclassified" removes an existing assignment.
+  v_save := public.admin_save_exam_content_with_category(
+    (v_save->>'exam_version_id')::uuid,
+    'M2 category-aware save unassigned',
+    'Disposable CI fixture unassigned',
+    35,
+    jsonb_build_array(jsonb_build_object(
+      'scope','bank',
+      'type','mc',
+      'content',jsonb_build_object('q','M2 category wrapper question?','o',jsonb_build_array('A','B')),
+      'answer_key',1,
+      'explanation','',
+      'grading_config','{}'::jsonb,
+      'source_metadata','{}'::jsonb,
+      'points',1
+    )),
+    null,
+    false
+  );
+  if v_save->>'category_id' is not null
+     or (select category_id from public.exams where id=v_new_exam_id) is not null then
+    raise exception 'Explicitly clearing an exam category must persist NULL.';
+  end if;
+
+  -- Editing a legacy exam that was never categorized must keep category_id NULL.
+  insert into public.exams(id,title,description,duration_minutes)
+  values (
+    '64000000-0000-4000-8000-000000000003',
+    'Legacy uncategorized exam',
+    'Pre-existing uncategorized fixture',
+    30
+  );
+  insert into public.exam_versions(
+    id,exam_id,version_no,title,description,duration_minutes,status,created_by
+  ) values (
+    '64000000-0000-4000-8000-000000000004',
+    '64000000-0000-4000-8000-000000000003',
+    1,'Legacy uncategorized exam','Pre-existing uncategorized fixture',30,'draft',v_admin
+  );
+  v_save := public.admin_save_exam_content_with_category(
+    '64000000-0000-4000-8000-000000000004',
+    'Legacy uncategorized exam edited',
+    'Legacy fixture edited through wrapper',
+    35,
+    jsonb_build_array(jsonb_build_object(
+      'scope','bank',
+      'type','mc',
+      'content',jsonb_build_array('A','B'),
+      'answer_key',1,
+      'explanation','',
+      'grading_config','{}'::jsonb,
+      'source_metadata','{}'::jsonb,
+      'points',1
+    )),
+    null,
+    false
+  );
+  if v_save->>'success' is distinct from 'true'
+     or v_save->>'category_id' is not null
+     or (select category_id from public.exams where id='64000000-0000-4000-8000-000000000003') is not null then
+    raise exception 'Editing a legacy uncategorized exam must retain NULL category_id: %',v_save;
+  end if;
+
   -- Admin category list includes inactive rows; student access is limited to active rows.
   if jsonb_array_length(public.admin_list_exam_categories()) <> 3 then
     raise exception 'Admin category list should include active and inactive categories.';
