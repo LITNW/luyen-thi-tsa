@@ -104,6 +104,8 @@ jobs:
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
       - name: Apply M2 follow-up for archived category preservation
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
+      - name: Apply M2 follow-up for archived version listing
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
 
       - name: Seed isolated test admin and run answer-validation regression
         env:
