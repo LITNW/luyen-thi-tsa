@@ -71,7 +71,7 @@ jobs:
             fi
           done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
 
-      - name: Apply pending AI import migration
+      - name: Apply subsequent AI import migration
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261112050000_ai_exam_import_staging.sql
