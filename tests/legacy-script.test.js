@@ -34,3 +34,12 @@ test('legacy editor preserves uncategorized and archived category assignments un
   assert.match(html, /Danh mục đã ẩn/);
   assert.match(html, /giữ nguyên/);
 });
+
+
+test('legacy editor obtains Supabase credentials from the deployment runtime, not a hardcoded project', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /src="\/legacy\/supabase-config\.js"/);
+  assert.match(html, /window\.__SUPABASE_CONFIG__/);
+  assert.doesNotMatch(html, /hwqtsopvpucadgpkigqz\.supabase\.co/);
+  assert.doesNotMatch(html, /sb_publishable_[A-Za-z0-9_-]{20,}/);
+});
