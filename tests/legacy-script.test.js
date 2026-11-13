@@ -15,14 +15,18 @@ test('legacy exam application inline JavaScript remains syntactically valid', ()
   }
 });
 
-test('legacy Admin editor loads categories and saves through the category-aware RPC', () => {
+test('legacy Admin editor loads education placement and optional categories before atomic save', () => {
   const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
   assert.match(html, /list_active_exam_categories/);
   assert.match(html, /id="f-category"/);
-  assert.match(html, /admin_save_exam_content_with_category/);
+  assert.match(html, /loadEditorEducationSubjects/);
+  assert.match(html, /id="f-education-subject"/);
+  assert.match(html, /admin_save_exam_content_with_education/);
+  assert.match(html, /p_education_subject_id:educationSubjectId/);
   assert.match(html, /p_category_id:categoryId/);
   assert.match(html, /category_id:currentCategory\?\.category_id\|\|null/);
   assert.match(html, /category_id:categoryId/);
+  assert.match(html, /education_subject_id:educationSubjectId/);
   assert.match(html, /const categoryId=selectedCategory\|\|null/);
 });
 
