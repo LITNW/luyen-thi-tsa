@@ -371,12 +371,13 @@ input::placeholder, textarea::placeholder {
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('/legacy/sw.js',{scope:'/legacy/'}).catch(()=>{}));
 }
-</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
+</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let editorCategories=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
-    const SB_URL='https://hwqtsopvpucadgpkigqz.supabase.co';
-    const SB_KEY='sb_publishable_DOgS6q2neojjMmaoBi64SQ_pv0HMOVL';
-    const sb=window.supabase?.createClient?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+    const SB_CONFIG=window.__SUPABASE_CONFIG__||{};
+    const SB_URL=SB_CONFIG.url||'';
+    const SB_KEY=SB_CONFIG.publishableKey||'';
+    const sb=window.supabase?.createClient&&SB_URL&&SB_KEY?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
     const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const st={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
     const ex=id=>D.exams.find(x=>x.id===id),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
