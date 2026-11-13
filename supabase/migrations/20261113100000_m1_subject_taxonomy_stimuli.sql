@@ -210,6 +210,14 @@ begin
     join public.exam_versions ev on ev.id = evq.exam_version_id
     where evq.question_version_id = v_question_version_id
       and ev.status = 'published'
+  ) or (
+    tg_op = 'UPDATE' and exists (
+      select 1
+      from public.exam_version_questions evq
+      join public.exam_versions ev on ev.id = evq.exam_version_id
+      where evq.question_version_id = old.question_version_id
+        and ev.status = 'published'
+    )
   ) then
     raise exception using
       errcode = '23514',
