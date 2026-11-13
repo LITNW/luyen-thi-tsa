@@ -78,7 +78,15 @@ Counts are observational only and will change as the platform is used.
 - `submit_exam_attempt(uuid)` grades by iterating `exam_version_questions`; it remains the authoritative score writer.
 - Answer-save, resume, time-tracking, and history RPCs rely on existing mapping and attempt identifiers.
 
-## 5. RLS and security observations
+## 5. Immutability, import, and media observations
+
+- Triggers prevent UPDATE/DELETE on `questions`, `question_versions`, and `question_answer_keys`; published exam versions and their question mappings are protected as well. New stimulus links must be written when creating a new question version, not by rewriting historical rows.
+- All 16 observed public application tables have RLS enabled. RLS is not forced; service-role/server-side paths still require careful authorization and secret handling.
+- The existing private Storage bucket `tsa-imports` has a 25 MiB file-size limit and no MIME allowlist. Keep it dedicated to import source files; do not mix reusable stimulus assets into it.
+- The import staging model (`import_jobs`, `import_questions`, `import_events`) stores extracted question content/answer keys and source metadata but has no first-class stimulus or question-group references. The importer must be extended deliberately after the content model is stable.
+- All 231 observed question versions contain a string prompt and options array; none has a detected top-level `stimulus` field. Do not assume that historical content already has reusable passages or media.
+
+## 6. RLS and security observations
 
 RLS is enabled on the existing application tables. Some sensitive tables intentionally have no direct student SELECT policy and are accessed through server-side RPCs. New content and stimulus tables must not accidentally grant direct student access to answer keys or draft content.
 
@@ -91,11 +99,11 @@ A separate security review is required for:
 
 Do not treat the presence of RLS alone as proof of correct access control.
 
-## 6. Known migration and CI concern
+## 7. Known migration and CI concern
 
 The clean-install workflow source on main fetches PR #22's migration and test from branch `fix/exam-answer-validation-guard` and asserts a hard-coded head SHA. Since PR #22 has been merged, the workflow should instead consume the migration and test files already present in the checked-out commit. This removes an unnecessary dependency on the continued existence and immutability of a feature branch. This CI cleanup should be done as a small, isolated change before the first new schema migration.
 
-## 7. Open PR disposition
+## 8. Open PR disposition
 
 - PR #18: separate hotfix for the obsolete `supabase-migration` branch. Its own description explicitly says not to retarget it to main. Leave it isolated; do not merge it into this architecture work.
 - PR #20: structural regression test for the active legacy exam HTML. Its CI run for the PR head completed successfully, but its branch is now 84 commits behind and 2 commits ahead of current main. Do not merge that stale branch wholesale. Port the 12-line test onto a fresh branch from current main, then close PR #20 as superseded, or leave it draft until that isolated replacement is ready.
