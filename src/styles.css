@@ -436,3 +436,18 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   .education-exam-card { align-items: flex-start; flex-direction: column; }
   .admin-education-page { width: calc(100% - 28px); }
 }
+
+.education-admin-level { cursor: default; }
+.education-admin-level-select {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+.education-admin-level-select small { color: var(--muted); }
+.education-admin-level .user-actions { margin-top: 12px; }
