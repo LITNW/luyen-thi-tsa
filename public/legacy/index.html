@@ -373,7 +373,7 @@ if('serviceWorker' in navigator){
 }
 </script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
-    let me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
+    let editorCategories=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
     const SB_URL='https://hwqtsopvpucadgpkigqz.supabase.co';
     const SB_KEY='sb_publishable_DOgS6q2neojjMmaoBi64SQ_pv0HMOVL';
     const sb=window.supabase?.createClient?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
@@ -480,11 +480,26 @@ if('serviceWorker' in navigator){
       go({n:'home'});
       notify(data?.archived?'Đã ẩn đề khỏi danh sách. Lịch sử '+Number(data.attempt_count||0)+' lượt làm được giữ nguyên.':'Đã xóa phiên bản đề thi.');
     }
+    async function loadEditorCategories(){
+      const {data,error}=await sb.rpc('list_active_exam_categories');
+      if(error)throw error;
+      editorCategories=Array.isArray(data)?data:[];
+    }
+    async function openNewEditor(){
+      try{
+        await loadEditorCategories();
+        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
+        go(view);
+      }catch(e){notify('Không tải được danh mục đề thi: '+e.message)}
+    }
     async function openEditor(versionId,status,examId){
       try{let id=versionId;if(status==='published'){const {data:newId,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:examId});if(error)throw error;id=newId}
         const {data:x,error}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:id});if(error)throw error;
+        await loadEditorCategories();
+        const {data:versions,error:ve}=await sb.rpc('admin_list_exam_versions_with_categories');if(ve)throw ve;
+        const currentCategory=(versions||[]).find(item=>item.exam_id===x.exam_id);
         const qs=(x.questions||[]).map(mapAdminQuestion);
-        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
+        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
       }catch(e){notify('Không mở được trình soạn đề: '+e.message)}
     }
     function edit(){
@@ -1221,7 +1236,7 @@ if('serviceWorker' in navigator){
         else if(k==='history')await loadHistory();
         else if(k==='users')await loadUsers();
         else if(k==='attempts')await loadAdminAttempts();
-        else if(k==='new')go({n:'edit',id:null,exam_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]});
+        else if(k==='new')await openNewEditor();
         else if(k==='editVersion')await openEditor(i,b.dataset.status,b.dataset.exam);
         else if(k==='deleteVersion')await deleteExamVersion(i,b.dataset.title,b.dataset.status);
         else if(k==='retryResult')await retrySubmittedResult();
