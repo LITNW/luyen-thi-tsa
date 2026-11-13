@@ -226,7 +226,7 @@ begin
     jsonb_build_array(jsonb_build_object(
       'scope','bank',
       'type','mc',
-      'content',jsonb_build_array('A','B'),
+      'content',jsonb_build_object('q','Legacy uncategorized question?','o',jsonb_build_array('A','B')),
       'answer_key',1,
       'explanation','',
       'grading_config','{}'::jsonb,
