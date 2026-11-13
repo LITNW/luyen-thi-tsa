@@ -205,6 +205,8 @@ Constructed-response grading is deferred. Future tables may include rubric ident
 
 ## 5. RPC and application contracts
 
+The flat RPC surface has destructive/reconciliation behavior and must be guarded before structured layout rows are introduced. See [the legacy RPC compatibility matrix](legacy-contract-matrix.md). Add a persisted `exam_versions.content_model_version` discriminator (v1 flat, v2 structured) in the structure migration. Every old flat mutation RPC must reject v2 versions before writing; v2 reads/writes use separately named RPCs.
+
 Do not mutate the old RPC response in place during the transition.
 
 Retain:
@@ -220,7 +222,7 @@ Introduce versioned contracts:
 
 The v2 payload should normalize all items into a typed structure. The frontend should not reconstruct domain relationships through multiple direct table reads.
 
-A compatibility adapter may flatten v2 sections to the legacy `questions` array for old exam clients, but this is a one-way presentation adapter; it must not discard group/stimulus structure when saving.
+The current legacy runtime cannot display shared stimuli or group boundaries. Route v1 versions to the existing flat runtime and v2 versions to a structured runtime using the persisted content-model version. A flat compatibility adapter may be used for admin previews or migration comparison, but it must not be used to run a v2 exam or save it back as flat content.
 
 ## 6. Security model
 
@@ -307,3 +309,6 @@ The following cannot be guaranteed by ordinary row-level CHECK constraints alone
 - The section tree belongs to the same exam version as every mapping it contains.
 
 Enforce these rules in the structured admin RPC inside a transaction, with supporting unique/FK constraints and deferred constraint triggers where appropriate. Do not rely on frontend validation.
+
+
+See also: [legacy RPC compatibility matrix](legacy-contract-matrix.md) and [migration plan](migration-plan.md).
