@@ -5,10 +5,7 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
-      - 'supabase/tests/fixtures/pre_005_supabase_schema.sql'
-      - 'supabase/tests/fixtures/pre_005_schema.sql'
-      - 'supabase/tests/answer_validation_regression.sql'
-      - 'supabase/tests/recovered_migration_chain_smoke.sql'
+      - 'supabase/tests/**'
       - 'supabase/migration-recovery-manifest.json'
       - '.github/workflows/supabase-clean-install.yml'
 
@@ -84,25 +81,17 @@ jobs:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
 
-      - name: Fetch PR #22 at the reviewed head
+      - name: Verify merged answer-validation migration and regression test
         run: |
-          set -euo pipefail
-          git fetch --no-tags origin fix/exam-answer-validation-guard
-          actual="$(git rev-parse FETCH_HEAD)"
-          expected="196de93af114652c7a567b2535c07b00def3de5a"
-          test "$actual" = "$expected" || {
-            echo "PR #22 head changed: expected $expected, got $actual"
-            exit 1
-          }
-          git show FETCH_HEAD:supabase/migrations/20261112170000_centralize_exam_answer_validation.sql > /tmp/answer-validation.sql
-          git show FETCH_HEAD:supabase/tests/answer_validation_regression.sql > /tmp/answer-validation-regression.sql
+          test -s supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
+          test -s supabase/tests/answer_validation_regression.sql
 
-      - name: Apply PR #22 migration
+      - name: Apply centralized answer-validation migration
         env:
           PGPASSWORD: postgres
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f /tmp/answer-validation.sql
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
 
-      - name: Seed isolated test admin and run PR #22 regression
+      - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
         run: |
@@ -129,7 +118,7 @@ jobs:
           END;
           $assert$;
           SQL
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f /tmp/answer-validation-regression.sql
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/answer_validation_regression.sql
 
       - name: Stop clean Supabase services
         if: always()
