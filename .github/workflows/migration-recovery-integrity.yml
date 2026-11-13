@@ -1,8 +1,10 @@
 name: Migration recovery integrity
 
 on:
+  push:
+    branches: [feature/m1-subject-taxonomy-stimuli]
   pull_request:
-    branches: [main]
+    branches: [main, architecture/multi-subject-foundation]
     paths:
       - 'supabase/migrations/**'
       - 'supabase/migration_archive/**'
