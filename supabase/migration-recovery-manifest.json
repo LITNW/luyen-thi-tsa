@@ -1,7 +1,7 @@
 {
   "source": "Production supabase_migrations.schema_migrations.statements[1]",
   "recovered_at": "2026-11-12",
-  "note": "MD5 fingerprints are calculated over the original stored SQL statement. The bootstrap migration is redacted in Git; its fingerprint refers to the original pre-redaction SQL. The `pending` array is a historical status snapshot as of recovery on 2026-11-12, not a live ledger mirror; `20261112050000_ai_exam_import_staging` was confirmed applied in Production on 2026-11-13. The later `20261112170000_centralize_exam_answer_validation` migration is tracked in the repository but is not part of the 17-statement recovery fingerprint set.",
+  "note": "The migrations array is the exact 17-statement recovery fingerprint set. recovery_snapshot_pending records the historical 2026-11-12 status only. subsequent_migrations lists later repository migrations; their current Production status must be verified against the live Supabase migration ledger.",
   "migrations": [
     {
       "version": "20261111145710",
@@ -106,12 +106,28 @@
       "redacted": false
     }
   ],
-  "pending": [
+  "recovery_snapshot_pending": [
     {
       "version": "20261112050000",
       "name": "ai_exam_import_staging",
       "status": "pending_not_in_production",
       "renamed_from": "20261111234000"
+    }
+  ],
+  "subsequent_migrations": [
+    {
+      "version": "20261112050000",
+      "name": "ai_exam_import_staging",
+      "status": "applied_in_production",
+      "source": "repository migration added after the 17-statement recovery snapshot",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261112170000",
+      "name": "centralize_exam_answer_validation",
+      "status": "applied_in_production",
+      "source": "merged PR #22 migration",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
