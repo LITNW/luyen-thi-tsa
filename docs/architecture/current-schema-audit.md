@@ -115,7 +115,7 @@ Do not remove indexes based only on a low-volume unused-index sample. Add indexe
 - `admin_save_exam_content(..., p_questions jsonb, ...)` accepts a flat array and reconciles mapping IDs; it deletes mappings omitted from the submitted array.
 - `admin_create_exam_version` clones flat mappings only. `admin_delete_exam_version` deletes mappings before the parent version when no attempts exist.
 - `list_published_exams` does not return a content-model/runtime version. `get_my_attempt_state` returns the exact exam version ID but not its layout version.
-- `submit_exam_attempt(uuid)` grades by iterating `exam_version_questions`; it remains the authoritative score writer.
+- `submit_exam_attempt(uuid)` grades by iterating `exam_version_questions`; it remains the authoritative score writer. The reconstructed pre-005 fixtures initially omitted this live-catalog function; the new legacy contract test exposed the omission, and the exact current Production definition is now included in both test fixtures. This improves compatibility testing but does not prove its original historical creation timestamp.
 - The flat add/remove/replace/reorder RPCs mutate `exam_version_questions` directly. The points-only RPC updates a mapping without understanding section/group structure.
 - Answer-save, resume, time-tracking, and history RPCs rely on existing mapping and attempt identifiers.
 
