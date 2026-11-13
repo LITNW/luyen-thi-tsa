@@ -6,7 +6,7 @@
   "engines": { "node": "26.x" },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-legacy-config.js",
     "test": "node --test",
     "preview": "vite preview"
   },
