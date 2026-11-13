@@ -154,11 +154,11 @@ begin
 
   -- Soft-archived versions must stay out of the active Admin list, as in the legacy RPC.
   insert into public.exam_versions(
-    id,exam_id,version_no,title,description,duration_minutes,status,created_by,archived_at
+    id,exam_id,version_no,title,description,duration_minutes,status,created_by,published_by,published_at,archived_at
   ) values (
     '64000000-0000-4000-8000-000000000005',
     v_new_exam_id,99,'Archived fixture version','Must not appear in active list',30,
-    'published',v_admin,now()
+    'published',v_admin,v_admin,now(),now()
   );
   v_list := public.admin_list_exam_versions_with_categories();
   if exists (
