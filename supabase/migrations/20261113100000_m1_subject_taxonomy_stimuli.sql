@@ -108,6 +108,26 @@ $function$;
 create trigger subjects_set_updated_at
 before update on public.subjects
 for each row execute function public.m1_set_updated_at();
+
+-- Subject codes are stable API identifiers and cannot be rewritten after creation.
+create or replace function public.m1_protect_subject_code()
+returns trigger
+language plpgsql
+set search_path = ''
+as $function$
+begin
+  if new.code is distinct from old.code then
+    raise exception using
+      errcode = '23514',
+      message = 'Subject code is immutable; create a new subject instead.';
+  end if;
+  return new;
+end;
+$function$;
+
+create trigger subjects_protect_code
+before update of code on public.subjects
+for each row execute function public.m1_protect_subject_code();
 create trigger taxonomy_nodes_set_updated_at
 before update on public.taxonomy_nodes
 for each row execute function public.m1_set_updated_at();
