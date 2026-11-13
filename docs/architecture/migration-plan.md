@@ -18,7 +18,7 @@ Strategy: Expand → Backfill → Dual-read/dual-write where required → Switch
 
 ### Required inventory
 - Table/column definitions, PK/unique/check/FK constraints.
-- Indexes, triggers, RLS state and policies.
+- Indexes, triggers, RLS state and policies, including Storage object policies and whether FORCE RLS is enabled.
 - Function definitions, SECURITY DEFINER flags, grants, search_path.
 - Current RPC payloads used by the React and legacy clients.
 - Existing migration manifest, clean-install workflow, PostgreSQL workflow, and all current regression tests.
