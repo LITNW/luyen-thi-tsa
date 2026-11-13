@@ -13,6 +13,8 @@ declare
   v_institution uuid := '65000000-0000-4000-8000-000000000002';
   v_program uuid := '65000000-0000-4000-8000-000000000003';
   v_major uuid := '65000000-0000-4000-8000-000000000004';
+  v_custom_root uuid := '65000000-0000-4000-8000-000000000008';
+  v_custom_child uuid := '65000000-0000-4000-8000-000000000009';
   v_math uuid;
   v_offer uuid := '65000000-0000-4000-8000-000000000005';
   v_university_offer uuid := '65000000-0000-4000-8000-000000000006';
@@ -99,10 +101,20 @@ begin
     raise exception 'Invalid grade hierarchy was unexpectedly accepted.';
   end if;
 
-  -- Cycle guard.
+  -- Cycle guard on custom context nodes (custom nodes may nest flexibly).
+  insert into public.education_nodes(
+    id,education_level_id,parent_id,node_type,code,name
+  ) values (
+    v_custom_root,v_uni,null,'custom','custom-root','Custom root'
+  );
+  insert into public.education_nodes(
+    id,education_level_id,parent_id,node_type,code,name
+  ) values (
+    v_custom_child,v_uni,v_custom_root,'custom','custom-child','Custom child'
+  );
   v_rejected := false;
   begin
-    update public.education_nodes set parent_id=v_major where id=v_institution;
+    update public.education_nodes set parent_id=v_custom_child where id=v_custom_root;
   exception when check_violation then
     v_rejected := true;
   end;
@@ -121,11 +133,11 @@ begin
     raise exception 'Parent with active descendants was unexpectedly deactivated.';
   end if;
 
-  -- Subject offering cannot be active under an inactive node.
+  -- Subject offering cannot be reactivated under an inactive node.
+  update public.education_subjects set is_active=false where id=v_university_offer;
   update public.education_nodes set is_active=false where id=v_major;
   v_rejected := false;
   begin
-    update public.education_subjects set is_active=false where id=v_university_offer;
     update public.education_subjects set is_active=true where id=v_university_offer;
   exception when check_violation then
     v_rejected := true;
@@ -146,11 +158,6 @@ begin
     raise exception 'Education subject offering assignment did not persist.';
   end if;
 
-  -- Student can read active levels but cannot mutate the catalogue.
-  perform set_config('request.jwt.claim.sub',v_student::text,true);
-  if (select count(*) from public.education_levels where is_active) < 2 then
-    raise exception 'Authenticated student could not read active education levels.';
-  end if;
 end;
 $tests$;
 
@@ -159,6 +166,9 @@ select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002'
 
 do $rls$
 begin
+  if (select count(*) from public.education_levels where is_active) < 2 then
+    raise exception 'Authenticated student could not read active education levels.';
+  end if;
   if has_table_privilege('anon','public.education_levels','SELECT') then
     raise exception 'anon must not have direct SELECT on education_levels.';
   end if;
