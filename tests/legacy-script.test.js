@@ -24,7 +24,7 @@ test('legacy Admin editor loads categories and saves through the category-aware 
   assert.match(html, /p_category_id:categoryId/);
   assert.match(html, /category_id:currentCategory\?\.category_id\|\|null/);
   assert.match(html, /category_id:categoryId/);
-  assert.match(html, /view\.category_id\|\|null/);
+  assert.match(html, /const categoryId=selectedCategory\|\|null/);
 });
 
 test('legacy editor preserves uncategorized and archived category assignments until explicitly changed', () => {
