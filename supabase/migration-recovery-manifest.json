@@ -157,6 +157,22 @@
       "source": "M2 follow-up: preserve legacy Admin list behavior by excluding soft-archived exam versions",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "verified_against_live_production_ledger": "2026-11-13"
+    },
+    {
+      "version": "20261113155228",
+      "name": "education_hierarchy_foundation",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Education-first architecture foundation; additive schema only, no existing exam placement backfill",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261113155356",
+      "name": "education_hierarchy_active_profile_read_policies",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Tightens education catalogue SELECT policies to active authenticated profiles",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
