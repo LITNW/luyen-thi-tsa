@@ -2,7 +2,7 @@ name: Migration recovery integrity
 
 on:
   push:
-    branches: [feature/m1-subject-taxonomy-stimuli]
+    branches: [feature/m1-subject-taxonomy-stimuli, feature/exam-categories-admin]
   pull_request:
     branches: [main, architecture/multi-subject-foundation]
     paths:
