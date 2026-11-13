@@ -40,6 +40,13 @@ begin
     raise exception 'The three canonical subjects were not seeded exactly once.';
   end if;
 
+  begin
+    update public.subjects set code='maths' where id=v_math;
+    raise exception 'A stable subject code was unexpectedly mutable.';
+  exception when check_violation then
+    null;
+  end;
+
   -- Confirm there was no automatic classification/backfill of legacy question versions.
   if exists (select 1 from public.question_version_taxonomy) then
     raise exception 'M1 must not auto-assign existing question versions to taxonomy.';
