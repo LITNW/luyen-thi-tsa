@@ -53,12 +53,14 @@ Add:
 No old question is assigned automatically. Seed only stable subject codes after content ownership confirms the taxonomy. Existing question versions remain valid with no taxonomy links.
 
 ### M2 — reusable stimulus foundation
+Before implementation, preserve the existing immutability triggers on question versions and answer keys. Existing rows are not updated to attach stimuli; future links are added only when a new question version is created.
+
 Add:
 - `stimuli`
 - `stimulus_versions`
 - required immutability triggers and RLS
 
-Do not add question-to-stimulus links until the stimulus lifecycle and storage access rules are tested. Do not copy existing question text into stimulus rows automatically.
+Do not add question-to-stimulus links until the stimulus lifecycle and storage access rules are tested. Do not copy existing question text into stimulus rows automatically. Use a dedicated private Storage bucket with MIME/size restrictions; do not reuse the current private `tsa-imports` bucket.
 
 ### M3 — question group versioning
 Add:
@@ -104,7 +106,10 @@ Do not let old `admin_save_exam_content` accept a structured payload by guessing
 - Switch admin authoring first, then runtime rendering.
 - Keep legacy runtime available until resume, offline sync, timing, submission, and results parity is verified.
 
-### M7 — question types and grading
+### M7 — import pipeline compatibility
+Extend import staging only after the stimulus/group model is stable. The importer must be able to stage stimulus candidates, group membership, question-to-stimulus links, and source provenance without writing directly into published content. Admin review must approve the stimulus and each question version before they are attached to an exam. Preserve the existing flat import path until a versioned structured import contract passes regression tests.
+
+### M8 — question types and grading
 Only after M1–M6:
 - Introduce a registry for question schemas/renderers/validators/graders.
 - Expand the database CHECK constraint deliberately.
