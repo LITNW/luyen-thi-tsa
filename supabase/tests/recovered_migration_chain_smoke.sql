@@ -30,7 +30,8 @@ BEGIN
     'get_my_attempt_state',
     'get_my_attempt_history',
     'record_attempt_question_time_v2',
-    'admin_delete_exam_version'
+    'admin_delete_exam_version',
+    'submit_exam_attempt'
   ]) AS required_name
   WHERE NOT EXISTS (
     SELECT 1 FROM pg_proc p

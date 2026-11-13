@@ -2,7 +2,7 @@
 
 ## What was recovered
 
-The Production database has 17 rows in `supabase_migrations.schema_migrations`. Each row contains one original SQL statement in `statements[1]`. Those SQL bodies have been restored as files under `supabase/migrations`, retaining their original Production versions and names.
+At the time of the recovery snapshot (2026-11-12), the Production database had 17 rows in `supabase_migrations.schema_migrations`. Each row contained one original SQL statement in `statements[1]`. Those SQL bodies were restored as files under `supabase/migrations`, retaining their original Production versions and names. A later read-only check on 2026-11-13 found 19 applied ledger entries: the original 17 plus `20261112050000_ai_exam_import_staging` and `20261112170000_centralize_exam_answer_validation`.
 
 `migration-recovery-manifest.json` records the source version, name, and MD5 fingerprint for each original statement. The integrity workflow verifies that each recovered SQL body matches its Production fingerprint.
 
@@ -15,7 +15,7 @@ The Supabase migration ledger contains the SQL statements, but the original GitH
 ## Active migration directory
 
 - The 17 recovered files match the 17 Production ledger versions.
-- `20261112050000_ai_exam_import_staging.sql` is a pending migration that was not present in the Production ledger. It was moved after the latest applied Production version (`20261112041845`) because its former timestamp sorted before already-applied migrations.
+- `20261112050000_ai_exam_import_staging.sql` was pending at the time of recovery and was moved after the latest then-applied Production version (`20261112041845`) because its former timestamp sorted before already-applied migrations. The 2026-11-13 read-only ledger check confirms it has since been applied in Production.
 - Three superseded files were moved to `supabase/migration_archive/`: the duplicate offline-sync file and the incomplete delete/archive drafts. Their SQL is retained for provenance but is no longer in the active migration directory.
 
 ## Important limitation: pre-005 schema
@@ -29,11 +29,10 @@ Two explicitly test-only compatibility fixtures are maintained:
 - `tests/fixtures/pre_005_schema.sql` supplies the reconstructed pre-005 schema and lightweight Auth stubs for plain PostgreSQL 16 tests.
 - `tests/fixtures/pre_005_supabase_schema.sql` supplies the same reconstructed public-schema baseline while leaving Supabase-managed `auth`, `storage`, and platform roles intact. It is used only against an isolated Supabase local stack.
 
-These fixtures are reconstructions of the schema state needed to exercise the recovered chain, not renamed historical migrations 001–004. The PostgreSQL 16 chain test validates SQL ordering and dependencies against the reconstructed schema. The Supabase clean-install workflow additionally starts an isolated local Supabase stack and applies the baseline, all 17 recovered migrations, pending AI-import migration, and PR #22 answer-validation migration before running smoke/regression checks. A passing run demonstrates compatibility with that tested local stack; it does not establish that the original historical SQL was recovered byte-for-byte or that Production was modified.
+These fixtures are reconstructions of the schema state needed to exercise the recovered chain, not renamed historical migrations 001–004. They include selected live-catalog baseline functions needed by the runtime, including `submit_exam_attempt`, but their presence in the fixture is not evidence of the exact historical migration or timestamp in which those functions were first created. The PostgreSQL 16 chain test validates SQL ordering and dependencies against the reconstructed schema. The Supabase clean-install workflow additionally starts an isolated local Supabase stack and applies the baseline, all 17 recovered migrations, the subsequent AI-import migration, and the PR #22 answer-validation migration before running smoke/regression checks. A passing run demonstrates compatibility with that tested local stack; it does not establish that the original historical SQL was recovered byte-for-byte or that Production was modified.
 
 ## Safety status
 
-- No Production migration was applied during this recovery.
-- No Production migration-history row was changed.
+- No Production migration was applied and no Production migration-history row was changed by the recovery work itself. The later 2026-11-13 read-only inspection observed 19 ledger entries; this repository work did not apply either subsequent migration.
 - No exam, question, answer-key, profile, or attempt data was modified.
 - This branch is for review and CI verification only. The migration history should not be repaired in Production until the pre-005 baseline and deployment sequence have been reviewed.

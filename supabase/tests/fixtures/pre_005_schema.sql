@@ -1218,3 +1218,241 @@ CREATE TRIGGER attempts_guard_update BEFORE DELETE OR UPDATE ON public.attempts 
 CREATE TRIGGER attempt_answers_guard BEFORE INSERT OR DELETE OR UPDATE ON public.attempt_answers FOR EACH ROW EXECUTE FUNCTION public.guard_attempt_child();
 CREATE TRIGGER exam_versions_immutable_after_publish BEFORE DELETE OR UPDATE ON public.exam_versions FOR EACH ROW EXECUTE FUNCTION public.protect_exam_version();
 CREATE TRIGGER exam_version_questions_protected BEFORE INSERT OR DELETE OR UPDATE ON public.exam_version_questions FOR EACH ROW EXECUTE FUNCTION public.protect_exam_version_questions();
+
+-- Reconstructed pre-005 scoring RPC captured from the current Production catalog.
+-- Kept in test fixtures so legacy submission behavior is exercised on clean installs.
+CREATE OR REPLACE FUNCTION public.submit_exam_attempt(p_attempt_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+    v_uid uuid := auth.uid();
+    v_attempt public.attempts%ROWTYPE;
+    v_row record;
+    v_duration integer;
+    v_max_score numeric;
+    v_total numeric := 0;
+    v_earned numeric;
+    v_is_correct boolean;
+    v_answer_set integer[];
+    v_key_set integer[];
+    v_slot_count integer;
+    v_correct_count integer;
+    v_no_reuse boolean;
+    v_answer_num numeric;
+    v_key_num numeric;
+    v_tolerance numeric;
+    v_elapsed integer;
+    v_answers jsonb := '[]'::jsonb;
+    v_results jsonb := '[]'::jsonb;
+BEGIN
+    IF v_uid IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.';
+    END IF;
+
+    SELECT *
+    INTO v_attempt
+    FROM public.attempts
+    WHERE id = p_attempt_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Không tìm thấy lần làm bài.';
+    END IF;
+
+    IF v_attempt.user_id IS DISTINCT FROM v_uid THEN
+        RAISE EXCEPTION 'Không có quyền nộp bài này.';
+    END IF;
+
+    -- Idempotent submission.
+    IF v_attempt.status = 'submitted' THEN
+        RETURN jsonb_build_object(
+            'attempt_id', v_attempt.id,
+            'status', v_attempt.status,
+            'score', v_attempt.score,
+            'max_score', v_attempt.max_score,
+            'elapsed_seconds', v_attempt.elapsed_seconds
+        );
+    END IF;
+
+    IF v_attempt.status <> 'in_progress'
+       OR v_attempt.exam_version_id IS NULL THEN
+        RAISE EXCEPTION 'Lần làm bài không ở trạng thái hợp lệ.';
+    END IF;
+
+    SELECT duration_minutes
+    INTO v_duration
+    FROM public.exam_versions
+    WHERE id = v_attempt.exam_version_id;
+
+    SELECT COALESCE(sum(points), 0)
+    INTO v_max_score
+    FROM public.exam_version_questions
+    WHERE exam_version_id = v_attempt.exam_version_id;
+
+    IF v_max_score <= 0 THEN
+        RAISE EXCEPTION 'Không thể chấm đề không có điểm.';
+    END IF;
+
+    FOR v_row IN
+        SELECT
+            evq.id AS mapping_id,
+            evq.position,
+            evq.points,
+            qv.question_type,
+            ak.answer_key,
+            ak.explanation,
+            ak.grading_config,
+            aa.answer
+        FROM public.exam_version_questions evq
+        JOIN public.question_versions qv
+            ON qv.id = evq.question_version_id
+        LEFT JOIN public.question_answer_keys ak
+            ON ak.question_version_id = qv.id
+        LEFT JOIN public.attempt_answers aa
+            ON aa.attempt_id = p_attempt_id
+           AND aa.exam_version_question_id = evq.id
+        WHERE evq.exam_version_id = v_attempt.exam_version_id
+        ORDER BY evq.position
+    LOOP
+        v_is_correct := false;
+        v_earned := 0;
+
+        IF v_row.answer IS NOT NULL
+           AND v_row.answer_key IS NOT NULL THEN
+            CASE v_row.question_type
+                WHEN 'mc' THEN
+                    v_is_correct := v_row.answer = v_row.answer_key;
+                    IF v_is_correct THEN v_earned := v_row.points; END IF;
+
+                WHEN 'ms' THEN
+                    SELECT COALESCE(
+                        array_agg(value::integer ORDER BY value::integer),
+                        ARRAY[]::integer[]
+                    )
+                    INTO v_answer_set
+                    FROM jsonb_array_elements_text(v_row.answer) AS x(value);
+
+                    SELECT COALESCE(
+                        array_agg(value::integer ORDER BY value::integer),
+                        ARRAY[]::integer[]
+                    )
+                    INTO v_key_set
+                    FROM jsonb_array_elements_text(v_row.answer_key) AS x(value);
+
+                    v_is_correct := v_answer_set = v_key_set;
+                    IF v_is_correct THEN v_earned := v_row.points; END IF;
+
+                WHEN 'tf' THEN
+                    -- All-or-nothing: one wrong or missing statement = 0.
+                    v_is_correct := v_row.answer = v_row.answer_key;
+                    IF v_is_correct THEN v_earned := v_row.points; END IF;
+
+                WHEN 'num' THEN
+                    v_answer_num := (v_row.answer #>> '{}')::numeric;
+                    v_key_num := (v_row.answer_key #>> '{}')::numeric;
+                    v_tolerance := COALESCE(
+                        (v_row.grading_config->>'relative_tolerance')::numeric,
+                        0.000001
+                    );
+                    v_is_correct :=
+                        abs(v_answer_num - v_key_num)
+                        <= v_tolerance * greatest(1, abs(v_key_num));
+                    IF v_is_correct THEN v_earned := v_row.points; END IF;
+
+                WHEN 'dnd' THEN
+                    SELECT
+                        count(*),
+                        count(*) FILTER (
+                            WHERE v_row.answer -> ((entry.key)::integer - 1)
+                                = to_jsonb((entry.value)::integer - 1)
+                        )
+                    INTO v_slot_count, v_correct_count
+                    FROM jsonb_each_text(v_row.answer_key)
+                        AS entry(key, value);
+
+                    SELECT count(*) = count(DISTINCT value)
+                    INTO v_no_reuse
+                    FROM jsonb_array_elements(v_row.answer) AS x(value)
+                    WHERE value <> 'null'::jsonb;
+
+                    IF v_no_reuse AND v_slot_count > 0 THEN
+                        v_earned := round(
+                            v_row.points
+                            * v_correct_count::numeric
+                            / v_slot_count,
+                            4
+                        );
+                        v_is_correct := v_correct_count = v_slot_count;
+                    END IF;
+            END CASE;
+        END IF;
+
+        v_total := v_total + v_earned;
+
+        UPDATE public.attempt_answers
+        SET
+            is_correct = v_is_correct,
+            earned_points = v_earned,
+            graded_at = clock_timestamp(),
+            updated_at = clock_timestamp()
+        WHERE attempt_id = p_attempt_id
+          AND exam_version_question_id = v_row.mapping_id;
+
+        v_answers := v_answers || jsonb_build_array(v_row.answer);
+
+        v_results := v_results || jsonb_build_array(
+            jsonb_build_object(
+                'position', v_row.position,
+                'question_type', v_row.question_type,
+                'answer', v_row.answer,
+                'correct_answer', v_row.answer_key,
+                'is_correct', v_is_correct,
+                'earned_points', v_earned,
+                'points', v_row.points,
+                'explanation', v_row.explanation
+            )
+        );
+    END LOOP;
+
+    v_total := round(v_total, 4);
+
+    v_elapsed := LEAST(
+        GREATEST(
+            floor(
+                extract(epoch FROM (
+                    clock_timestamp() - v_attempt.started_at
+                ))
+            )::integer,
+            0
+        ),
+        v_duration * 60
+    );
+
+    UPDATE public.attempts
+    SET
+        status = 'submitted',
+        score = v_total,
+        max_score = v_max_score,
+        elapsed_seconds = v_elapsed,
+        answers = v_answers,
+        result_details = v_results,
+        submitted_at = clock_timestamp(),
+        finished_at = clock_timestamp(),
+        last_activity_at = clock_timestamp()
+    WHERE id = p_attempt_id;
+
+    RETURN jsonb_build_object(
+        'attempt_id', p_attempt_id,
+        'status', 'submitted',
+        'score', v_total,
+        'max_score', v_max_score,
+        'elapsed_seconds', v_elapsed
+    );
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.submit_exam_attempt(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.submit_exam_attempt(uuid) TO authenticated, service_role;
