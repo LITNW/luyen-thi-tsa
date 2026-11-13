@@ -51,6 +51,43 @@ Question-version type distribution:
 
 Counts are observational only and will change as the platform is used.
 
+
+### Column inventory (read-only snapshot)
+
+This is the column inventory observed at review time. Types are PostgreSQL types; nullable columns are not marked NOT NULL here. It is a baseline for diffing future migrations, not a hand-maintained schema definition.
+
+| Table | Columns |
+|---|---|
+| `profiles` | `id uuid`, `email text`, `role text`, `status text`, `created_at timestamptz`, `updated_at timestamptz`, `user_code text`, `display_name text` |
+| `audit_logs` | `id bigint`, `actor_id uuid`, `action text`, `target_type text`, `target_id text`, `details jsonb`, `created_at timestamptz` |
+| `exams` | `id uuid`, `title text`, `description text`, `duration_minutes integer`, `questions_public jsonb`, `is_published boolean`, `created_by uuid`, `created_at timestamptz`, `updated_at timestamptz` |
+| `exam_solutions` | `exam_id uuid`, `solutions jsonb`, `updated_at timestamptz` |
+| `exam_versions` | `id uuid`, `exam_id uuid`, `version_no integer`, `title text`, `description text`, `duration_minutes integer`, `status text`, `created_by uuid`, `published_by uuid`, `created_at timestamptz`, `published_at timestamptz`, `archived_at timestamptz` |
+| `questions` | `id uuid`, `scope text`, `owner_exam_id uuid`, `created_by uuid`, `created_at timestamptz` |
+| `question_versions` | `id uuid`, `question_id uuid`, `version_no integer`, `question_type text`, `content jsonb`, `created_by uuid`, `created_at timestamptz` |
+| `question_answer_keys` | `question_version_id uuid`, `answer_key jsonb`, `explanation text`, `grading_config jsonb`, `created_at timestamptz`, `updated_at timestamptz`, `source_metadata jsonb` |
+| `exam_version_questions` | `id uuid`, `exam_version_id uuid`, `exam_id uuid`, `question_version_id uuid`, `question_id uuid`, `position integer`, `points numeric`, `created_at timestamptz` |
+| `attempts` | `id uuid`, `user_id uuid`, `exam_id uuid`, `answers jsonb`, `score numeric`, `max_score numeric`, `elapsed_seconds integer`, `result_details jsonb`, `submitted_at timestamptz`, `exam_version_id uuid`, `status text`, `started_at timestamptz`, `finished_at timestamptz`, `last_activity_at timestamptz` |
+| `attempt_answers` | `id uuid`, `attempt_id uuid`, `exam_version_id uuid`, `exam_version_question_id uuid`, `answer jsonb`, `is_correct boolean`, `earned_points numeric`, `created_at timestamptz`, `updated_at timestamptz`, `graded_at timestamptz` |
+| `attempt_question_times` | `id uuid`, `attempt_id uuid`, `exam_version_id uuid`, `exam_version_question_id uuid`, `seconds_spent integer`, `visit_count integer`, `updated_at timestamptz` |
+| `attempt_question_time_events` | `event_id uuid`, `attempt_id uuid`, `exam_version_id uuid`, `exam_version_question_id uuid`, `seconds_spent integer`, `visit_increment integer`, `created_at timestamptz` |
+| `import_jobs` | `id uuid`, `created_by uuid`, `target_exam_id uuid`, `target_exam_version_id uuid`, `original_filename text`, `mime_type text`, `file_size_bytes bigint`, `storage_bucket text`, `storage_path text`, `preprocessed_storage_path text`, `preprocessed_file_size_bytes bigint`, `sha256 text`, `source_format text`, `status text`, `processing_stage text`, `page_count integer`, `progress_percent smallint`, `provider text`, `model text`, `error_code text`, `error_message text`, `metadata jsonb`, `created_at timestamptz`, `updated_at timestamptz`, `started_at timestamptz`, `completed_at timestamptz`, `approved_at timestamptz`, `approved_by uuid` |
+| `import_questions` | `id uuid`, `job_id uuid`, `ordinal integer`, `status text`, `question_type text`, `content jsonb`, `answer_key jsonb`, `explanation text`, `points numeric`, `source_page_start integer`, `source_page_end integer`, `source_location jsonb`, `confidence jsonb`, `validation_flags jsonb`, `source_metadata jsonb`, `imported_question_id uuid`, `imported_question_version_id uuid`, `created_at timestamptz`, `updated_at timestamptz` |
+| `import_events` | `id bigint`, `job_id uuid`, `actor_id uuid`, `event_type text`, `details jsonb`, `created_at timestamptz` |
+
+### Important index inventory
+
+- `attempts_one_open_per_user_version`: partial unique index preventing more than one in-progress attempt per user/exam version.
+- `attempts_id_version_unique`: supports the composite attempt foreign key.
+- `attempt_answers_attempt_question_unique`: one answer per attempt/question mapping.
+- `attempt_answers_attempt_version_fk_idx` and `attempt_answers_question_version_fk_idx`: support composite foreign-key paths.
+- `evq_position_unique` and `evq_question_unique`: protect flat exam ordering and question-version uniqueness.
+- `question_versions_question_version_unique`: protects version numbering.
+- `import_questions_job_ordinal_unique`: protects import staging order.
+- `attempt_question_time_events` currently has only its primary-key index; assess missing foreign-key indexes separately with query plans before changing it.
+
+Do not remove indexes based only on a low-volume unused-index sample. Add indexes for new foreign keys and actual access paths as part of each schema migration.
+
 ## 4. Critical schema contracts
 
 ### Question versions
