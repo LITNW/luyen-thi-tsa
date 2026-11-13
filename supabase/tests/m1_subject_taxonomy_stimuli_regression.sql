@@ -211,25 +211,41 @@ begin
     null;
   end;
 
-  -- Admin sees/manage rows through RLS. A student sees no direct table rows.
-  execute 'set local role authenticated';
-  perform set_config('request.jwt.claim.sub',v_admin::text,true);
-  select count(*) into v_subject_count from public.subjects;
-  if v_subject_count < 3 then
+  -- The RPC must not be executable by anon.
+  if has_function_privilege('anon','public.list_active_subjects()','EXECUTE') then
+    raise exception 'Anonymous role must not execute list_active_subjects().';
+  end if;
+end;
+$tests$;
+
+rollback;
+-- Exercise table grants and RLS under the actual authenticated database role.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+do $admin_rls$
+declare v_count integer;
+begin
+  select count(*) into v_count from public.subjects;
+  if v_count < 3 then
     raise exception 'Admin RLS policy does not expose the subject catalogue.';
   end if;
-  execute 'reset role';
+end;
+$admin_rls$;
+reset role;
 
-  execute 'set local role authenticated';
-  perform set_config('request.jwt.claim.sub',v_student::text,true);
-  select count(*) into v_subject_count from public.subjects;
-  if v_subject_count <> 0 then
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+do $student_rls$
+declare v_count integer;
+begin
+  select count(*) into v_count from public.subjects;
+  if v_count <> 0 then
     raise exception 'Student direct SELECT unexpectedly exposed private subject rows.';
   end if;
 
-  select count(*) into v_subject_count from public.list_active_subjects();
-  if v_subject_count <> 3 then
-    raise exception 'Authenticated student subject RPC should return exactly three active subjects; got %.',v_subject_count;
+  select count(*) into v_count from public.list_active_subjects();
+  if v_count <> 3 then
+    raise exception 'Authenticated student subject RPC should return exactly three active subjects; got %.',v_count;
   end if;
 
   begin
@@ -240,18 +256,12 @@ begin
   end;
 
   begin
-    insert into public.stimuli(status,created_by) values ('draft',v_student);
+    insert into public.stimuli(status,created_by) values ('draft','00000000-0000-4000-8000-000000000002');
     raise exception 'Student INSERT into stimuli was unexpectedly accepted.';
   exception when insufficient_privilege then
     null;
   end;
-  execute 'reset role';
-
-  -- The RPC must not be executable by anon.
-  if has_function_privilege('anon','public.list_active_subjects()','EXECUTE') then
-    raise exception 'Anonymous role must not execute list_active_subjects().';
-  end if;
 end;
-$tests$;
+$student_rls$;
+reset role;
 
-rollback;
