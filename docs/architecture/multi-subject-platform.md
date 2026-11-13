@@ -249,3 +249,57 @@ A compatibility adapter may flatten v2 sections to the legacy `questions` array 
 8. P7: analytics and constructed-response/rubric workflow.
 
 Each phase has its own PR and must pass its own gates. Do not combine the entire restructuring into one mega-migration.
+
+## 9. ERD overview
+
+```mermaid
+erDiagram
+  SUBJECTS ||--o{ TAXONOMY_NODES : contains
+  TAXONOMY_NODES ||--o{ TAXONOMY_NODES : parent_of
+  QUESTION_VERSIONS ||--o{ QUESTION_VERSION_TAXONOMY : classified_by
+  TAXONOMY_NODES ||--o{ QUESTION_VERSION_TAXONOMY : classifies
+  STIMULI ||--o{ STIMULUS_VERSIONS : versions
+  STIMULUS_VERSIONS ||--o{ QUESTION_GROUP_VERSIONS : supplies
+  QUESTION_GROUPS ||--o{ QUESTION_GROUP_VERSIONS : versions
+  QUESTION_GROUP_VERSIONS ||--o{ QUESTION_GROUP_VERSION_QUESTIONS : contains
+  QUESTION_VERSIONS ||--o{ QUESTION_GROUP_VERSION_QUESTIONS : member
+  EXAM_VERSIONS ||--o{ EXAM_SECTIONS : contains
+  SUBJECTS o|--o{ EXAM_SECTIONS : scopes
+  EXAM_SECTIONS ||--o{ EXAM_SECTION_ITEMS : contains
+  QUESTION_GROUP_VERSIONS o|--o{ EXAM_SECTION_ITEMS : groups
+  EXAM_SECTION_ITEMS ||--|{ EXAM_SECTION_ITEM_QUESTIONS : maps
+  EXAM_VERSION_QUESTIONS ||--o| EXAM_SECTION_ITEM_QUESTIONS : placed_as
+  EXAM_VERSIONS ||--o{ EXAM_VERSION_QUESTIONS : maps
+  QUESTION_VERSIONS ||--o{ EXAM_VERSION_QUESTIONS : selected
+  EXAM_VERSION_QUESTIONS ||--o{ ATTEMPT_ANSWERS : answered_in
+  ATTEMPTS ||--o{ ATTEMPT_ANSWERS : contains
+```
+
+The ERD shows ownership and conceptual cardinality. Exact SQL foreign keys, including composite keys that bind a mapping to the same exam version as an attempt, must be specified in the migration design and verified against PostgreSQL catalogs.
+
+## 10. Initial RLS matrix
+
+| Resource | Admin | Student | Anonymous |
+|---|---|---|---|
+| Subjects and taxonomy | CRUD through admin RPC | Published metadata through read RPC | No direct table access |
+| Stimulus identities/versions | CRUD through admin RPC | Only stimulus versions referenced by a published exam, through read RPC | No access |
+| Question groups and group versions | CRUD through admin RPC | Only through published exam read RPC | No access |
+| Question-group membership | CRUD through admin RPC | Only through published exam read RPC | No access |
+| Exam sections and items | CRUD on draft through admin RPC | Published structure through read RPC | No access |
+| Question-version taxonomy | CRUD through admin RPC | Aggregated analytics only through authorized RPC | No access |
+| Question answer keys | Existing admin-only workflow | No direct access; result details only after submission | No access |
+| Storage assets | Admin upload/manage | Access only if referenced by a published exam and policy permits | No access by default |
+
+Use explicit grants and RLS together. Prefer no direct student table policies for content whose visibility depends on publication state, unless a policy has been proven equivalent to the reviewed RPC filter. Every SECURITY DEFINER RPC must enforce caller role and publication state itself.
+
+## 11. Cross-table invariants that require transactional enforcement
+
+The following cannot be guaranteed by ordinary row-level CHECK constraints alone:
+- A taxonomy parent belongs to the same subject and the hierarchy contains no cycle.
+- A question-group version contains at least one question and each member position is unique.
+- A group item contains exactly the question mappings in its referenced group version, in the same order.
+- A standalone question item contains exactly one mapping.
+- Every exam mapping is placed exactly once in the section tree.
+- The section tree belongs to the same exam version as every mapping it contains.
+
+Enforce these rules in the structured admin RPC inside a transaction, with supporting unique/FK constraints and deferred constraint triggers where appropriate. Do not rely on frontend validation.
