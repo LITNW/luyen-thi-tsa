@@ -225,11 +225,21 @@ $tests$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
 do $admin_rls$
-declare v_count integer;
+declare
+  v_subjects integer;
+  v_taxonomy integer;
+  v_classifications integer;
+  v_stimuli integer;
+  v_stimulus_versions integer;
 begin
-  select count(*) into v_count from public.subjects;
-  if v_count < 3 then
-    raise exception 'Admin RLS policy does not expose the subject catalogue.';
+  select count(*) into v_subjects from public.subjects;
+  select count(*) into v_taxonomy from public.taxonomy_nodes;
+  select count(*) into v_classifications from public.question_version_taxonomy;
+  select count(*) into v_stimuli from public.stimuli;
+  select count(*) into v_stimulus_versions from public.stimulus_versions;
+  if v_subjects < 3 or v_taxonomy < 4 or v_classifications <> 2
+     or v_stimuli <> 1 or v_stimulus_versions <> 1 then
+    raise exception 'Admin RLS policies do not expose all expected M1 rows.';
   end if;
 end;
 $admin_rls$;
@@ -243,6 +253,22 @@ begin
   select count(*) into v_count from public.subjects;
   if v_count <> 0 then
     raise exception 'Student direct SELECT unexpectedly exposed private subject rows.';
+  end if;
+  select count(*) into v_count from public.taxonomy_nodes;
+  if v_count <> 0 then
+    raise exception 'Student direct SELECT unexpectedly exposed taxonomy rows.';
+  end if;
+  select count(*) into v_count from public.question_version_taxonomy;
+  if v_count <> 0 then
+    raise exception 'Student direct SELECT unexpectedly exposed question taxonomy rows.';
+  end if;
+  select count(*) into v_count from public.stimuli;
+  if v_count <> 0 then
+    raise exception 'Student direct SELECT unexpectedly exposed stimulus identities.';
+  end if;
+  select count(*) into v_count from public.stimulus_versions;
+  if v_count <> 0 then
+    raise exception 'Student direct SELECT unexpectedly exposed stimulus versions.';
   end if;
 
   select count(*) into v_count from public.list_active_subjects();
