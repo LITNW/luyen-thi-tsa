@@ -84,6 +84,7 @@ Suggested columns:
 Rules:
 - A parent and child must belong to the same subject.
 - Cycles are forbidden.
+- Subject-scoped node codes are stable identifiers. Once a node is referenced by a question version, its code and parent relationship are immutable; retire/replace it rather than rewriting historical meaning. Display-name edits should be restricted to corrections that do not change meaning, or modeled as a new node when meaning changes.
 - Use recursive queries over `parent_id`; do not store a denormalized path as the source of truth.
 - Unique code scope must be explicit (at minimum subject + parent + code).
 - Taxonomy is editable, but historical analytics must retain the classification that applied to the question version or exam snapshot.
@@ -96,7 +97,7 @@ Many-to-many relation:
 - optional `weight numeric` only if a future reporting requirement justifies weighted attribution
 - composite primary key and indexes in both lookup directions
 
-Attach classification to question versions rather than only question identities. This preserves historical classification when an editor changes the intended skill of a later question version.
+Attach classification to question versions rather than only question identities. Make the mapping immutable once the question version is used in a published exam; a later reclassification requires a new question version. This preserves historical classification when an editor changes the intended skill of a later question version.
 
 ### 4.2 Independent reusable stimuli
 
