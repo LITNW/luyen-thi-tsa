@@ -119,6 +119,11 @@ begin
     raise exception 'Anonymous role must not execute the Admin placement RPC.';
   end if;
 
+  if has_function_privilege('authenticated','public.education_exam_version_publish_guard()','EXECUTE')
+     or has_function_privilege('anon','public.education_exam_version_publish_guard()','EXECUTE') then
+    raise exception 'Internal publication guard must not be directly executable by API roles.';
+  end if;
+
   v_rejected:=false;
   begin
     perform public.admin_set_exam_education_subject(v_exam,null);
