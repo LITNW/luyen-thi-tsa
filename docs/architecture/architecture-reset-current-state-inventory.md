@@ -138,6 +138,8 @@ Cloudflare Preview build command was corrected to use `wrangler pages deploy` wi
 
 Netlify Deploy Preview currently has no verified Staging build variables. The connector returned HTTP 403 when attempting to create them, so this is a manual dashboard step before using that Preview for browser E2E.
 
+Vercel Preview deployment `dpl_3hyRPCbwmhDU98KYEmoUXkyZ6K5j` is READY for exact commit `2f9feb9136fbf5161de9b4be9e82625945f2bca9`. Its branch-scoped variables were read back and verified against the Staging URL and publishable key; authenticated browser E2E is still pending. Preview URL: https://luyen-thi-tsa-s9y7-ooqmi33z4-tsa-48a5.vercel.app. The global Preview variables and the legacy `feature/react-migration` branch variables were also corrected to Staging; Production variables were verified unchanged.
+
 No Production schema or data was changed by these Staging migrations.
 
 ## 9. Production exam classification proposal — read-only audit 2026-11-14
