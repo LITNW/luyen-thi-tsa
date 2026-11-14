@@ -128,6 +128,26 @@ Regression coverage executed directly against Staging and passed:
 - Exam placement cannot be changed once a classified exam has attempts.
 - Atomic editor save persists placement before optional publication; save without a placement is rejected.
 
-The editor and Student/Admin UI changes are present on Draft PR #28. React migration CI has passed on the previously checked head; latest changes are awaiting the next CI run. Browser E2E is not yet completed.
+The editor and Student/Admin UI changes are present on Draft PR #28. The publication guard migration `20261114024035_education_exam_version_publish_guard` was added after the atomic editor save. It installs a database trigger before INSERT or status UPDATE on `exam_versions`; every new publication now requires an active education-subject offering and active level/context. The trigger function is not directly executable by API roles.
+
+Staging regression suites passed after the guard was applied: education hierarchy foundation, exam placement (including direct INSERT and UPDATE publication bypass attempts), and atomic editor save. Test fixtures use transactions and roll back.
+
+Latest GitHub CI on the current branch is being re-run after adapting the pre-existing answer-validation, legacy RPC, M1 and M2 regression fixtures to provide an education placement when the education schema exists. The new trigger is not being weakened to make old tests pass.
+
+Cloudflare Preview build command was corrected to use `wrangler pages deploy` with an explicit non-production branch. The first retry built the Vite app successfully but deployment was rejected with Cloudflare API authentication error 10000 because the build token lacks the required Pages deployment permission. The trigger remains restricted to `architecture/education-hierarchy-reset`; Production branch and Production environment were not changed. The two Cloudflare build variables point to Staging; the publishable key is stored as a secret and is not reproduced here.
+
+Netlify Deploy Preview currently has no verified Staging build variables. The connector returned HTTP 403 when attempting to create them, so this is a manual dashboard step before using that Preview for browser E2E.
 
 No Production schema or data was changed by these Staging migrations.
+
+## 9. Production exam classification proposal — read-only audit 2026-11-14
+
+The three stable exam identities were inspected using their titles, version states, question counts, sample question content and attempt counts. This is a proposal for Admin approval only; no placement was written.
+
+| Exam identity | Current versions | Content evidence | Proposed placement | Confidence / handling |
+|---|---|---|---|---|
+| `06aa6610-7497-4203-bc61-cb34d0415cad` — “BỘ ĐỀ THI DỰ ĐOÁN ĐÁNH GIÁ TƯ DUY (TSA 2026-2027) - PHẦN TƯ DUY TOÁN HỌC” | 2 published versions; v1 active (39 questions, 5 attempts), v2 archived (39 questions, 1 attempt) | Explicitly says “Tư duy Toán học”; samples span functions, calculus, geometry, probability, statistics and logic | THPT → Toán | Subject: high confidence. Level: strong but still requires owner confirmation. |
+| `79cc1c71-21b6-406e-93b2-7d07b70cd9ba` — “ĐỀ TSA 002” | 4 published versions (v1, v3, v4, v5), all archived; 40 questions and 1 attempt per version; no active published version | Latest archived version samples cover logic, combinatorics, inequalities, functions, integrals, optimization and applied mathematics | THPT → Toán | Subject: high confidence. Level: medium confidence because title is generic. Keep hidden; all versions are archived. |
+| `c0e8e168-e3f8-444a-8c17-77d580bc3df5` — “ĐỀ TSA 002” | v1 published/archived (40 questions, 2 attempts); v2 published/active (40 questions, 4 attempts); v3 draft (40 questions, 0 attempts) | Active version samples cover algebra, calculus, geometry, probability, statistics, complex numbers and applied mathematics | THPT → Toán | Subject: high confidence. Level: medium confidence because title is generic. |
+
+The two records titled “ĐỀ TSA 002” are distinct exam identities with separate versions and attempt histories. Do not merge or delete them based on matching titles. Total Production counts remain 3 exams, 9 versions, 119 question identities, 231 question versions, 358 mappings, 16 attempts, 16 answers, 64 per-question timing rows and 337 timing events.
