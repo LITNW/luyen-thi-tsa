@@ -1,6 +1,8 @@
 -- Regression tests for 20261112170000_centralize_exam_answer_validation.sql.
 -- Run only in the disposable PostgreSQL database created by the CI workflow.
 
+begin;
+
 DO $tests$
 DECLARE
   v_saved_version uuid;
@@ -250,3 +252,5 @@ BEGIN
   END IF;
 END;
 $tests$;
+
+rollback;
