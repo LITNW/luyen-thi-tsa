@@ -205,6 +205,14 @@
       "staging_status": "applied_in_staging",
       "source": "Adds atomic legacy editor save wrapper that persists education placement before optional publish",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261114024035",
+      "name": "education_exam_version_publish_guard",
+      "status": "repository_only_not_applied_to_production",
+      "staging_status": "applied_in_staging",
+      "source": "Database-level guard rejects every publication path unless the exam has an active education-subject placement",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ]
 }
