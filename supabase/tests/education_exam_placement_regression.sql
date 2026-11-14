@@ -13,6 +13,9 @@ declare
   v_exam uuid := '66000000-0000-4000-8000-000000000002';
   v_published uuid := '66000000-0000-4000-8000-000000000003';
   v_archived uuid := '66000000-0000-4000-8000-000000000004';
+  v_unplaced_exam uuid := '66000000-0000-4000-8000-000000000006';
+  v_unplaced_draft uuid := '66000000-0000-4000-8000-000000000007';
+  v_unplaced_insert uuid := '66000000-0000-4000-8000-000000000008';
   v_rejected boolean;
   v_count integer;
 begin
@@ -64,6 +67,42 @@ begin
   end;
   if not v_rejected then
     raise exception 'Classified exam with attempts was unexpectedly unassigned.';
+  end if;
+
+  -- The database trigger must reject direct INSERT and UPDATE publication paths,
+  -- not only calls routed through the education-aware legacy editor wrapper.
+  insert into public.exams(id,title,description,duration_minutes,created_by)
+  values(v_unplaced_exam,'Unplaced publication fixture','Must remain draft',30,v_admin);
+
+  v_rejected:=false;
+  begin
+    insert into public.exam_versions(
+      id,exam_id,version_no,title,description,duration_minutes,status,created_by,published_by,published_at
+    ) values(
+      v_unplaced_insert,v_unplaced_exam,1,'Blocked direct insert','Unplaced',30,'published',v_admin,v_admin,now()
+    );
+  exception when check_violation then
+    v_rejected:=true;
+  end;
+  if not v_rejected then
+    raise exception 'Direct INSERT unexpectedly published an exam without education placement.';
+  end if;
+
+  insert into public.exam_versions(
+    id,exam_id,version_no,title,description,duration_minutes,status,created_by
+  ) values(
+    v_unplaced_draft,v_unplaced_exam,1,'Unplaced draft fixture','Must remain draft',30,'draft',v_admin
+  );
+
+  v_rejected:=false;
+  begin
+    update public.exam_versions set status='published',published_by=v_admin,published_at=now()
+    where id=v_unplaced_draft;
+  exception when check_violation then
+    v_rejected:=true;
+  end;
+  if not v_rejected then
+    raise exception 'Direct UPDATE unexpectedly published an exam without education placement.';
   end if;
 
   perform set_config('request.jwt.claim.sub',v_student::text,true);
