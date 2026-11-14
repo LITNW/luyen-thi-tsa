@@ -132,7 +132,7 @@ The editor and Student/Admin UI changes are present on Draft PR #28. The publica
 
 Staging regression suites passed after the guard was applied: education hierarchy foundation, exam placement (including direct INSERT and UPDATE publication bypass attempts), and atomic editor save. Test fixtures use transactions and roll back.
 
-Latest GitHub CI on the current branch is being re-run after adapting the pre-existing answer-validation, legacy RPC, M1 and M2 regression fixtures to provide an education placement when the education schema exists. The new trigger is not being weakened to make old tests pass.
+All five GitHub Actions workflows passed on PR #28 head `2f9feb9136fbf5161de9b4be9e82625945f2bca9`: React migration CI, SQL migration regression, recovered migration chain, migration recovery integrity and Supabase clean-install compatibility. The pre-existing answer-validation, legacy RPC, M1 and M2 fixtures now create a temporary education placement when the schema exists and roll back their data.
 
 Cloudflare Preview build command was corrected to use `wrangler pages deploy` with an explicit non-production branch. The first retry built the Vite app successfully but deployment was rejected with Cloudflare API authentication error 10000 because the build token lacks the required Pages deployment permission. The trigger remains restricted to `architecture/education-hierarchy-reset`; Production branch and Production environment were not changed. The two Cloudflare build variables point to Staging; the publishable key is stored as a secret and is not reproduced here.
 
