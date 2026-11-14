@@ -2,6 +2,8 @@
 -- Run only in the disposable Supabase local stack created by CI.
 -- This test protects the current flat editor/runtime while v2 is designed.
 
+begin;
+
 DO $tests$
 DECLARE
   v_admin uuid := '00000000-0000-4000-8000-000000000001';
@@ -231,3 +233,5 @@ BEGIN
   END IF;
 END;
 $tests$;
+
+rollback;
