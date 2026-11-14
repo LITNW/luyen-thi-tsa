@@ -119,6 +119,8 @@ jobs:
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
       - name: Apply atomic education-aware editor save
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
+      - name: Enforce education placement for every publication path
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
 
       - name: Seed isolated test admin and run answer-validation regression
         env:
