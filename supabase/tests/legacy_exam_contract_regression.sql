@@ -21,6 +21,7 @@ DECLARE
   v_submit_result jsonb;
   v_submit_retry jsonb;
   v_attempt_state jsonb;
+  v_offering uuid;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub',v_admin::text,true);
 
@@ -33,6 +34,26 @@ BEGIN
 
   INSERT INTO public.exams(id,title,description,duration_minutes)
   VALUES (v_exam_id,'Legacy contract regression','Disposable CI fixture',30);
+  if to_regclass('public.education_subjects') is not null then
+    select es.id into v_offering
+    from public.education_subjects es
+    join public.education_levels l on l.id=es.education_level_id
+    join public.subjects s on s.id=es.subject_id
+    where l.code='thpt' and es.education_node_id is null and s.code='mathematics'
+    limit 1;
+    if v_offering is null then
+      insert into public.education_subjects(education_level_id,education_node_id,subject_id,display_name)
+      select l.id,null,s.id,'CI Mathematics'
+      from public.education_levels l
+      cross join public.subjects s
+      where l.code='thpt' and s.code='mathematics'
+      returning id into v_offering;
+    end if;
+    if v_offering is null then
+      raise exception 'CI Mathematics education offering could not be prepared.';
+    end if;
+    perform public.admin_set_exam_education_subject(v_exam_id,v_offering);
+  end if;
 
   INSERT INTO public.exam_versions(
     id,exam_id,version_no,title,description,duration_minutes,status
