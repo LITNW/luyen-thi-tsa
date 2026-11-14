@@ -1,14 +1,14 @@
 # Education Architecture Reset — Delivery Plan
 
-Status: Approved direction; implementation in progress. Last updated: 2026-11-13.
+Status: Approved direction; implementation in progress. Last updated: 2026-11-14.
 
 ## Current execution status
-- Phase 0: initial Production inventory complete; code-reference audit continues before any object retirement.
-- Phase 1: target architecture and KEEP/MODIFY/REPLACE/REMOVE register drafted.
-- Phase 2: relational model and constraints specified.
-- Phase 3: additive schema, RLS, placement RPCs and regression tests applied to Staging only; direct Staging regression suites pass.
-- Phase 4: Student level/context/subject navigation, Admin education management, Admin exam placement and legacy editor integration implemented on the architecture branch; automated build and browser E2E still required.
-- Phases 5–6: not started. Production enforcement and rollout remain gated on full E2E and explicit classification of existing Production exams.
+- Phase 0: Production schema/data baseline refreshed read-only; three-exam classification proposal prepared from live version/question/attempt evidence. No data changed.
+- Phase 1: education-first navigation, optional context, category separation and KEEP/MODIFY/REPLACE/RETIRE/DELETE rules are documented; existing exam mappings still require user approval.
+- Phase 2: relational model, RLS, identity guards, placement immutability and RPC contracts are implemented and regression-tested on Staging.
+- Phase 3: seven additive education migrations are applied on Staging only, including a database-level publication guard that blocks every unplaced publication path. Staging hierarchy, placement and atomic-editor regression suites pass. Latest CI is being refreshed after adapting legacy regression fixtures.
+- Phase 4: Student navigation, Admin education management, Admin placement and legacy editor integration are implemented on PR #28. Vite build passes. Cloudflare Pages deployment is blocked by the build token's missing Pages permission; Netlify Preview variables could not be set through the connector (HTTP 403). Authenticated browser E2E remains pending.
+- Phases 5–6: not started. Production classification, migration, merge/deploy and legacy retirement remain separately gated.
 Rule: No Production destructive operation without a verified Staging run, explicit data diff, backup and rollback path.
 
 ## Delivery units
