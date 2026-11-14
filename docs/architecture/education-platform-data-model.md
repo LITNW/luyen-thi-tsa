@@ -61,7 +61,7 @@ attempts and attempt_answers remain attached to their existing exam/version/ques
 - Database trigger rejects assignment to inactive/missing education offerings.
 - Once a non-NULL placement has student attempts, it cannot be changed or cleared.
 - A legacy exam with NULL placement can be classified once, even if it already has attempts.
-- Mandatory placement at publication is deferred until the Admin editor and legacy exam classification queue are ready.
+- A separate trigger on `exam_versions` rejects every INSERT or status UPDATE that would publish a version unless the owning exam has an active education-subject offering under an active level and active optional node. This protects direct RPC and DML paths, not only the legacy editor wrapper.
 
 ## 3. Current Staging seed and data state
 
