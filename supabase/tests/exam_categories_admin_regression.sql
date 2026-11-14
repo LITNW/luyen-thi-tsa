@@ -20,6 +20,7 @@ declare
   v_list jsonb;
   v_count integer;
   v_rejected boolean;
+  v_offering uuid;
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
 
@@ -136,6 +137,26 @@ begin
     false
   );
   v_new_exam_id := (v_save->>'exam_id')::uuid;
+  if to_regclass('public.education_subjects') is not null then
+    select es.id into v_offering
+    from public.education_subjects es
+    join public.education_levels l on l.id=es.education_level_id
+    join public.subjects s on s.id=es.subject_id
+    where l.code='thpt' and es.education_node_id is null and s.code='mathematics'
+    limit 1;
+    if v_offering is null then
+      insert into public.education_subjects(education_level_id,education_node_id,subject_id,display_name)
+      select l.id,null,s.id,'CI Mathematics'
+      from public.education_levels l
+      cross join public.subjects s
+      where l.code='thpt' and s.code='mathematics'
+      returning id into v_offering;
+    end if;
+    if v_offering is null then
+      raise exception 'CI Mathematics education offering could not be prepared.';
+    end if;
+    perform public.admin_set_exam_education_subject(v_new_exam_id,v_offering);
+  end if;
   if v_save->>'success' is distinct from 'true'
      or (v_save->>'category_id') is distinct from v_child_id::text
      or (select category_id from public.exams where id=v_new_exam_id) is distinct from v_child_id then

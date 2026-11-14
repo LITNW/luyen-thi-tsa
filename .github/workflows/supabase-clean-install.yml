@@ -107,6 +107,21 @@ jobs:
       - name: Apply M2 follow-up for archived version listing
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
 
+      - name: Apply education hierarchy foundation
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
+      - name: Apply education hierarchy active-profile read policies
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
+      - name: Apply education hierarchy identity guards
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
+      - name: Apply education exam placement and scoped catalogue
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160130_education_exam_placement_and_scoped_catalogue.sql
+      - name: Apply education exam placement history guard
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
+      - name: Apply atomic education-aware editor save
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
+      - name: Enforce education placement for every publication path
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
+
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
@@ -150,6 +165,21 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/exam_categories_admin_regression.sql
+
+      - name: Run education hierarchy foundation regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
+
+      - name: Run education exam placement regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql
+
+      - name: Run atomic education-aware editor save regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_atomic_editor_save_regression.sql
 
       - name: Stop clean Supabase services
         if: always()

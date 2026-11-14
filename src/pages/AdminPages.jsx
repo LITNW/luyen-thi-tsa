@@ -8,7 +8,7 @@ function AdminFrame({ eyebrow = 'ADMIN WORKSPACE', title, children }) {
     <div className="app-shell">
       <header className="topbar">
         <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>KHU VỰC QUẢN TRỊ</small></span></Link>
-        <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Danh mục</Link><Link to="/admin/users">Tài khoản</Link><Link to="/admin/attempts">Lượt làm</Link><Link to="/">Trang chủ</Link></nav>
+        <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link><Link to="/admin/users">Tài khoản</Link><Link to="/admin/attempts">Lượt làm</Link><Link to="/">Trang chủ</Link></nav>
       </header>
       <main className="narrow-page">
         <p className="eyebrow">{eyebrow}</p><h1>{title}</h1>
@@ -21,13 +21,14 @@ function AdminFrame({ eyebrow = 'ADMIN WORKSPACE', title, children }) {
 
 export function AdminHomePage() {
   return <AdminFrame title="Quản trị hệ thống">
-    <p className="muted">Các màn hình dưới đây dùng RPC quản trị của Supabase. Trình soạn đề và nhập đề AI tiếp tục được mở trong giao diện hiện tại trong giai đoạn chuyển đổi.</p>
+    <p className="muted">Quản lý cấu trúc giáo dục, nội dung thi và tài khoản. Loại đề chỉ là metadata tùy chọn, không phải tầng điều hướng.</p>
     <div className="admin-grid">
-      <Link className="admin-card featured" to="/admin/exams"><b>Quản lý đề thi</b><span>Xem phiên bản, trạng thái, lượt làm và gán danh mục</span></Link>
-      <Link className="admin-card" to="/admin/categories"><b>Quản lý danh mục</b><span>Tạo, sửa, phân cấp và ẩn danh mục đề thi</span></Link>
+      <Link className="admin-card featured" to="/admin/education"><b>Cấu trúc học tập</b><span>Cấp học, ngữ cảnh, danh mục môn và môn học mở</span></Link>
+      <Link className="admin-card" to="/admin/exams"><b>Quản lý đề thi</b><span>Vị trí học tập, loại đề, phiên bản và trạng thái</span></Link>
+      <Link className="admin-card" to="/admin/categories"><b>Loại đề (tùy chọn)</b><span>Phân loại mục đích: luyện tập, thi thử, kiểm tra…</span></Link>
       <Link className="admin-card" to="/admin/users"><b>Quản lý tài khoản</b><span>Vai trò và trạng thái học viên</span></Link>
       <Link className="admin-card" to="/admin/attempts"><b>Theo dõi lượt làm</b><span>Kết quả và thời gian làm bài</span></Link>
-      <a className="admin-card" href="/legacy/index.html"><b>Trình soạn đề & nhập AI</b><span>Mở công cụ hiện tại để tạo, sửa và nhập đề</span></a>
+      <a className="admin-card" href="/legacy/index.html"><b>Trình soạn đề & nhập AI</b><span>Mở công cụ hiện tại trong giai đoạn chuyển đổi</span></a>
     </div>
   </AdminFrame>;
 }
@@ -35,21 +36,35 @@ export function AdminHomePage() {
 export function AdminExamsPage() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [offerings, setOfferings] = useState([]);
+  const [levels, setLevels] = useState([]);
+  const [nodes, setNodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyExamId, setBusyExamId] = useState('');
   const [error, setError] = useState('');
 
   const load = async () => {
     setLoading(true);
-    const [examResult, categoryResult] = await Promise.all([
+    const [examResult, categoryResult, examMetaResult, offeringResult, levelResult, nodeResult] = await Promise.all([
       supabase.rpc('admin_list_exam_versions_with_categories'),
       supabase.rpc('admin_list_exam_categories'),
+      supabase.from('exams').select('id,education_subject_id'),
+      supabase.from('education_subjects').select('id,education_level_id,education_node_id,display_name,is_active,local_code'),
+      supabase.from('education_levels').select('id,name,code,is_active'),
+      supabase.from('education_nodes').select('id,name,parent_id,education_level_id,is_active'),
     ]);
-    if (examResult.error) setError(examResult.error.message);
-    else if (categoryResult.error) setError(categoryResult.error.message);
+    const failed = [examResult, categoryResult, examMetaResult, offeringResult, levelResult, nodeResult].find((result) => result.error);
+    if (failed) setError(failed.error.message);
     else {
-      setItems(examResult.data || []);
+      const examMeta = new Map((examMetaResult.data || []).map((exam) => [exam.id, exam]));
+      setItems((examResult.data || []).map((item) => ({
+        ...item,
+        education_subject_id: examMeta.get(item.exam_id)?.education_subject_id || null,
+      })));
       setCategories(categoryResult.data || []);
+      setOfferings(offeringResult.data || []);
+      setLevels(levelResult.data || []);
+      setNodes(nodeResult.data || []);
       setError('');
     }
     setLoading(false);
@@ -58,8 +73,7 @@ export function AdminExamsPage() {
   useEffect(() => { void load(); }, []);
 
   const assignCategory = async (examId, categoryId) => {
-    setBusyExamId(examId);
-    setError('');
+    setBusyExamId(examId); setError('');
     const { error: rpcError } = await supabase.rpc('admin_set_exam_category', {
       p_exam_id: examId,
       p_category_id: categoryId || null,
@@ -68,41 +82,79 @@ export function AdminExamsPage() {
     else {
       const selected = categories.find((category) => category.id === categoryId);
       setItems((current) => current.map((item) => item.exam_id === examId ? {
-        ...item,
-        category_id: categoryId || null,
-        category_name: selected?.name || null,
-        category_slug: selected?.slug || null,
+        ...item, category_id: categoryId || null,
+        category_name: selected?.name || null, category_slug: selected?.slug || null,
       } : item));
     }
     setBusyExamId('');
   };
 
-  const activeCategories = categories.filter((category) => category.is_active);
+  const assignEducation = async (examId, offeringId) => {
+    setBusyExamId(examId); setError('');
+    const { error: rpcError } = await supabase.rpc('admin_set_exam_education_subject', {
+      p_exam_id: examId,
+      p_education_subject_id: offeringId || null,
+    });
+    if (rpcError) setError(rpcError.message);
+    else setItems((current) => current.map((item) => item.exam_id === examId ? {
+      ...item, education_subject_id: offeringId || null,
+    } : item));
+    setBusyExamId('');
+  };
 
-  return <AdminFrame title="Phiên bản đề thi">
-    <p className="muted">Danh mục gắn với đề thi gốc, không gắn riêng từng phiên bản. Các đề cũ chưa được phân loại sẽ giữ giá trị trống cho đến khi Admin chọn.</p>
+  const activeCategories = categories.filter((category) => category.is_active);
+  const activeOfferings = offerings.filter((offering) => offering.is_active);
+  const levelMap = new Map(levels.map((level) => [level.id, level]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const offeringLabel = (offering) => {
+    if (!offering) return '';
+    const level = levelMap.get(offering.education_level_id);
+    const path = [];
+    let node = offering.education_node_id ? nodeMap.get(offering.education_node_id) : null;
+    let guard = 0;
+    while (node && guard < 12) {
+      path.unshift(node.name);
+      node = node.parent_id ? nodeMap.get(node.parent_id) : null;
+      guard += 1;
+    }
+    return [level?.name, ...path, offering.display_name].filter(Boolean).join(' / ');
+  };
+
+  return <AdminFrame title="Quản lý đề thi">
+    <p className="muted">Mỗi đề cần được gắn với một môn học thuộc cấp học/ngữ cảnh phù hợp trước khi quy tắc xuất bản mới được bật. Loại đề chỉ là thông tin phụ, không bắt buộc.</p>
     {error && <div className="alert" role="alert">{error}</div>}
     {loading ? <div className="loading-line"><span className="spinner" /> Đang tải…</div> :
       items.length ? <div className="version-list">{items.map((item) => {
-        const archivedCurrent = item.category_id && !activeCategories.some((category) => category.id === item.category_id);
+        const archivedCategory = item.category_id && !activeCategories.some((category) => category.id === item.category_id);
+        const currentOffering = offerings.find((offering) => offering.id === item.education_subject_id);
+        const archivedOffering = item.education_subject_id && (!currentOffering || !currentOffering.is_active);
+        const examAttemptCount = items.filter((row) => row.exam_id === item.exam_id).reduce((sum, row) => sum + Number(row.attempt_count || 0), 0);
+        const placementLocked = Boolean(item.education_subject_id && examAttemptCount > 0);
         return <article className="version-row category-exam-row" key={item.exam_version_id}>
           <div className="category-exam-info">
             <b>{item.title}</b>
             <small>Phiên bản {item.version_no} · {item.question_count} câu · {item.duration_minutes} phút · {item.attempt_count} lượt làm</small>
-            <small>Danh mục hiện tại: {item.category_name || 'Chưa phân loại'}</small>
+            <small>Vị trí học tập: {currentOffering ? offeringLabel(currentOffering) : item.education_subject_id ? 'Vị trí đã ẩn' : 'Chưa gán'}</small>
+            <small>Loại đề: {item.category_name || 'Không phân loại'}</small>
           </div>
           <div className="category-exam-actions">
             <span className={'status ' + (item.status === 'published' ? 'published' : 'draft')}>{item.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
             <label className="category-inline-label">
-              <span>Gán danh mục</span>
-              <select
-                className="category-select"
-                value={item.category_id || ''}
-                disabled={busyExamId === item.exam_id}
-                onChange={(event) => assignCategory(item.exam_id, event.target.value)}
-              >
-                <option value="">Chưa phân loại</option>
-                {archivedCurrent && <option value={item.category_id} disabled>{item.category_name || 'Danh mục đã ẩn'} (đã ẩn)</option>}
+              <span>Vị trí học tập</span>
+              <select className="category-select" value={item.education_subject_id || ''} disabled={busyExamId === item.exam_id || placementLocked}
+                onChange={(event) => assignEducation(item.exam_id, event.target.value)}>
+                <option value="">Chưa gán</option>
+                {archivedOffering && <option value={item.education_subject_id} disabled>{currentOffering ? offeringLabel(currentOffering) : 'Môn học đã ẩn'} (đã ẩn)</option>}
+                {activeOfferings.map((offering) => <option value={offering.id} key={offering.id}>{offeringLabel(offering)}</option>)}
+              </select>
+              {placementLocked && <small>Đã có lượt làm; vị trí đã gán được khóa để bảo toàn lịch sử.</small>}
+            </label>
+            <label className="category-inline-label">
+              <span>Loại đề (tùy chọn)</span>
+              <select className="category-select" value={item.category_id || ''} disabled={busyExamId === item.exam_id}
+                onChange={(event) => assignCategory(item.exam_id, event.target.value)}>
+                <option value="">Không phân loại</option>
+                {archivedCategory && <option value={item.category_id} disabled>{item.category_name || 'Loại đề đã ẩn'} (đã ẩn)</option>}
                 {activeCategories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}
               </select>
             </label>
@@ -200,8 +252,8 @@ export function AdminCategoriesPage() {
     setSaving(false);
   };
 
-  return <AdminFrame title="Quản lý danh mục đề thi">
-    <p className="muted">Danh mục dùng để phân loại mục đích của đề (thi thử, kiểm tra, ôn tập…). Danh mục đã gán cho đề nên được ẩn thay vì xóa.</p>
+  return <AdminFrame title="Loại đề (metadata tùy chọn)">
+    <p className="muted">Loại đề chỉ mô tả mục đích (thi thử, kiểm tra, ôn tập…). Không dùng để xác định cấp học, môn học hoặc điều hướng học sinh; không bắt buộc khi xuất bản.</p>
     {error && <div className="alert" role="alert">{error}</div>}
     {notice && <div className="form-message" role="status">{notice}</div>}
     <form className="category-form form-stack" onSubmit={save}>
