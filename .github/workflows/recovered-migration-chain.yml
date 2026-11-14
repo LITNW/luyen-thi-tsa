@@ -79,6 +79,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
       - name: Apply atomic education-aware editor save
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
+      - name: Enforce education placement for every publication path
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
