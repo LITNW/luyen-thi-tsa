@@ -109,19 +109,15 @@ Returns:
 
 Only active-profile users can call it. It returns only published, non-archived versions for the requested active offering.
 
-## 6. Publication enforcement — intentionally deferred
+## 6. Publication enforcement — active on Staging, gated for Production
 
-The current staging foundation does not yet block publication of unplaced legacy exams. This is deliberate:
-- The old editor does not yet select an education-subject offering.
-- Existing Production exams have not been classified.
-- Enforcing NOT NULL or a publication trigger now would break the legacy editor and could hide existing exam content.
+The Staging implementation now enforces mandatory placement at both the application and database layers:
+1. The legacy editor requires an active education-subject offering and calls `admin_save_exam_content_with_education`.
+2. The wrapper saves content as a draft, assigns placement in the same transaction, then optionally publishes.
+3. A database trigger on `exam_versions` rejects any INSERT or status UPDATE to `published` when the owning exam has no active education-subject offering, active level or active optional context node.
+4. Regression tests prove that direct INSERT and direct UPDATE publication attempts cannot bypass the rule.
 
-The later editor integration release must:
-1. Add required education placement to new/edit exam flows.
-2. Provide an Admin queue for legacy unplaced exams.
-3. Classify all intended-to-remain-published exams.
-4. Add database-side publication enforcement.
-5. Re-run all question type, import, grading, history and attempt tests.
+Existing Production exams remain unclassified until the user approves the classification proposal and the additive Production migration/cutover is separately approved. Existing published history is not rewritten by installing the trigger; it governs new publication transitions. Before Production rollout, classify intended-to-remain-published exams, verify all Admin/import flows and complete authenticated Preview E2E.
 
 ## 7. Security and migration references
 
