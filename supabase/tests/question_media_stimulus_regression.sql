@@ -80,7 +80,7 @@ begin
     v_exam_version,v_exam,1,'Question media regression','Disposable CI fixture',30,'draft',v_admin
   );
 
-  v_save := public.admin_save_exam_content(
+  v_save := public.admin_save_exam_content_with_education(
     v_exam_version,
     'Question media regression',
     'Disposable CI fixture',
@@ -120,6 +120,8 @@ begin
         'points',1
       )
     ),
+    v_offering,
+    null,
     false
   );
 
