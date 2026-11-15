@@ -65,7 +65,33 @@ default_grants AS (
   FROM snapshot s
   CROSS JOIN LATERAL jsonb_array_elements(s.doc->'default_privileges') d
   CROSS JOIN LATERAL jsonb_array_elements(d->'acl') g
+  WHERE d->>'owner'='postgres'
+    AND g->>'grantee' IN ('anon','authenticated')
+),
+unexpected_grantors AS (
+  SELECT g->>'grantor' AS grantor
+  FROM snapshot s
+  CROSS JOIN LATERAL jsonb_array_elements(s.doc->'tables') t
+  CROSS JOIN LATERAL jsonb_array_elements(t->'acl') g
   WHERE g->>'grantee' IN ('anon','authenticated')
+  UNION ALL
+  SELECT g->>'grantor'
+  FROM snapshot s
+  CROSS JOIN LATERAL jsonb_array_elements(s.doc->'columns') c
+  CROSS JOIN LATERAL jsonb_array_elements(c->'acl') g
+  WHERE g->>'grantee' IN ('anon','authenticated')
+  UNION ALL
+  SELECT g->>'grantor'
+  FROM snapshot s
+  CROSS JOIN LATERAL jsonb_array_elements(s.doc->'sequences') q
+  CROSS JOIN LATERAL jsonb_array_elements(q->'acl') g
+  WHERE g->>'grantee' IN ('anon','authenticated')
+  UNION ALL
+  SELECT g->>'grantor'
+  FROM snapshot s
+  CROSS JOIN LATERAL jsonb_array_elements(s.doc->'default_privileges') d
+  CROSS JOIN LATERAL jsonb_array_elements(d->'acl') g
+  WHERE d->>'owner'='postgres' AND g->>'grantee' IN ('anon','authenticated')
 ),
 revoke_baseline AS (
   SELECT
@@ -83,13 +109,9 @@ revoke_baseline AS (
          ' FROM anon, authenticated;'
   FROM (VALUES ('audit_logs_id_seq'),('import_events_id_seq'),('tsa_user_code_seq')) x(name)
   UNION ALL
-  SELECT 'ALTER DEFAULT PRIVILEGES FOR ROLE ' || quote_ident(o.owner_name) ||
-         ' REVOKE ALL ON SEQUENCES FROM anon, authenticated;'
-  FROM (VALUES ('postgres'),('supabase_admin')) o(owner_name)
+  SELECT 'ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON SEQUENCES FROM anon, authenticated;'
   UNION ALL
-  SELECT 'ALTER DEFAULT PRIVILEGES FOR ROLE ' || quote_ident(o.owner_name) ||
-         ' IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;'
-  FROM (VALUES ('postgres'),('supabase_admin')) o(owner_name)
+  SELECT 'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;'
 ),
 all_restore AS (
   SELECT -1 AS ord, 'BEGIN;' AS sql
@@ -108,8 +130,11 @@ SELECT CASE
     OR (SELECT (doc->>'found_sequence_count')::integer FROM snapshot) <> 3
     OR (SELECT (doc->>'bootstrap_staging_sentinel')::boolean FROM snapshot) IS DISTINCT FROM true
     OR (SELECT jsonb_array_length(doc->'default_privileges') FROM snapshot) <> 4
+    OR (SELECT d->>'raw_acl' FROM snapshot s CROSS JOIN LATERAL jsonb_array_elements(s.doc->'default_privileges') d WHERE d->>'owner'='supabase_admin' AND d->>'scope'='public') IS DISTINCT FROM
+       '{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}'
+    OR EXISTS (SELECT 1 FROM unexpected_grantors WHERE grantor <> 'postgres')
   THEN 'ERROR: snapshot validation failed; do not use rollback output'
-  ELSE E'DO $phase16_rollback_role_guard$\nBEGIN\n  IF NOT pg_has_role(current_user, ''supabase_admin'', ''MEMBER'')\n     AND NOT COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=current_user), false) THEN\n    RAISE EXCEPTION ''Rollback blocked: executor cannot SET ROLE supabase_admin; grantor provenance cannot be preserved'';\n  END IF;\nEND\n$phase16_rollback_role_guard$;\n\n' || string_agg(sql, E'\n\n' ORDER BY ord, sql) ||
+  ELSE E'DO $phase16_rollback_role_guard$\nBEGIN\n  IF current_user <> ''postgres''\n     AND NOT pg_has_role(current_user, ''postgres'', ''SET'')\n     AND NOT COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=current_user), false) THEN\n    RAISE EXCEPTION ''Rollback blocked: executor cannot SET ROLE postgres'';\n  END IF;\nEND\n$phase16_rollback_role_guard$;\n\n' || string_agg(sql, E'\n\n' ORDER BY ord, sql) ||
        E'\n\n-- Verify restored ACLs against original snapshot. COMMIT only after exact review.'
 END AS generated_rollback_sql
 FROM all_restore;
@@ -117,8 +142,9 @@ FROM all_restore;
 -- Before executing generated SQL:
 -- 1. Confirm the snapshot has 12 tables, 3 sequences and 4 default-ACL scopes.
 -- 2. Confirm Staging identity in the snapshot and in the Supabase dashboard.
--- 3. Confirm each SET ROLE grantor can be assumed by the execution principal.
--- 4. Review that only anon/authenticated grants are restored; service_role and owner
---    ACLs were not changed by the proposed remediation and are intentionally untouched.
+-- 3. Confirm all target ACL grantors are postgres; platform-managed
+--    supabase_admin defaults are validated but intentionally excluded from SQL.
+-- 4. Confirm the executor can SET ROLE postgres. Never attempt to assume
+--    supabase_admin or rewrite its grantor. service_role and owner ACLs are untouched.
 -- 5. Execute generated output in one transaction, then run the snapshot query again
 --    and compare client-role ACL entries with the original snapshot.
