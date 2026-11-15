@@ -245,11 +245,12 @@
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     },
     {
-      "version": "20261115153000",
+      "version": "20261115154958",
       "name": "multiple_stimulus_groups",
-      "status": "proposed_in_feature_branch_not_applied",
+      "status": "applied_in_staging_verified_2026-11-15",
       "source": "Feature branch PR #31 follow-up: normalized question-to-stimulus links, immutable multi-group snapshots, and published student media authorization for every attached group",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_status": "applied_in_staging_verified_2026-11-15"
     }
   ],
   "last_verified_against_live_ledgers": {
