@@ -90,7 +90,8 @@ default_rows AS (
    AND d.defaclnamespace=ds.schema_oid
    AND d.defaclobjtype='S'
 )
-SELECT jsonb_pretty(jsonb_build_object(
+WITH payload AS (
+SELECT jsonb_build_object(
   'snapshot_format', 'phase16-acl-snapshot-v1',
   'captured_at', clock_timestamp(),
   'database', current_database(),
@@ -108,4 +109,10 @@ SELECT jsonb_pretty(jsonb_build_object(
   'found_sequence_count', (SELECT count(*) FROM sequence_rows),
   'sequences', COALESCE((SELECT jsonb_agg(to_jsonb(s) ORDER BY s.name) FROM sequence_rows s), '[]'::jsonb),
   'default_privileges', COALESCE((SELECT jsonb_agg(to_jsonb(d) ORDER BY d.owner,d.scope) FROM default_rows d), '[]'::jsonb)
-)) AS phase16_acl_snapshot;
+) AS doc
+)
+SELECT jsonb_pretty(jsonb_build_object(
+  'snapshot_fingerprint_md5', md5(doc::text),
+  'snapshot', doc
+)) AS phase16_acl_snapshot
+FROM payload;
