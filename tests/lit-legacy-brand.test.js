@@ -19,3 +19,10 @@ test('legacy authentication, dashboard and exam room use the official LIT symbol
   assert.match(html, /class="legacy-brand-symbol small" src="\/brand\/lit-symbol\.svg"/);
   assert.match(html, /class="legacy-brand-symbol exam-brand-symbol" src="\/brand\/lit-symbol\.svg"/);
 });
+
+
+test('legacy admin import workspace displays LIT identity', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /class="legacy-workspace-brand"/);
+  assert.match(html, /Trung tâm nhập đề bằng AI/);
+});
