@@ -236,6 +236,13 @@
       "status": "proposed_in_feature_branch_not_applied",
       "source": "Feature branch PR #31: switch admin_save_stimulus_version to SECURITY INVOKER and rely on existing Admin-only RLS policies",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261115120000",
+      "name": "question_media_validator_grants",
+      "status": "proposed_in_feature_branch_not_applied",
+      "source": "Feature branch PR #31: grant authenticated Admins execution on the pure media manifest validator used by stimulus RPC and insert triggers",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ],
   "last_verified_against_live_ledgers": {
