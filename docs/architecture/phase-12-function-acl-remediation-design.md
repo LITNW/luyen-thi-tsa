@@ -30,7 +30,7 @@ The nine Staging-only-in-effect `anon`-callable SECURITY DEFINER functions are:
 
 The first four are the high-priority exposed RPC surface. The other five are trigger functions and should not be public RPC endpoints. Production already denies effective `anon` EXECUTE on all SECURITY DEFINER functions. The previous Phase 11 summary's description of the three attempt functions as a Staging-specific finding is confirmed; this phase revalidated the Production/ Staging difference directly.
 
-The remaining `anon` EXECUTE counts (18 Production, 23 Staging) are mostly trigger/helper functions, not public callable APIs. Their EXECUTE grants should be removed as part of the function-level least-privilege baseline, while trigger behavior must be regression-tested. Trigger execution is not equivalent to direct RPC invocation; PostgreSQL checks trigger-function privileges when the trigger is created, not for every row-level trigger firing.
+The remaining `anon` EXECUTE counts (18 Production, 23 Staging) are trigger/helper functions, not public callable APIs. In addition, Staging has five trigger-only SECURITY DEFINER helpers callable by `authenticated` (`audit_exam_change`, `audit_profile_change`, `handle_new_auth_user`, `prevent_last_active_admin_removal`, `prevent_last_admin_delete`) while Production denies client-role EXECUTE on them. The proposed allowlist removes client-role access to these internal helpers while preserving trigger attachments. Trigger execution is not equivalent to direct RPC invocation; PostgreSQL checks trigger-function privileges when the trigger is created, not for every row-level trigger firing.
 
 ## 2. Important product contract finding: anonymous catalogue is not currently supported
 
@@ -174,7 +174,7 @@ The draft:
 
 The blanket schema operation is guarded by the expected function count. If the schema inventory changes before execution, the script must abort and be regenerated from a fresh catalog snapshot. A separate future task should review `service_role` grants and default privileges; this phase does not silently narrow server-side access without a complete server/Edge/external-caller inventory.
 
-## 5. Staging validation plan (not run)
+## 5. Security Advisor baseline\n\nProduction Security Advisor was queried read-only. It reports 41 `authenticated_security_definer_function_executable` findings, corresponding to the 41 intentionally client-callable SECURITY DEFINER functions in the current allowlist. This lint is a review signal, not proof that every finding is exploitable: the 26 Admin functions contain `is_admin` checks, while student functions enforce active-user and attempt-ownership checks. Staging's additional authenticated-callable trigger helpers should be removed; after ACL parity, the expected authenticated SECURITY DEFINER warning set should align with Production, then each remaining finding must be explicitly accepted or redesigned. Production also reports three informational RLS-enabled/no-policy findings (`attempt_question_time_events`, `exam_solutions`, `question_answer_keys`) and a leaked-password-protection warning; these are recorded as adjacent security work, not modified in Phase 12.\n\n## 6. Staging validation plan (not run)
 
 ### A. Static catalog checks
 
@@ -224,15 +224,15 @@ Do not use Production attempts for ACL tests. Do not use real student accounts i
 - Rollback is a forward ACL migration restoring the exact pre-change ACL snapshot, not a database restore.
 - Keep the previous ACL snapshot and SQL output in the PR evidence.
 
-## 6. Risks / decisions still open
+## 7. Risks / decisions still open
 
 1. **Anonymous catalogue product requirement:** current SQL contract is authenticated-only. Product owner must explicitly decide whether pre-login catalogue browsing is required. If yes, design a separate metadata-only RPC and UI change; do not grant anon to the current authenticated-only function.
 2. **service_role:** preserve existing grants in this phase. A complete server/Edge/cron/external caller audit is required before narrowing them.
-3. **Default privileges:** review `ALTER DEFAULT PRIVILEGES` for the actual object-creating role(s), including `postgres`, so new public functions do not regain broad default EXECUTE. Do not change defaults until the migration/DDL owner and intended role matrix are confirmed.
+3. **Default privileges:** both environments currently have `postgres` and `supabase_admin` default function ACLs in `public` that include `anon`, `authenticated`, and `service_role`. The draft revokes future defaults for `postgres` only, because application migrations/functions are owned by `postgres`. It deliberately does not alter `supabase_admin` defaults, which are platform-managed. Verify the actual migration owner before applying; if another owner creates application functions, design a separate default-ACL rule for that owner.
 4. **Function bodies:** the static scan found all 26 Admin functions contain `is_admin`; semantic tests must still verify the check is applied before sensitive reads/writes.
 5. **Environment drift:** Production-only `abandon_exam_attempt` and `save_exam_atomic` must remain untouched; Staging-only ACL anomalies must be corrected only in a separately approved Staging rollout.
 
-## 7. Safety boundary and completion
+## 8. Safety boundary and completion
 
 - All catalog queries in this phase were SELECT-only.
 - No function was invoked.
