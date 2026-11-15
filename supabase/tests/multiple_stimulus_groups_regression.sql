@@ -16,7 +16,7 @@ begin
   ) then
     raise exception 'Question version stimulus-link trigger is missing.';
   end if;
-  if to_regprocedure('public.lit_link_question_version_stimuli()') is null then
+  if to_regprocedure('private.lit_link_question_version_stimuli()') is null then
     raise exception 'Question version stimulus-link function is missing.';
   end if;
   if not exists (
