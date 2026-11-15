@@ -5,11 +5,11 @@ import { supabase } from '../lib/supabase.js';
 function EducationFrame({ children }) {
   return <div className="app-shell">
     <header className="topbar">
-      <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>KHÔNG GIAN HỌC TẬP</small></span></Link>
+      <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT" /></Link>
       <nav className="top-links"><Link to="/history">Lịch sử</Link><Link to="/account">Tài khoản</Link></nav>
     </header>
     <main className="education-page">{children}</main>
-    <footer className="footer">TSA PRACTICE PLATFORM <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
+    <footer className="footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
   </div>;
 }
 

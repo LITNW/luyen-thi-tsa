@@ -46,7 +46,7 @@ export default function DashboardPage() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>NỀN TẢNG LUYỆN THI</small></span></Link>
+        <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT" /></Link>
         <nav className="top-links" aria-label="Điều hướng chính">
           <Link to="/history">Lịch sử</Link>
           <Link to="/account">Tài khoản</Link>
@@ -61,7 +61,7 @@ export default function DashboardPage() {
             <h1>Hôm nay, bạn muốn<br /><span>học tập và thử sức ở đâu?</span></h1>
             <p>Xin chào {profile?.display_name || 'học viên'}. Chọn cấp học để tìm môn học và bài thi phù hợp.</p>
           </div>
-          <div className="hero-mark" aria-hidden="true"><span>TSA</span></div>
+          <div className="hero-mark" aria-hidden="true"><img src="/brand/lit-symbol.svg" alt="" /></div>
         </section>
 
         <section className="metrics" aria-label="Thông tin tài khoản">
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           }
         </section>
       </main>
-      <footer className="footer">TSA PRACTICE PLATFORM <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
+      <footer className="footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
     </div>
   );
 }

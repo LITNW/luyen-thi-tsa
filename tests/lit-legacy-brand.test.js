@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+test('legacy visible brand labels use LIT while TSA exam references remain contextual', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /LIT · PHÒNG THI/);
+  assert.match(html, /LIT PRACTICE PLATFORM|LIT · LEARN · PRACTICE · GROW/);
+  assert.match(html, /<div class="hero-core">LIT<\/div>/);
+  assert.doesNotMatch(html, /TSA PRACTICE · PHÒNG THI/);
+  assert.doesNotMatch(html, /<b>TSA Practice<\/b>/);
+  assert.doesNotMatch(html, /TSA PRACTICE PLATFORM/);
+});
+
+
+test('legacy authentication, dashboard and exam room use the official LIT symbol asset', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /class="legacy-brand-symbol auth-brand-symbol" src="\/brand\/lit-symbol\.svg" alt="LIT"/);
+  assert.match(html, /class="legacy-brand-symbol small" src="\/brand\/lit-symbol\.svg"/);
+  assert.match(html, /class="legacy-brand-symbol exam-brand-symbol" src="\/brand\/lit-symbol\.svg"/);
+});
+
+
+test('legacy admin import workspace displays LIT identity', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /class="legacy-workspace-brand"/);
+  assert.match(html, /Trung tâm nhập đề bằng AI/);
+});

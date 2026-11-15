@@ -10,7 +10,7 @@ const emptyOffering = { id: '', education_level_id: '', education_node_id: '', s
 function AdminEducationFrame({ children }) {
   return <div className="app-shell">
     <header className="topbar">
-      <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>KHU VỰC QUẢN TRỊ</small></span></Link>
+      <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Khu vực quản trị" /></Link>
       <nav className="top-links">
         <Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link>
         <Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link>
@@ -22,7 +22,7 @@ function AdminEducationFrame({ children }) {
       <p className="muted">Tạo cấp học, các tầng ngữ cảnh tùy chọn và môn học được mở tại từng ngữ cảnh. Không cần tạo lớp/trường/ngành nếu mô hình hiện tại không sử dụng chúng.</p>
       {children}
     </main>
-    <footer className="footer">TSA PRACTICE PLATFORM · EDUCATION ADMIN</footer>
+    <footer className="footer">LIT · EDUCATION ADMIN</footer>
   </div>;
 }
 

@@ -42,8 +42,8 @@ export default function AuthPage({ mode = 'login' }) {
   return (
     <main className="auth-layout">
       <section className="auth-story">
-        <div className="brand-lockup"><span className="brand-mark">T</span><span><b>TSA Practice</b><small>NỀN TẢNG LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></div>
-        <p className="eyebrow">TSA PRACTICE PLATFORM</p>
+        <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Learn, Practice, Grow" /></Link>
+        <p className="eyebrow">LIT · LEARN · PRACTICE · GROW</p>
         <h1>Chuẩn bị tốt hơn.<br /><span>Bứt phá giới hạn.</span></h1>
         <p className="story-copy">Không gian luyện tập tập trung cho kỳ thi Đánh giá tư duy: làm bài có thời gian, theo dõi tiến độ và xem lại kết quả.</p>
         <div className="story-points"><span><b>01</b> Luyện tập theo đề thi</span><span><b>02</b> Chấm điểm tự động</span><span><b>03</b> Lưu lịch sử học tập</span></div>
