@@ -12,7 +12,7 @@ $phase16_snapshot$::jsonb AS doc
 table_grants AS (
   SELECT
     'SET ROLE ' || quote_ident(g->>'grantor') || E';\n' ||
-    'GRANT ' || quote_ident(g->>'privilege') ||
+    'GRANT ' || upper(g->>'privilege') ||
     ' ON TABLE public.' || quote_ident(t->>'name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
@@ -25,7 +25,7 @@ table_grants AS (
 column_grants AS (
   SELECT
     'SET ROLE ' || quote_ident(g->>'grantor') || E';\n' ||
-    'GRANT ' || quote_ident(g->>'privilege') ||
+    'GRANT ' || upper(g->>'privilege') ||
     ' (' || quote_ident(c->>'column_name') || ') ON TABLE public.' ||
     quote_ident(c->>'table_name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
@@ -39,7 +39,7 @@ column_grants AS (
 sequence_grants AS (
   SELECT
     'SET ROLE ' || quote_ident(g->>'grantor') || E';\n' ||
-    'GRANT ' || quote_ident(g->>'privilege') ||
+    'GRANT ' || upper(g->>'privilege') ||
     ' ON SEQUENCE public.' || quote_ident(q->>'name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
@@ -54,7 +54,7 @@ default_grants AS (
     'SET ROLE ' || quote_ident(g->>'grantor') || E';\n' ||
     'ALTER DEFAULT PRIVILEGES FOR ROLE ' || quote_ident(d->>'owner') ||
     CASE WHEN d->>'scope'='public' THEN ' IN SCHEMA public' ELSE '' END ||
-    ' GRANT ' || quote_ident(g->>'privilege') ||
+    ' GRANT ' || upper(g->>'privilege') ||
     ' ON SEQUENCES TO ' ||
     CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
