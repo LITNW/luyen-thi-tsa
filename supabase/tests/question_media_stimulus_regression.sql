@@ -9,8 +9,9 @@ declare
   v_student uuid := '00000000-0000-4000-8000-000000000002';
   v_exam uuid := '71000000-0000-4000-8000-000000000001';
   v_exam_version uuid := '71000000-0000-4000-8000-000000000002';
-  v_stimulus uuid := '71000000-0000-4000-8000-000000000003';
-  v_stimulus_version uuid := '71000000-0000-4000-8000-000000000004';
+  v_stimulus uuid;
+  v_stimulus_version uuid;
+  v_stimulus_save jsonb;
   v_offering uuid;
   v_save jsonb;
   v_admin_payload jsonb;
@@ -49,15 +50,8 @@ begin
     returning id into v_offering;
   end if;
 
-  insert into public.stimuli(id,status,created_by)
-  values(v_stimulus,'draft',v_admin);
-
-  insert into public.stimulus_versions(
-    id,stimulus_id,version_no,stimulus_type,content,metadata,created_by
-  ) values (
-    v_stimulus_version,
-    v_stimulus,
-    1,
+  v_stimulus_save := public.admin_save_stimulus_version(
+    null::uuid,
     'mixed',
     jsonb_build_object(
       'body','Ngữ liệu dùng chung cho hai câu hỏi.',
@@ -67,9 +61,13 @@ begin
         'caption','Biểu đồ trong ngữ liệu'
       ))
     ),
-    jsonb_build_object('title','Ngữ liệu kiểm thử'),
-    v_admin
+    jsonb_build_object('title','Ngữ liệu kiểm thử','question_indices',jsonb_build_array(1,2))
   );
+  v_stimulus := (v_stimulus_save->>'stimulus_id')::uuid;
+  v_stimulus_version := (v_stimulus_save->>'stimulus_version_id')::uuid;
+  if v_stimulus is null or v_stimulus_version is null then
+    raise exception 'Shared stimulus RPC did not return identity/version IDs.';
+  end if;
 
   insert into public.exams(id,title,description,duration_minutes,created_by,education_subject_id)
   values(v_exam,'Question media regression','Disposable CI fixture',30,v_admin,v_offering);
