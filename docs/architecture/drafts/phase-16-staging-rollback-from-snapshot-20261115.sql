@@ -1,3 +1,12 @@
+DO $phase16_rollback_role_guard$
+BEGIN
+  IF NOT pg_has_role(current_user, 'supabase_admin', 'MEMBER')
+     AND NOT COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=current_user), false) THEN
+    RAISE EXCEPTION 'Rollback blocked: executor cannot SET ROLE supabase_admin; grantor provenance cannot be preserved';
+  END IF;
+END
+$phase16_rollback_role_guard$;
+
 BEGIN;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
