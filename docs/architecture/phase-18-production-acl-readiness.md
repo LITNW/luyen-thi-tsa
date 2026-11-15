@@ -108,3 +108,8 @@ No migration is required for this ACL-only change, and the migration ledger must
 ## 9. Decision
 
 Phase 18 has completed the read-only Production readiness assessment and prepared Production-specific scripts. Production is **conditionally ready**, but the fresh backup and immediate pre-rollout snapshot gates remain outstanding. No Production rollout has occurred.
+
+
+## 10. Consolidation review link
+- The audit package is available as draft PR #29: https://github.com/LITNW/luyen-thi-tsa/pull/29.
+- The PR is intentionally unmerged and contains 27 changed files. CI was still running at the time of this report update; Vercel status was successful and Netlify Preview was pending.
