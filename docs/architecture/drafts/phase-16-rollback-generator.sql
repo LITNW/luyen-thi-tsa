@@ -4,10 +4,13 @@
 -- Paste the complete JSON object into the dollar-quoted placeholder.
 -- The query emits SQL text only; it does not execute GRANT/REVOKE statements.
 
-WITH snapshot AS (
+WITH raw_snapshot AS (
   SELECT $phase16_snapshot$
 PASTE_EXPORTED_PHASE16_SNAPSHOT_JSON_HERE
-$phase16_snapshot$::jsonb AS doc
+$phase16_snapshot$::jsonb AS wrapper
+),
+snapshot AS (
+  SELECT COALESCE(wrapper->'snapshot', wrapper) AS doc FROM raw_snapshot
 ),
 table_grants AS (
   SELECT
@@ -89,7 +92,8 @@ revoke_baseline AS (
   FROM (VALUES ('postgres'),('supabase_admin')) o(owner_name)
 ),
 all_restore AS (
-  SELECT 0 AS ord, sql FROM revoke_baseline
+  SELECT -1 AS ord, 'BEGIN;' AS sql
+  UNION ALL SELECT 0, sql FROM revoke_baseline
   UNION ALL SELECT 1, sql FROM table_grants
   UNION ALL SELECT 2, sql FROM column_grants
   UNION ALL SELECT 3, sql FROM sequence_grants
