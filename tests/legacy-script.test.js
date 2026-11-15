@@ -105,3 +105,14 @@ test('education subject selection reads the select element value rather than der
   assert.match(html, /educationSelect=document\.getElementById\('f-education-subject'\),educationSubjectId=educationSelect\?\.value\|\|view\.education_subject_id\|\|''/);
   assert.doesNotMatch(html, /g\('f-education-subject'\)\?\.value/);
 });
+
+
+test('legacy media editor makes per-question attachment state and shared-stimulus scope explicit', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /function questionMediaOverviewHtml\(\)/);
+  assert.match(html, /Đã tải lên · chưa lưu bản nháp/);
+  assert.match(html, /Đã lưu trong bản nháp/);
+  assert.match(html, /data-a=\"selectMediaQuestion\"/);
+  assert.match(html, /Hiện tại mỗi đề chỉ hỗ trợ một nhóm ngữ liệu chung/);
+  assert.match(html, /Chọn ảnh xong, bấm Tải ảnh lên/);
+});
