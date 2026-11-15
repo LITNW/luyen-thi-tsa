@@ -138,7 +138,7 @@ test('multiple stimulus versions are snapshotted and authorized for published st
   const schemaRegression = readFileSync(new URL('../supabase/tests/multiple_stimulus_groups_regression.sql', import.meta.url), 'utf8');
   assert.match(migration, /question_version_stimuli/);
   assert.match(migration, /stimulus_version_ids/);
-  assert.match(migration, /jsonb_array_elements\\(coalesce\\(qv\\.content->'stimuli'/);
+  assert.ok(migration.includes("jsonb_array_elements(coalesce(qv.content->'stimuli'"));
   assert.match(regression, /stimulus_version_ids/);
   assert.match(schemaRegression, /two independent stimulus groups/);
 });
