@@ -94,3 +94,8 @@ test('shared stimulus RPC runs with invoker privileges', () => {
   assert.match(migration, /security invoker/i);
   assert.match(migration, /grant execute on function public\.admin_save_stimulus_version/);
 });
+
+test('authenticated Admins can execute the media manifest validator', () => {
+  const migration = readFileSync(new URL('../supabase/migrations/20261115120000_question_media_validator_grants.sql', import.meta.url), 'utf8');
+  assert.match(migration, /grant execute on function public\.lit_validate_media_manifest\(jsonb\) to authenticated/i);
+});
