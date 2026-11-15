@@ -3,7 +3,7 @@
 
 begin;
 
-create temporary table media_fixture_ids(stimulus_id uuid,stimulus_version_id uuid,exam_version_id uuid) on commit drop;
+create temporary table media_fixture_ids(stimulus_id uuid,stimulus_version_id uuid,second_stimulus_id uuid,second_stimulus_version_id uuid,exam_version_id uuid) on commit drop;
 
 do $setup$
 declare
@@ -14,6 +14,9 @@ declare
   v_stimulus uuid;
   v_stimulus_version uuid;
   v_stimulus_save jsonb;
+  v_second_stimulus_save jsonb;
+  v_second_stimulus uuid;
+  v_second_stimulus_version uuid;
   v_offering uuid;
   v_save jsonb;
   v_admin_payload jsonb;
@@ -74,7 +77,26 @@ begin
   if v_stimulus is null or v_stimulus_version is null then
     raise exception 'Shared stimulus RPC did not return identity/version IDs.';
   end if;
-  insert into media_fixture_ids values(v_stimulus,v_stimulus_version,v_exam_version);
+  v_second_stimulus_save := public.admin_save_stimulus_version(
+    null::uuid,
+    'image',
+    jsonb_build_object(
+      'body','Ngữ liệu độc lập thứ hai.',
+      'media',jsonb_build_array(jsonb_build_object(
+        'path','question-media/ci-admin/shared-two.png',
+        'alt','Hình thuộc ngữ liệu thứ hai',
+        'caption','Ảnh ngữ liệu thứ hai'
+      ))
+    ),
+    jsonb_build_object('title','Ngữ liệu độc lập thứ hai','question_indices',jsonb_build_array(1))
+  );
+  v_second_stimulus := (v_second_stimulus_save->>'stimulus_id')::uuid;
+  v_second_stimulus_version := (v_second_stimulus_save->>'stimulus_version_id')::uuid;
+  if v_second_stimulus is null or v_second_stimulus_version is null
+     or v_second_stimulus=v_stimulus then
+    raise exception 'The second stimulus group must have an independent identity and version.';
+  end if;
+  insert into media_fixture_ids values(v_stimulus,v_stimulus_version,v_second_stimulus,v_second_stimulus_version,v_exam_version);
 
   insert into public.exams(id,title,description,duration_minutes,created_by,education_subject_id)
   values(v_exam,'Question media regression','Disposable CI fixture',30,v_admin,v_offering);
@@ -97,7 +119,7 @@ begin
         'content',jsonb_build_object(
           'q','Câu hỏi thứ nhất?',
           'o',jsonb_build_array('A','B'),
-          'stimulus_version_id',v_stimulus_version,
+          'stimulus_version_ids',jsonb_build_array(v_stimulus_version::text,v_second_stimulus_version::text),
           'media',jsonb_build_array(jsonb_build_object(
             'path','question-media/ci-admin/q1.png',
             'alt','Hình riêng câu 1',
@@ -140,21 +162,27 @@ begin
   join public.question_versions qv on qv.id=evq.question_version_id
   where evq.exam_version_id=v_exam_version;
 
-  if v_question_count<>2 or v_shared_count<>2 then
-    raise exception 'Both questions must retain the same shared stimulus version.';
+  select count(*) into v_shared_count
+  from public.question_version_stimuli qvs
+  join public.exam_version_questions evq on evq.question_version_id=qvs.question_version_id
+  where evq.exam_version_id=v_exam_version;
+  if v_question_count<>2 or v_shared_count<>3 then
+    raise exception 'Expected two questions with three independent group links, got questions %, links %.',v_question_count,v_shared_count;
   end if;
 
   v_admin_payload := public.admin_get_exam_version(v_exam_version);
   if jsonb_array_length(v_admin_payload->'questions')<>2
-     or v_admin_payload->'questions'->0->'content'->'stimulus'->>'version_id'
-        is distinct from v_stimulus_version::text
+     or jsonb_array_length(v_admin_payload->'questions'->0->'content'->'stimuli')<>2
+     or v_admin_payload->'questions'->0->'content'->'stimuli'->1->>'version_id'
+        is distinct from v_second_stimulus_version::text
      or jsonb_array_length(v_admin_payload->'questions'->0->'content'->'media')<>1 then
-    raise exception 'Admin authoring read lost question-local or shared stimulus media.';
+    raise exception 'Admin authoring read lost question-local media or one of the independent stimulus groups.';
   end if;
 
   insert into storage.objects(bucket_id,name,owner_id,metadata)
   values
     ('lit-question-media','question-media/ci-admin/shared.png',v_admin::text,'{"mimetype":"image/png"}'),
+    ('lit-question-media','question-media/ci-admin/shared-two.png',v_admin::text,'{"mimetype":"image/png"}'),
     ('lit-question-media','question-media/ci-admin/q1.png',v_admin::text,'{"mimetype":"image/png"}');
 end;
 $setup$;
@@ -209,8 +237,9 @@ begin
 
   v_public_payload := public.get_published_exam(v_exam_version);
   if jsonb_array_length(v_public_payload->'questions')<>2
-     or v_public_payload->'questions'->0->'content'->'stimulus'->>'version_id'
-        is distinct from v_stimulus_version::text
+     or jsonb_array_length(v_public_payload->'questions'->0->'content'->'stimuli')<>2
+     or v_public_payload->'questions'->0->'content'->'stimuli'->1->>'version_id'
+        is distinct from (select second_stimulus_version_id::text from media_fixture_ids)
      or v_public_payload->'questions'->0->'content' ? 'answer_key'
      or v_public_payload->'questions'->0->'content' ? 'explanation' then
     raise exception 'Student exam payload lost stimulus data or leaked grading fields.';
@@ -225,6 +254,7 @@ declare
   v_count integer;
   v_shared_allowed boolean;
   v_question_allowed boolean;
+  v_second_shared_allowed boolean;
   v_uid uuid;
   v_profile_status text;
 begin
@@ -232,10 +262,11 @@ begin
   select status into v_profile_status from public.profiles where id=v_uid;
   v_shared_allowed := private.lit_can_read_question_media('question-media/ci-admin/shared.png');
   v_question_allowed := private.lit_can_read_question_media('question-media/ci-admin/q1.png');
+  v_second_shared_allowed := private.lit_can_read_question_media('question-media/ci-admin/shared-two.png');
   select count(*) into v_count from storage.objects where bucket_id='lit-question-media';
-  if v_count<>2 then
-    raise exception 'Student media access mismatch: visible %, shared allowed %, question allowed %, uid %, profile status %.',
-      v_count,v_shared_allowed,v_question_allowed,v_uid,v_profile_status;
+  if v_count<>3 or not v_second_shared_allowed then
+    raise exception 'Student media access mismatch: visible %, shared allowed %, second shared allowed %, question allowed %, uid %, profile status %.',
+      v_count,v_shared_allowed,v_second_shared_allowed,v_question_allowed,v_uid,v_profile_status;
   end if;
 end;
 $published_media_rls$;
