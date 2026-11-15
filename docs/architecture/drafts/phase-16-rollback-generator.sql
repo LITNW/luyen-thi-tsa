@@ -19,7 +19,7 @@ table_grants AS (
     ' ON TABLE public.' || quote_ident(t->>'name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
-    ';\nRESET ROLE;' AS sql
+    E';\nRESET ROLE;' AS sql
   FROM snapshot s
   CROSS JOIN LATERAL jsonb_array_elements(s.doc->'tables') t
   CROSS JOIN LATERAL jsonb_array_elements(t->'acl') g
@@ -33,7 +33,7 @@ column_grants AS (
     quote_ident(c->>'table_name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
-    ';\nRESET ROLE;' AS sql
+    E';\nRESET ROLE;' AS sql
   FROM snapshot s
   CROSS JOIN LATERAL jsonb_array_elements(s.doc->'columns') c
   CROSS JOIN LATERAL jsonb_array_elements(c->'acl') g
@@ -46,7 +46,7 @@ sequence_grants AS (
     ' ON SEQUENCE public.' || quote_ident(q->>'name') ||
     ' TO ' || CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
-    ';\nRESET ROLE;' AS sql
+    E';\nRESET ROLE;' AS sql
   FROM snapshot s
   CROSS JOIN LATERAL jsonb_array_elements(s.doc->'sequences') q
   CROSS JOIN LATERAL jsonb_array_elements(q->'acl') g
@@ -61,7 +61,7 @@ default_grants AS (
     ' ON SEQUENCES TO ' ||
     CASE WHEN g->>'grantee'='PUBLIC' THEN 'PUBLIC' ELSE quote_ident(g->>'grantee') END ||
     CASE WHEN (g->>'is_grantable')::boolean THEN ' WITH GRANT OPTION' ELSE '' END ||
-    ';\nRESET ROLE;' AS sql
+    E';\nRESET ROLE;' AS sql
   FROM snapshot s
   CROSS JOIN LATERAL jsonb_array_elements(s.doc->'default_privileges') d
   CROSS JOIN LATERAL jsonb_array_elements(d->'acl') g
