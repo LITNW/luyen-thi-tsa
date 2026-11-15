@@ -278,3 +278,50 @@ Phase 16 is design-complete only when:
 - Phase 16 remains deliberately scoped to the 12 existing `postgres`-owned tables, three existing `postgres`-owned sequences, the `profiles.display_name` column ACL, and `postgres` sequence defaults. It does not attempt to rewrite `supabase_admin` table, sequence, or function defaults.
 - The revised remediation preflight now fails closed if any `supabase_admin`-owned relation or function appears in `public`, even if it is not one of the 15 target objects. This makes future extension/platform-owned objects a separate review gate rather than silently applying project-owned assumptions.
 - This is a scope clarification, not a claim that all platform defaults are harmless: a future extension installed into `public` may create `supabase_admin`-owned objects and inherit the platform defaults. Avoid installing extensions into `public` when the extension supports another schema; inspect ownership and ACLs after every extension installation/upgrade that can add public objects.
+
+
+## Phase 16 — Staging Rehearsal Execution Record (2026-11-15)
+
+### Fresh pre-rehearsal snapshot
+- Re-ran the read-only snapshot query against Staging project `cppalwtdkditlhojpeyc` immediately before remediation.
+- Snapshot identity: database `postgres`, PostgreSQL `17.11`, Staging bootstrap sentinel true, 12/12 target tables, 3/3 target sequences, and 4/4 default-ACL scopes.
+- Captured at `2026-11-15T09:17:42.231939+00:00`; wrapper MD5 fingerprint `7e6a3563ea9a1c436ce53a0d3653a5fe`.
+- Normalized snapshot content (excluding the timestamp field) matched the previously reviewed snapshot exactly. The MD5 changes between captures because `captured_at` is included in the fingerprint; do not interpret that timestamp-dependent difference as ACL drift.
+- Snapshot retained at `docs/architecture/evidence/phase-16-staging-acl-snapshot-pre-rehearsal-20261115.json`.
+- Regenerated rollback from this exact fresh snapshot. Output contains 217 `SET ROLE postgres` and 217 matching `RESET ROLE` statements; no `supabase_admin` role switch, no `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, and no `COMMIT`. Saved as `docs/architecture/drafts/phase-16-staging-rollback-pre-rehearsal-20261115.sql`.
+
+### Preflight defect and correction
+- First read-only preflight attempt failed before any ACL mutation because the `acldefault` second argument's CASE expression resolved to `text`, while PostgreSQL expects `"char"`.
+- Corrected the expression to cast the CASE result to `"char"` in `phase-16-staging-acl-remediation-draft.sql`.
+- Re-ran preflight inside a transaction followed by `ROLLBACK`; it passed. The SQL executor was independently verified as `postgres`, `rolsuper=false`, with `pg_has_role(..., 'postgres', 'SET') = true`; database and Staging sentinel also matched.
+- The failed preflight made no schema, data, ACL or role change.
+
+### Remediation transaction
+- Following the owner's explicit approval, executed the reviewed split-scope remediation on Staging only, using a runtime copy with the design-only exception removed and the terminal `ROLLBACK` changed to `COMMIT`. Added transaction-local `lock_timeout = 5s` and `statement_timeout = 60s`.
+- Transaction sequence: `BEGIN` → identity/ownership/PUBLIC/default-ACL preflight → table/column/sequence/postgres-default ACL changes → postflight assertions → `COMMIT`.
+- No statement altered `supabase_admin` defaults. Production was not queried or changed.
+- Exact executed SQL retained at `docs/architecture/evidence/phase-16-staging-acl-remediation-executed-20261115.sql`.
+- Supabase SQL execution returned no error; independent read-only verification followed.
+
+### Independent postflight verification
+- Target tables: 12 found; `anon` effective table privileges on all 12 = **0**.
+- `authenticated`: effective privileges are **SELECT only** on `public.profiles` and `public.exams`; no INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER/MAINTAIN on either; zero privileges on the other ten target tables.
+- Column ACL: `UPDATE(display_name)` = false for both `anon` and `authenticated`.
+- Target sequences: 3 found; effective `SELECT`/`UPDATE`/`USAGE` privileges for both client roles = **0**.
+- `postgres` sequence default ACL: one public override row remains; no `anon` or `authenticated` entries remain in global/public sequence defaults.
+- `supabase_admin/public` sequence default ACL exactly matches the captured baseline: `{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}`.
+- `service_role` retains all eight table privileges on all 12 target tables and all three sequence privileges on all three target sequences.
+- Public RLS policy count remains 42; non-internal public trigger count remains 33.
+- No function body, function ACL, RLS policy, trigger, ownership, role membership, schema, table data, sequence value, migration ledger or Production object was changed by this transaction.
+
+### Security Advisor
+- Post-remediation Security Advisor reports the same categories previously observed during Phase 12: 40 authenticated-callable SECURITY DEFINER function warnings, 3 informational RLS-enabled/no-policy findings, and 1 leaked-password-protection warning.
+- These are existing findings outside the table/sequence ACL change scope; no Advisor remediation was attempted in this rehearsal.
+
+### Current rehearsal status and remaining gates
+- Database remediation and independent catalog postflight: **PASS**.
+- Fresh snapshot and grantor-preserving rollback generation: **PASS** (rollback not yet executed).
+- Four browser E2E groups: **PENDING owner-run verification**. The assistant does not have an authenticated browser session and has not claimed these tests passed.
+- Rollback execution and exact post-restore snapshot comparison: **PENDING** until the owner reports the E2E outcome.
+- Staging remains in the remediated ACL state so the owner can run E2E. Do not run rollback before those tests complete; rollback would remove the remediated state being tested.
+- Production, `main`, migrations, application code and deployments remain untouched.
