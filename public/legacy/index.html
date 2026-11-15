@@ -482,7 +482,7 @@ if('serviceWorker' in navigator){
  if(!me)out+='<section class="section-heading"><div><p class="eyebrow">DANH MỤC HỌC TẬP</p><h2>Danh sách đề thi đã được sắp xếp theo cấp học</h2><p class="m">Hãy quay về trang chủ để chọn cấp học, môn học và bài thi.</p><a class="b bp" href="/">Mở danh mục cấp học →</a></div></section>';
  return out+'<p id="global-msg" class="m dashboard-message"></p></main><footer class="site-footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer></div>';
 }
-    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],media:x.content?.media||[],stimulus:x.content?.stimulus||null,source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
+    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],media:x.content?.media||[],stimuli:x.content?.stimuli|| (x.content?.stimulus?[x.content.stimulus]:[]),stimulus:x.content?.stimulus||null,source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
     async function deleteExamVersion(id,title,status){
       const label=title||'phiên bản đề';
       if(!window.confirm('Xóa '+label+' ('+(status==='published'?'đã xuất bản':'bản nháp')+')? Nếu đã có học sinh làm bài, hệ thống sẽ ẩn đề khỏi danh sách nhưng giữ nguyên lịch sử và kết quả. Nếu chưa có lượt làm, phiên bản sẽ được xóa.'))return;
@@ -517,7 +517,7 @@ if('serviceWorker' in navigator){
     async function openNewEditor(){
       try{
         await loadEditorCategories();await loadEditorEducationSubjects();
-        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,stimulus:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[],draftQuestionText:''};
+        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,stimuli:[],activeStimulusId:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[],draftQuestionText:''};
         go(view);
       }catch(e){notify('Không tải được cấu trúc học tập hoặc loại đề: '+e.message)}
     }
@@ -529,7 +529,7 @@ if('serviceWorker' in navigator){
         const currentCategory=(versions||[]).find(item=>item.exam_id===x.exam_id);
         const {data:examMeta,error:eme}=await sb.from('exams').select('education_subject_id').eq('id',x.exam_id).single();if(eme)throw eme;
         const qs=(x.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(qs);
-        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,stimulus:qs.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs,draftQuestionText:ser(qs)};go(view);
+        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,stimuli:stimulusGroupsFromQuestions(qs),activeStimulusId:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs,draftQuestionText:ser(qs)};go(view);
       }catch(e){notify('Không mở được trình soạn đề: '+e.message)}
     }
     function mediaForSave(items){return (items||[]).map((item,index)=>({path:item.path,alt:String(item.alt||'').slice(0,300),caption:String(item.caption||'').slice(0,500),position:index+1,mime_type:item.mime_type||null,size:Number(item.size)||null}))}
@@ -557,6 +557,44 @@ if('serviceWorker' in navigator){
       const pending=view.pendingQuestionMedia?.[index]?.length||0;
       const status=pending?'Đã tải lên · chưa lưu bản nháp':items.length?'Đã lưu trong bản nháp':'Chưa có ảnh';
       return '<div class="c lit-media-editor"><h3>Ảnh riêng cho câu '+(index+1)+'</h3><p class="m">Đang chỉnh sửa ảnh của câu '+(index+1)+'. Chọn ảnh xong, bấm Tải ảnh lên; sau đó ảnh sẽ nằm trong danh sách chờ lưu và không bị mất khi chuyển sang câu khác.</p><p class="lit-media-state"><b>'+items.length+' ảnh</b> · '+status+'</p>'+questionMediaOverviewHtml()+'<label for="f-media-question">Chọn câu hỏi cần chỉnh sửa</label><input id="f-media-question" type="number" min="1" max="200" value="'+(index+1)+'"><label for="f-media-files">Chọn ảnh (JPEG, PNG, WEBP hoặc GIF; tối đa 10 MB/ảnh)</label><input id="f-media-files" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif"><label for="f-media-caption">Chú thích ảnh (tùy chọn)</label><input id="f-media-caption" maxlength="500" placeholder="Mô tả ngắn cho ảnh"><button class="b" data-a="uploadQuestionMedia">Tải ảnh lên cho câu '+(index+1)+'</button><div class="lit-media-grid">'+mediaPreview(items,'Question',index)+'</div></div>';
+    }
+    function stimulusGroupsFromQuestions(questions){
+      const groups=new Map();
+      for(const question of questions||[])for(const snapshot of question.stimuli||[]){
+        const key=snapshot.version_id||snapshot.id;if(!key)continue;
+        if(!groups.has(key))groups.set(key,{local_id:makeUuid(),id:snapshot.id||null,version_id:snapshot.version_id||null,version_no:snapshot.version_no||null,type:snapshot.type||'text',title:snapshot.metadata?.title||'',metadata:snapshot.metadata||{},content:snapshot.content||{body:'',media:[]},questionSpec:(snapshot.metadata?.question_indices||[]).join(', ')||'all',dirty:false});
+      }
+      return [...groups.values()];
+    }
+    function activeStimulusGroup(){
+      const groups=view.stimuli||[];if(!view.activeStimulusId&&groups.length)view.activeStimulusId=groups[0].local_id;
+      return groups.find(group=>group.local_id===view.activeStimulusId)||null;
+    }
+    function captureActiveStimulusForm(){
+      const group=activeStimulusGroup();if(!group)return;
+      const type=document.getElementById('f-stimulus-type'),title=document.getElementById('f-stimulus-title'),scope=document.getElementById('f-stimulus-questions'),body=document.getElementById('f-stimulus-body');
+      if(type)group.type=type.value||'text';if(title)group.title=title.value||'';if(scope)group.questionSpec=scope.value.trim()||'all';
+      if(body){group.content=group.content||{body:'',media:[]};group.content.body=body.value||''}
+    }
+    function parseStimulusQuestionIndices(spec,questionCount){
+      if(/^all$/i.test(String(spec||'').trim()))return Array.from({length:questionCount},(_,index)=>index+1);
+      const indices=[],seen=new Set();
+      for(const part of String(spec||'').split(',').map(value=>value.trim()).filter(Boolean)){
+        const match=part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+        if(!match)throw new Error('Phạm vi câu hỏi không hợp lệ. Ví dụ: 1-4, 6 hoặc all.');
+        const start=Number(match[1]),end=Number(match[2]||match[1]);
+        if(start<1||end<start||end>questionCount)throw new Error('Phạm vi câu hỏi sử dụng ngữ liệu vượt quá số câu hiện có.');
+        for(let number=start;number<=end;number++){if(seen.has(number))throw new Error('Câu hỏi '+number+' bị lặp trong cùng một nhóm ngữ liệu.');seen.add(number);indices.push(number)}
+      }
+      if(!indices.length)throw new Error('Hãy chọn ít nhất một câu hỏi cho nhóm ngữ liệu.');
+      return indices;
+    }
+    async function saveStimulusGroup(group,questionCount){
+      const indices=parseStimulusQuestionIndices(group.questionSpec,questionCount),media=group.content?.media||[];
+      if(!(group.title.trim()||(group.content?.body||'').trim()||media.length))throw new Error('Nhóm ngữ liệu cần có tiêu đề, nội dung hoặc ít nhất một ảnh.');
+      const {data,error}=await sb.rpc('admin_save_stimulus_version',{p_stimulus_id:group.id||null,p_stimulus_type:group.type||'text',p_content:{body:group.content?.body||'',media:mediaForSave(media)},p_metadata:{...(group.metadata||{}),title:group.title.trim(),question_indices:indices}});
+      if(error)throw error;group.id=data.stimulus_id;group.version_id=data.stimulus_version_id;group.version_no=data.version_no;
+      group.metadata={...(group.metadata||{}),title:group.title.trim(),question_indices:indices};group.dirty=false;return group;
     }
     function stimulusMediaEditorHtml(){
       const items=view.stimulus?.content?.media||[];
@@ -1176,7 +1214,7 @@ if('serviceWorker' in navigator){
           }catch(linkError){importLinkWarning=' Đề đã lưu nhưng trạng thái liên kết bản nhập chưa đồng bộ: '+(linkError.message||String(linkError))}
         }
         if(publishNow){await refreshData((await sb.auth.getSession()).data.session?.user);go({n:'home'});notify('Đã xuất bản phiên bản đề thi.'+importLinkWarning)}
-        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(mapped);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,education_subject_id:educationSubjectId,stimulus:mapped.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,draftQuestionText:ser(mapped),importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
+        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(mapped);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,education_subject_id:educationSubjectId,stimuli:stimulusGroupsFromQuestions(mapped),activeStimulusId:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,draftQuestionText:ser(mapped),importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
       }catch(e){m.textContent='Không lưu được: '+e.message}
     }
     function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf')return {method:'all_or_nothing'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'partial_mapping',no_option_reuse:true,allow_unused_options:true}}
