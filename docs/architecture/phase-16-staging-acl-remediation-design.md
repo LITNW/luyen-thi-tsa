@@ -194,3 +194,36 @@ Phase 16 is design-complete only when:
 - **External Caller Gate remains OPEN.** Available Staging logs show no unexpected caller, but effective coverage is only approximately 43 hours after project creation, not a full seven days. User confirmation is still required that no external app, mobile client, script, dashboard, integration or direct SQL/API consumer uses the target tables/sequences with `anon` or `authenticated` credentials.
 - **Rollback executability gate remains OPEN** because the current SQL execution identity cannot assume `supabase_admin`. A separate authorized grantor-preserving execution route must be established before any rehearsal.
 - No Staging ACL remediation, rollback execution, Production query/change, migration, deployment, branch merge or data mutation occurred. Phase 16 remains pre-execution only.
+
+
+## Phase 16 Follow-up — Owner Attestation, Grantor Capability & Generator Verification
+
+### External caller owner attestation
+- On 2026-11-15, the project owner explicitly confirmed that no mobile application, standalone script, third-party dashboard, or external service uses Supabase Staging or Production with `anon` or `authenticated` credentials to access the 12 target tables or three sequences.
+- The owner identified the only known clients as the official React/Legacy website and authorized Cloudflare Pages/Vercel Preview environments.
+- Treat the External Caller Gate as **owner-attested / conditionally accepted**, not as independently proven absence. The available Staging logs still cover only approximately 43 hours after project creation; referer/user-agent evidence is not cryptographic identity and dormant/no-referer callers cannot be excluded by logs alone.
+- This owner attestation supersedes the earlier statement that owner confirmation was still pending. It does not alter the historical log coverage limitation.
+
+### Read-only grantor capability verification
+- Rechecked Staging through a SELECT-only catalog query. Execution identity is `postgres`, with `rolsuper=false`.
+- `pg_has_role(current_user, 'supabase_admin', 'MEMBER')`, `USAGE`, and `SET` all return false. The role membership catalog contains no membership edge granting `postgres` the ability to assume `supabase_admin`.
+- All 12 target tables and all three target sequences are owned by `postgres`.
+- Across the snapshot's client-role ACL entries, 217 grant records have grantor `postgres`; six records have grantor `supabase_admin`. Those six are the `anon` and `authenticated` SELECT/UPDATE/USAGE entries in the `supabase_admin` / `public` sequence default ACL.
+- The remediation draft explicitly requires the executor to be able to manage default privileges for both `postgres` and `supabase_admin`. The current Staging executor fails that precondition. Therefore the full remediation draft cannot pass preflight using the currently available Supabase SQL execution identity.
+- Supabase documents this hosted-role restriction: `postgres` cannot act as `supabase_admin` to change privileges granted by it, and `GRANTED BY supabase_admin` is not a supported workaround for this executor. See [Supabase KB: Can't revoke a role membership granted by supabase_admin](https://supabase.com/kb/troubleshooting/cant-revoke-a-role-membership-granted-by-supabase_admin-d08922).
+- Do not try to manufacture membership, change object ownership, or silently rewrite the historical grantor to `postgres`. Those actions would change the security boundary or produce a non-equivalent rollback.
+
+### Rollback generator defect found and corrected
+- A static inspection found that the generator used a standard SQL string literal containing `\\nRESET ROLE;`. With PostgreSQL standard-conforming strings, that emits literal backslash-`n` characters rather than line breaks; the generated rollback would not be valid executable SQL.
+- Corrected the generator to use an escape string literal for the separator, then regenerated the rollback artifact from the same saved snapshot.
+- Re-ran the generator as a SELECT-only query on Staging. The corrected output contains 223 `SET ROLE` statements and 223 standalone `RESET ROLE;` lines, with no literal backslash-`n` separators. The 223 grant operations comprise object/column/sequence GRANT statements and default-privilege GRANT statements.
+- The generator and generated rollback remain fail-closed: the rollback guard still blocks execution because the current executor cannot assume `supabase_admin`. The formatting fix does not make the rollback executable.
+
+### Decision and remaining blocker
+- External Caller Gate: **owner-attested / conditionally accepted**, with the 43-hour telemetry limitation retained.
+- Rollback generator syntax: **corrected and SELECT-only revalidated**.
+- Grantor-preserving rollback: **blocked** for the six `supabase_admin` default-ACL entries.
+- Full Staging remediation: **blocked before execution** because the remediation preflight requires the ability to alter `supabase_admin` default privileges, which the current executor does not have.
+- No remediation statement, rollback statement, DDL, DML, GRANT, REVOKE, migration, role-membership change, ownership change, or Production query/change was executed in this follow-up.
+- No authenticated browser E2E was run. The four E2E groups must be rerun by the project owner after a future authorized Staging ACL rehearsal; the assistant must not report them as passed before the owner supplies results.
+- Safe next paths are: (1) obtain written guidance from Supabase on a supported way to manage this platform-owned default ACL, without attempting privileged workarounds; or (2) propose a separately reviewed, narrower Staging rehearsal that explicitly leaves `supabase_admin` defaults unchanged and records that residual risk. The narrower scope changes the approved target and must not be executed without separate approval.
