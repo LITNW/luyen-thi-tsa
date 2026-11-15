@@ -110,8 +110,10 @@
     {
       "version": "20261112050000",
       "name": "ai_exam_import_staging",
-      "status": "pending_not_in_production",
-      "renamed_from": "20261111234000"
+      "status": "historical_snapshot_pending_but_live_applied",
+      "renamed_from": "20261111234000",
+      "verified_against_live_production_ledger": "2026-11-15",
+      "note": "The pending label describes the 2026-11-12 recovery snapshot only; live Production ledger now records this migration as applied."
     }
   ],
   "subsequent_migrations": [
@@ -161,58 +163,71 @@
     {
       "version": "20261113155228",
       "name": "education_hierarchy_foundation",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Education-first architecture foundation; additive schema only, no existing exam placement backfill",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261113155356",
       "name": "education_hierarchy_active_profile_read_policies",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Tightens education catalogue SELECT policies to active authenticated profiles",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261113155742",
       "name": "education_hierarchy_identity_guards",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Protect stable education level/node/subject-offering identities once referenced; reject active nodes under inactive levels",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261113160130",
       "name": "education_exam_placement_and_scoped_catalogue",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Adds Admin education-subject assignment and Student exam catalogue scoped to one active offering",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261113160231",
       "name": "education_exam_placement_identity_guard",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Ensures exam education placement cannot be changed after it has attempts",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261113161654",
       "name": "education_atomic_editor_save",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Adds atomic legacy editor save wrapper that persists education placement before optional publish",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     },
     {
       "version": "20261114024035",
       "name": "education_exam_version_publish_guard",
-      "status": "repository_only_not_applied_to_production",
-      "staging_status": "applied_in_staging",
+      "status": "applied_in_production_verified_2026-11-15",
+      "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Database-level guard rejects every publication path unless the exam has an active education-subject placement",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-15"
     }
-  ]
+  ],
+  "last_verified_against_live_ledgers": {
+    "date": "2026-11-15",
+    "production_project_ref": "hwqtsopvpucadgpkigqz",
+    "staging_project_ref": "cppalwtdkditlhojpeyc",
+    "note": "Live Supabase migration ledgers queried read-only on 2026-11-15. This records ledger presence only; it does not assert that SQL object definitions are identical or that every object originated from the corresponding migration."
+  }
 }
