@@ -145,7 +145,10 @@ values (
   10485760,
   array['image/jpeg','image/png','image/webp','image/gif']
 )
-on conflict (id) do nothing;
+on conflict (id) do update
+set public=false,
+    file_size_limit=excluded.file_size_limit,
+    allowed_mime_types=excluded.allowed_mime_types;
 
 drop policy if exists lit_question_media_admin_insert on storage.objects;
 create policy lit_question_media_admin_insert
