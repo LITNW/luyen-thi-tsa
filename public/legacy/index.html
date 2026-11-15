@@ -989,7 +989,7 @@ if('serviceWorker' in navigator){
     async function save(publishNow){
       const g=i=>document.getElementById(i).value,m=document.getElementById('msg');let qs;
       try{qs=parse(g('f-q'));if(!qs.length)throw new Error('Chưa có câu hỏi nào')}catch(e){m.textContent=e.message;return}
-      const mi=parseInt(g('f-m')),title=g('f-t').trim(),description=g('f-d').trim(),educationSubjectId=g('f-education-subject')?.value||'';
+      const mi=parseInt(g('f-m')),title=g('f-t').trim(),description=g('f-d').trim(),educationSelect=document.getElementById('f-education-subject'),educationSubjectId=educationSelect?.value||view.education_subject_id||'';
       if(!title||!(mi>0)||mi>600){m.textContent='Cần nhập tên đề và thời lượng từ 1 đến 600 phút.';return}
       if(!educationSubjectId){m.textContent='Hãy chọn cấp học và môn học trước khi lưu hoặc xuất bản.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
@@ -1309,7 +1309,7 @@ if('serviceWorker' in navigator){
         if(k==='sub'||k==='no')render();
       }catch(err){notify(err.message||String(err))}
     });
-    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='f-education-subject'&&view.n==='edit'){view.education_subject_id=t.value||null}if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
     A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
     A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
     A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});
