@@ -481,7 +481,7 @@ if('serviceWorker' in navigator){
  if(!me)out+='<section class="section-heading"><div><p class="eyebrow">DANH MỤC HỌC TẬP</p><h2>Danh sách đề thi đã được sắp xếp theo cấp học</h2><p class="m">Hãy quay về trang chủ để chọn cấp học, môn học và bài thi.</p><a class="b bp" href="/">Mở danh mục cấp học →</a></div></section>';
  return out+'<p id="global-msg" class="m dashboard-message"></p></main><footer class="site-footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer></div>';
 }
-    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
+    function mapAdminQuestion(x){return {k:x.type,q:x.content.q,o:x.content.o||[],a:x.answer_key,e:x.explanation||'',t:x.content.t||'',p:Number(x.points)||1,once:!!x.content.once,fm:x.source_metadata?.fm||[],media:x.content?.media||[],stimulus:x.content?.stimulus||null,source_metadata:x.source_metadata||{},mapping_id:x.mapping_id,question_id:x.question_id,question_version_id:x.question_version_id,scope:x.scope||'exam',owner_exam_id:x.owner_exam_id||null}}
     async function deleteExamVersion(id,title,status){
       const label=title||'phiên bản đề';
       if(!window.confirm('Xóa '+label+' ('+(status==='published'?'đã xuất bản':'bản nháp')+')? Nếu đã có học sinh làm bài, hệ thống sẽ ẩn đề khỏi danh sách nhưng giữ nguyên lịch sử và kết quả. Nếu chưa có lượt làm, phiên bản sẽ được xóa.'))return;
@@ -516,7 +516,7 @@ if('serviceWorker' in navigator){
     async function openNewEditor(){
       try{
         await loadEditorCategories();await loadEditorEducationSubjects();
-        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
+        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,stimulus:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
         go(view);
       }catch(e){notify('Không tải được cấu trúc học tập hoặc loại đề: '+e.message)}
     }
@@ -527,8 +527,8 @@ if('serviceWorker' in navigator){
         const {data:versions,error:ve}=await sb.rpc('admin_list_exam_versions_with_categories');if(ve)throw ve;
         const currentCategory=(versions||[]).find(item=>item.exam_id===x.exam_id);
         const {data:examMeta,error:eme}=await sb.from('exams').select('education_subject_id').eq('id',x.exam_id).single();if(eme)throw eme;
-        const qs=(x.questions||[]).map(mapAdminQuestion);
-        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
+        const qs=(x.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(qs);
+        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,stimulus:qs.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
       }catch(e){notify('Không mở được trình soạn đề: '+e.message)}
     }
     function mediaForSave(items){return (items||[]).map((item,index)=>({path:item.path,alt:String(item.alt||'').slice(0,300),caption:String(item.caption||'').slice(0,500),position:index+1,mime_type:item.mime_type||null,size:Number(item.size)||null}))}
@@ -1081,13 +1081,23 @@ if('serviceWorker' in navigator){
       if(!educationSubjectId){m.textContent='Hãy chọn cấp học và môn học trước khi lưu hoặc xuất bản.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
       if(fe.length){m.textContent='Chưa lưu được: '+fe.length+' lỗi công thức. '+fe.slice(0,4).join(' | ');fpanel();return}
+      const stimulusTitle=document.getElementById('f-stimulus-title')?.value.trim()||'',stimulusBody=document.getElementById('f-stimulus-body')?.value||'',stimulusType=document.getElementById('f-stimulus-type')?.value||'text';
+      const stimulusMedia=view.stimulus?.content?.media||[];let stimulusVersionId=null;
+      if(stimulusTitle||stimulusBody.trim()||stimulusMedia.length){
+        const {data:stimulusSaved,error:stimulusError}=await sb.rpc('admin_save_stimulus_version',{p_stimulus_id:view.stimulus?.id||null,p_stimulus_type:stimulusType,p_content:{body:stimulusBody,media:mediaForSave(stimulusMedia)},p_metadata:{title:stimulusTitle}});
+        if(stimulusError)throw stimulusError;
+        stimulusVersionId=stimulusSaved.stimulus_version_id;
+        view.stimulus={id:stimulusSaved.stimulus_id,version_id:stimulusVersionId,version_no:stimulusSaved.version_no,type:stimulusType,title:stimulusTitle,metadata:{title:stimulusTitle},content:{body:stimulusBody,media:stimulusMedia}};
+      }else{view.stimulus=null}
       const usedOld=new Set(),oldList=view.questions||[];
       const payload=qs.map((q,i)=>{
         let oldIndex=oldList.findIndex((old,j)=>!usedOld.has(j)&&old.q===q.q&&old.k===q.k);
         if(oldIndex<0&&qs.length===oldList.length&&!usedOld.has(i))oldIndex=i;
         const old=oldIndex>=0?oldList[oldIndex]:{};
         if(oldIndex>=0)usedOld.add(oldIndex);
-        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
+        const removed=view.removedQuestionMedia?.[oldIndex]||[],questionMedia=[...(old.media||[]).filter(item=>!removed.includes(item.path)),...(view.pendingQuestionMedia?.[i]||[])],order=view.questionMediaOrder?.[i]||[];
+        questionMedia.sort((a,b)=>{const ai=order.indexOf(a.path),bi=order.indexOf(b.path);return (ai<0?999:ai)-(bi<0?999:bi)});
+        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once,media:mediaForSave(questionMedia),...(stimulusVersionId?{stimulus_version_id:stimulusVersionId}:{})},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
       try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_education',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_education_subject_id:educationSubjectId,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;view.education_subject_id=educationSubjectId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
@@ -1108,7 +1118,7 @@ if('serviceWorker' in navigator){
           }catch(linkError){importLinkWarning=' Đề đã lưu nhưng trạng thái liên kết bản nhập chưa đồng bộ: '+(linkError.message||String(linkError))}
         }
         if(publishNow){await refreshData((await sb.auth.getSession()).data.session?.user);go({n:'home'});notify('Đã xuất bản phiên bản đề thi.'+importLinkWarning)}
-        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,education_subject_id:educationSubjectId,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
+        else{const {data:detail,error:de}=await sb.rpc('admin_get_exam_version',{p_exam_version_id:data.exam_version_id});if(de)throw de;const mapped=(detail.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(mapped);view={n:'edit',id:detail.exam_version_id,exam_id:detail.exam_id,category_id:categoryId,category_name:view.category_name,education_subject_id:educationSubjectId,stimulus:mapped.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:detail.title,desc:detail.description||'',minutes:detail.duration_minutes,qs:mapped},questions:mapped,importQuestionMeta:importMeta};render();notify('Đã lưu bản nháp. Chưa xuất bản.'+importLinkWarning)}
       }catch(e){m.textContent='Không lưu được: '+e.message}
     }
     function gradingConfig(k){if(k==='mc')return {method:'exact_index'};if(k==='ms')return {method:'exact_set'};if(k==='tf')return {method:'all_or_nothing'};if(k==='num')return {method:'numeric_tolerance',relative_tolerance:0.000001};return {method:'partial_mapping',no_option_reuse:true,allow_unused_options:true}}
