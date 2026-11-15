@@ -66,6 +66,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115100000_question_media_stimulus_groups.sql
       - name: Apply stimulus RPC invoker hardening migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115110000_stimulus_rpc_invoker_hardening.sql
+      - name: Apply question media validator grants migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115120000_question_media_validator_grants.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
       - name: Apply M2 follow-up for archived category preservation
