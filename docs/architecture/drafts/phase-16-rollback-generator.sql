@@ -99,7 +99,16 @@ all_restore AS (
   UNION ALL SELECT 3, sql FROM sequence_grants
   UNION ALL SELECT 4, sql FROM default_grants
 )
-SELECT string_agg(sql, E'\n\n' ORDER BY ord, sql) AS generated_rollback_sql
+SELECT CASE
+  WHEN (SELECT doc->>'snapshot_format' FROM snapshot) <> 'phase16-acl-snapshot-v1'
+    OR (SELECT (doc->>'found_table_count')::integer FROM snapshot) <> 12
+    OR (SELECT (doc->>'found_sequence_count')::integer FROM snapshot) <> 3
+    OR (SELECT (doc->>'bootstrap_staging_sentinel')::boolean FROM snapshot) IS DISTINCT FROM true
+    OR (SELECT jsonb_array_length(doc->'default_privileges') FROM snapshot) <> 4
+  THEN 'ERROR: snapshot validation failed; do not use rollback output'
+  ELSE string_agg(sql, E'\n\n' ORDER BY ord, sql) ||
+       E'\n\n-- Verify restored ACLs against original snapshot. COMMIT only after exact review.'
+END AS generated_rollback_sql
 FROM all_restore;
 
 -- Before executing generated SQL:
