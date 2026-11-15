@@ -88,3 +88,9 @@ test('shared stimulus can be scoped to a selected question range', () => {
   assert.match(html, /stimulusQuestionSpec\.split\(','\)/);
   assert.match(html, /stimulusQuestionIndices\.includes\(i\+1\)/);
 });
+
+test('shared stimulus RPC runs with invoker privileges', () => {
+  const migration = readFileSync(new URL('../supabase/migrations/20261115110000_stimulus_rpc_invoker_hardening.sql', import.meta.url), 'utf8');
+  assert.match(migration, /security invoker/i);
+  assert.match(migration, /grant execute on function public\.admin_save_stimulus_version/);
+});
