@@ -165,3 +165,32 @@ Phase 16 is design-complete only when:
 - All artifacts are committed to this isolated audit branch and verified by rereading.
 
 **Current decision:** Design artifacts only. Do not execute the remediation draft or generated rollback. No Staging or Production changes are authorized by this phase.
+
+
+## Phase 16 Pre-execution Evidence — 2026-11-15
+
+### Staging identity and read-only snapshot
+- Verified Supabase project ref `cppalwtdkditlhojpeyc`, project name `tsa-practice-staging`, region `ap-southeast-1`, status `ACTIVE_HEALTHY`, PostgreSQL `17.11.0.019`. Project creation timestamp: `2026-11-13T06:45:16Z`.
+- Executed the checked-in Phase 16 snapshot query through the Staging SQL interface. It is a SELECT/CTE-only catalog read; no DDL, DML, GRANT, REVOKE, migration or data change was run.
+- Snapshot captured at `2026-11-15T08:59:54.910022+00:00`; database `postgres`; server version `17.11`; format `phase16-acl-snapshot-v1`; MD5 fingerprint `17683a067e185a1543e9e53d841ac2f2`.
+- Preflight evidence: Staging bootstrap sentinel true; exactly 12/12 target tables, 3/3 target sequences, and 4/4 default-ACL scopes were found.
+- All 12 target tables currently grant the full PostgreSQL 17 table privilege set (including `MAINTAIN`) to both `anon` and `authenticated`. `profiles.display_name` has column-level `UPDATE` for `authenticated`. Each of the three target sequences grants `SELECT`, `UPDATE`, and `USAGE` to both client roles. Both `postgres/public` and `supabase_admin/public` sequence default ACLs grant those three privileges to both client roles; both global scopes have no catalog override.
+- Snapshot artifact: [phase-16-staging-acl-snapshot-20261115.json](evidence/phase-16-staging-acl-snapshot-20261115.json).
+
+### Generated rollback and grantor limitation
+- The rollback generator consumed the exact exported snapshot and returned a 22,832-character SQL artifact containing 223 GRANT statements, 223 matching `SET ROLE` statements, and 20 baseline REVOKE statements. It has no COMMIT and is not executed.
+- A read-only role check found SQL executor `postgres`, `rolsuper=false`, membership in `postgres` true, membership in `supabase_admin` false. Therefore this executor cannot `SET ROLE supabase_admin`; the snapshot's `supabase_admin` grantor entries cannot be restored with exact grantor provenance by this execution identity.
+- Updated the rollback generator and generated artifact to fail closed before `BEGIN` unless the executor can assume `supabase_admin` or is superuser. Do not remove this guard or treat the generated rollback as executable until an authorized grantor-preserving execution identity is available. The generated SQL is a recovery draft, not proof that rollback is operationally executable.
+- Generated rollback artifact: [phase-16-staging-rollback-from-snapshot-20261115.sql](drafts/phase-16-staging-rollback-from-snapshot-20261115.sql).
+
+### External Caller Gate — log evidence
+- Queried Staging unified `edge_logs` over seven consecutive 24-hour windows from `2026-11-08T02:00:00Z` through `2026-11-15T02:00:00Z`, filtering REST requests for the 12 target tables and three sequence names. The first five windows returned no matching requests; however, the Staging project was not created until `2026-11-13T06:45:16Z`, so those empty windows are pre-creation and provide no caller-coverage evidence.
+- In the first post-creation window (`2026-11-13T02:00Z`–`2026-11-14T02:00Z`), observed `GET /rest/v1/profiles`: 106 requests, all HTTP 200, role `authenticated`; and 5 `OPTIONS` preflight requests. Referer was the repository's Cloudflare Pages feature preview host.
+- In the next window (`2026-11-14T02:00Z`–`2026-11-15T02:00Z`), observed `GET /rest/v1/profiles`: 11 requests and `GET /rest/v1/exams`: 3 requests, all HTTP 200, role `authenticated`; plus 2 `OPTIONS` requests. Referer was the repository's Vercel preview host.
+- No direct REST requests were observed for the other 10 target tables or the three target sequences in the available post-creation log windows. No target-table request was observed with role `anon`; OPTIONS rows have no JWT role. PostgREST-specific logs contained only root-path health/system entries, so API path analysis used the unified `edge_logs` source, which exposed request path, method, JWT role, referer, user-agent, status and client-IP metadata.
+- Observed direct callers are consistent with known repository preview clients and the already documented `profiles` / `exams` client reads. Referer and user-agent are indicators, not cryptographic caller identity; logs cannot prove the absence of a hidden script, a no-referer client, or a dormant integration.
+
+### Gate status and next action
+- **External Caller Gate remains OPEN.** Available Staging logs show no unexpected caller, but effective coverage is only approximately 43 hours after project creation, not a full seven days. User confirmation is still required that no external app, mobile client, script, dashboard, integration or direct SQL/API consumer uses the target tables/sequences with `anon` or `authenticated` credentials.
+- **Rollback executability gate remains OPEN** because the current SQL execution identity cannot assume `supabase_admin`. A separate authorized grantor-preserving execution route must be established before any rehearsal.
+- No Staging ACL remediation, rollback execution, Production query/change, migration, deployment, branch merge or data mutation occurred. Phase 16 remains pre-execution only.
