@@ -227,3 +227,46 @@ Phase 16 is design-complete only when:
 - No remediation statement, rollback statement, DDL, DML, GRANT, REVOKE, migration, role-membership change, ownership change, or Production query/change was executed in this follow-up.
 - No authenticated browser E2E was run. The four E2E groups must be rerun by the project owner after a future authorized Staging ACL rehearsal; the assistant must not report them as passed before the owner supplies results.
 - Safe next paths are: (1) obtain written guidance from Supabase on a supported way to manage this platform-owned default ACL, without attempting privileged workarounds; or (2) propose a separately reviewed, narrower Staging rehearsal that explicitly leaves `supabase_admin` defaults unchanged and records that residual risk. The narrower scope changes the approved target and must not be executed without separate approval.
+
+
+## Phase 16 Extension — Platform Grantor Resolution & Split-Scope Design (2026-11-15)
+
+### 1. Authoritative Supabase platform boundary
+- Reviewed Supabase Knowledge Base, updated 2026-11-04: [Can't change the default privileges of supabase_admin in the public schema](https://supabase.com/kb/troubleshooting/cant-change-the-default-privileges-of-supabase_admin-in-the-public-schema-448af9).
+- Supabase explicitly states that a hosted project's `postgres` role cannot alter `supabase_admin` default privileges and cannot become a member of that reserved platform role. `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, `GRANT supabase_admin TO postgres`, and `SET ROLE supabase_admin` are not supported workarounds.
+- The defaults apply only to objects created by `supabase_admin`; objects created by `postgres` use `postgres` defaults. Supabase says its Auth, Storage and Realtime services keep their objects in their own schemas; `supabase_admin`-owned objects in `public` come from extensions installed into `public`. Supabase recommends installing extensions in the `extensions` schema or another suitable schema rather than `public`.
+- The Data API "Automatically expose new tables" setting changes the `postgres` defaults, not the `supabase_admin` defaults. Do not use that setting as a claimed fix for the platform-owned ACL.
+
+### 2. Read-only Staging evidence
+- Revalidated project ref `cppalwtdkditlhojpeyc`, database `postgres`, PostgreSQL `17.11`, current executor `postgres`, `rolsuper=false`, and the Staging bootstrap sentinel.
+- All 15 target relations/sequences (12 tables + 3 sequences) are owned by `postgres`; owner mismatch count is zero.
+- No relation in schema `public` is currently owned by `supabase_admin`.
+- The `supabase_admin` / `public` sequence default ACL has 12 privilege entries: three each for `postgres`, `anon`, `authenticated`, and `service_role` (SELECT, UPDATE, USAGE). Exactly six entries belong to `anon` and `authenticated`. All are granted by `supabase_admin`; none has grant option.
+- The six client-role entries are not ACLs on the existing three target sequences. They are defaults that would apply only to future sequences created by `supabase_admin` in `public`. The three existing target sequences are `postgres`-owned and their effective client privileges are separate object ACLs.
+- Current effective privileges on all 12 target tables and all three target sequences remain broad for `anon` and `authenticated`; this is the existing state that the proposed postgres-owned object remediation is intended to correct. No ACL was changed by this evidence query.
+
+### 3. Revised split-scope remediation
+- **Mutable project-owned scope:** all 12 target tables, three target sequences, `profiles.display_name` column ACL, and `postgres` sequence default ACLs (global and `public`) remain in the remediation target. The script now preflights that all 15 target objects are owned by `postgres`, and fails closed if this ownership invariant changes.
+- **Immutable platform-managed scope:** retain the `supabase_admin` default ACL in the snapshot and its fingerprint, but do not issue `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, do not attempt `SET ROLE supabase_admin`, and do not synthesize grants that claim to restore its grantor.
+- The remediation preflight now asserts the known `supabase_admin/public` sequence default ACL raw value. The postflight asserts it remains exactly unchanged and that no unexpected global `supabase_admin` sequence default ACL appears.
+- The remediation still requires effective `anon` table privileges to be zero across all 12 tables; `authenticated` receives SELECT only on `profiles` and `exams`, and zero table privileges on the other ten. Both client roles must have zero effective privileges on all three existing target sequences and no `UPDATE(display_name)` column privilege.
+- The script removes the impossible preflight requirement to assume `supabase_admin`; it still requires authority over `postgres` defaults and verifies the exact platform ACL instead of modifying it.
+- Residual risk is explicit: if an extension or other operation creates an object owned by `supabase_admin` in `public`, the platform defaults may grant client-role privileges to that new object. The current project has zero such objects. Keep extension installation out of `public` where supported, and add an ownership/ACL review for any future extension installation or platform-owned object appearing in `public`. This exception does not weaken the ACL target for the current 15 postgres-owned objects.
+
+### 4. Revised rollback generator
+- Rollback generation now restores only client-role grants whose grantor is `postgres`, including `postgres` global/schema-specific sequence defaults.
+- The generator validates the snapshot's `supabase_admin/public` sequence default ACL against the captured baseline, but deliberately emits no `SET ROLE supabase_admin` or `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin` statement.
+- The generator fails closed if any client-role grant on a target object or the `postgres` default ACL has an unexpected grantor other than `postgres`. It checks that the execution identity can assume `postgres`, not `supabase_admin`.
+- Re-ran the generator as a SELECT-only query on Staging against the saved snapshot. Output: 217 `SET ROLE` statements, 217 matching `RESET ROLE;` lines, 211 direct `GRANT` statements plus six default-privilege `ALTER ... GRANT` statements; no `supabase_admin` role switch, no `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin`, and no `COMMIT`.
+- The generated rollback is a reviewed recovery artifact, not an executed rollback. It still requires a future rehearsal and a post-restore snapshot comparison.
+
+### 5. Verification and decision
+- Updated design files:
+  - `docs/architecture/drafts/phase-16-staging-acl-remediation-draft.sql`
+  - `docs/architecture/drafts/phase-16-rollback-generator.sql`
+  - `docs/architecture/drafts/phase-16-staging-rollback-from-snapshot-20261115.sql`
+- Snapshot SQL remains read-only and continues to capture all four default-ACL scopes, including the platform-managed scope, so the baseline remains auditable.
+- Static review confirms the remediation draft contains no executable `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin` statement. It intentionally retains preflight/postflight reads of that ACL.
+- The rollback generator was executed only as a SELECT query to produce SQL text. The remediation draft and generated rollback were not executed.
+- **Platform Grantor Resolution: resolved by supported exclusion**, not by acquiring platform role membership. The six client-role default-ACL entries are documented as immutable platform defaults for future platform-owned objects; they do not apply to the existing postgres-owned targets.
+- **Design status:** split-scope design is prepared and SELECT-only generator output is validated. This is not authorization to execute the Staging remediation. A separate explicit approval is still required for the Staging rehearsal; Production remains out of scope.
