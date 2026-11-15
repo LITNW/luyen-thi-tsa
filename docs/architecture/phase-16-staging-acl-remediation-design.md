@@ -325,3 +325,14 @@ Phase 16 is design-complete only when:
 - Rollback execution and exact post-restore snapshot comparison: **PENDING** until the owner reports the E2E outcome.
 - Staging remains in the remediated ACL state so the owner can run E2E. Do not run rollback before those tests complete; rollback would remove the remediated state being tested.
 - Production, `main`, migrations, application code and deployments remain untouched.
+
+
+### Owner-confirmed E2E and rollback rehearsal completion (2026-11-15)
+- The owner confirmed that all four Staging E2E groups completed without errors after ACL remediation: logged-out/anonymous access, Student workflow, Admin workflow, and Student direct-access denial against Admin operations. This is owner-reported browser verification; the assistant did not independently control an authenticated browser.
+- After receiving that confirmation, executed the grantor-preserving rollback generated from the fresh pre-rehearsal snapshot. It ran inside one transaction and completed without SQL error.
+- Rollback restored the captured pre-rehearsal grants for all 12 target tables, `profiles.display_name` column ACL, all 3 target sequences, and both global/public `postgres` sequence default ACL scopes. It did not assume `supabase_admin`, alter its platform-managed defaults, or touch `service_role` outside the captured grants.
+- Captured a new post-rollback snapshot at `2026-11-15T09:28:35.014859+00:00`; fingerprint `536ed48ae51ecf67678375dfd77f0c85`. Compared the complete snapshot against the fresh pre-rehearsal snapshot, excluding only the timestamp field: **exact JSON equality**. Table ACLs, column ACLs, sequence ACLs, and all four default-ACL scopes matched exactly.
+- Post-rollback catalog verification: public RLS policies = 42; non-internal public triggers = 33; `anon` effective privileges again match the original baseline (12 target tables and 3 target sequences); `authenticated` `UPDATE(display_name)` again matches the original baseline (true); `postgres` global/public sequence defaults again contain the original six anon/authenticated entries. These are expected restoration results, not a security regression in the final state: Staging has deliberately been returned to its exact pre-rehearsal ACL state.
+- Post-rollback snapshot retained at `docs/architecture/evidence/phase-16-staging-acl-snapshot-post-rollback-20261115.json`.
+- Rehearsal status: remediation transaction **PASS**; independent postflight **PASS**; owner-confirmed four-group E2E **PASS**; rollback transaction **PASS**; exact ACL snapshot restoration **PASS**.
+- Final Staging state is restored to the pre-rehearsal ACL baseline. No remediation remains active. Production, `main`, migrations, app code, data, secrets, and deployments were not changed.
