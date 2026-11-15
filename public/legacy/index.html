@@ -642,7 +642,7 @@ if('serviceWorker' in navigator){
     function examStimulusHtml(stimulus){
       if(!stimulus)return '';
       const content=stimulus.content||{},title=stimulus.metadata?.title||'Ngữ liệu chung';
-      return '<section class="exam-stimulus"><div class="exam-stimulus-title">'+esc(title)+'</div>'+(content.body?'<div class="exam-stimulus-body">'+esc(content.body).replace(/\\n/g,'<br>')+'</div>':'')+examMediaHtml(content.media||[])+'</section>';
+      return '<section class="exam-stimulus"><div class="exam-stimulus-title">'+esc(title)+'</div>'+(content.body?'<div class="exam-stimulus-body">'+esc(content.body).replace(/\n/g,'<br>')+'</div>':'')+examMediaHtml(content.media||[])+'</section>';
     }
     function edit(){
       const x=view.exam||{title:'',desc:'',minutes:60,qs:[]};
