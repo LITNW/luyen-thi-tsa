@@ -109,7 +109,7 @@ SELECT CASE
     OR (SELECT (doc->>'bootstrap_staging_sentinel')::boolean FROM snapshot) IS DISTINCT FROM true
     OR (SELECT jsonb_array_length(doc->'default_privileges') FROM snapshot) <> 4
   THEN 'ERROR: snapshot validation failed; do not use rollback output'
-  ELSE string_agg(sql, E'\n\n' ORDER BY ord, sql) ||
+  ELSE E'DO $phase16_rollback_role_guard$\nBEGIN\n  IF NOT pg_has_role(current_user, ''supabase_admin'', ''MEMBER'')\n     AND NOT COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=current_user), false) THEN\n    RAISE EXCEPTION ''Rollback blocked: executor cannot SET ROLE supabase_admin; grantor provenance cannot be preserved'';\n  END IF;\nEND\n$phase16_rollback_role_guard$;\n\n' || string_agg(sql, E'\n\n' ORDER BY ord, sql) ||
        E'\n\n-- Verify restored ACLs against original snapshot. COMMIT only after exact review.'
 END AS generated_rollback_sql
 FROM all_restore;
