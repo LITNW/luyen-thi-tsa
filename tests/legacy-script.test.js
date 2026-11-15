@@ -134,10 +134,11 @@ test('legacy editor manages multiple independent shared stimulus groups with iso
 
 test('multiple stimulus versions are snapshotted and authorized for published student media', () => {
   const migration = readFileSync(new URL('../supabase/migrations/20261115153000_multiple_stimulus_groups.sql', import.meta.url), 'utf8');
-  const regression = readFileSync(new URL('../supabase/tests/multiple_stimulus_groups_regression.sql', import.meta.url), 'utf8');
+  const regression = readFileSync(new URL('../supabase/tests/question_media_stimulus_regression.sql', import.meta.url), 'utf8');
+  const schemaRegression = readFileSync(new URL('../supabase/tests/multiple_stimulus_groups_regression.sql', import.meta.url), 'utf8');
   assert.match(migration, /question_version_stimuli/);
   assert.match(migration, /stimulus_version_ids/);
-  assert.match(migration, /jsonb_array_elements\(coalesce\(qv\.content->'stimuli'/);
-  assert.match(regression, /two independent stimulus groups/);
+  assert.match(migration, /jsonb_array_elements\\(coalesce\\(qv\\.content->'stimuli'/);
   assert.match(regression, /stimulus_version_ids/);
+  assert.match(schemaRegression, /two independent stimulus groups/);
 });
