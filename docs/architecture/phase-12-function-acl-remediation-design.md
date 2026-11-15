@@ -244,3 +244,55 @@ Do not use Production attempts for ACL tests. Do not use real student accounts i
 
 - Supabase: [Securing your API](https://supabase.com/docs/guides/api/securing-your-api) — grants control whether roles can reach functions; RLS does not apply to function EXECUTE.
 - Supabase: [Security Advisor](https://supabase.com/docs/guides/database/database-linter) — review SECURITY DEFINER exposure and public EXECUTE grants.
+
+
+## 9. Staging ACL rehearsal — executed 2026-11-15
+
+The original Phase 12 SQL draft targets the 74-function Production catalog and was **not** run against Staging. A Staging-specific script was generated after a fresh preflight and exact rollback snapshot.
+
+Artifacts:
+- `docs/architecture/drafts/phase-12-staging-acl-rehearsal.sql`
+- `docs/architecture/drafts/phase-12-staging-acl-rollback.sql`
+
+The Staging rehearsal script was executed on project `cppalwtdkditlhojpeyc` in one transaction and committed. It asserts the exact preflight baseline before making changes:
+- 72 public functions; 46 SECURITY DEFINER.
+- effective EXECUTE: anon 32, authenticated 68, service_role 72.
+- 9 anon-callable SECURITY DEFINER functions.
+- 33 non-internal public triggers.
+- Production-only `abandon_exam_attempt(uuid)` is absent in Staging.
+
+Post-change verification:
+- 72 public functions; 46 SECURITY DEFINER (unchanged).
+- effective EXECUTE: anon **0**, authenticated **40**, service_role **72**.
+- anon-callable SECURITY DEFINER functions: **0**.
+- all 40 Staging allowlist signatures exist and are callable by authenticated.
+- non-internal public trigger count remains 33 and trigger fingerprint remains `d3de277b66b9a1b4773476b6ffbcdd5a`.
+- `service_role` default EXECUTE for postgres-created public functions remains present.
+- postgres global function default no longer grants PUBLIC EXECUTE; postgres public-schema defaults no longer grant anon/authenticated EXECUTE.
+- postgres storage-schema default ACLs and supabase_admin defaults were not changed.
+
+Database-level authorization checks were run inside rolled-back transactions:
+- `SET LOCAL ROLE anon`: direct calls to `is_admin()`, the new subject catalogue RPC, `get_published_exam`, `start_exam_attempt`, `save_attempt_answer`, and `record_attempt_question_time_v2` were all denied by EXECUTE ACL.
+- `SET LOCAL ROLE authenticated` without a user JWT: `is_admin()` returned false; `admin_list_profiles` rejected the caller; the subject catalogue rejected the context because there was no active authenticated user.
+These are database authorization checks, not a substitute for browser E2E using real Staging Student and Admin accounts.
+
+Production was queried after the Staging change and remained at its pre-rehearsal baseline: 74 functions, 48 SECURITY DEFINER, effective EXECUTE anon 18, authenticated 59, service_role 74.
+
+### Remaining browser E2E — operator action required
+
+Authenticated user JWTs and actual UI sessions are not available through the database catalog connection. The following checks remain pending in the Staging web app:
+1. Logged-out browser: open the student catalogue; verify the existing login-required state and verify no exam payload or attempt is exposed.
+2. Student account: sign in, load THPT → Toán catalogue, open an exam, start/resume, save/reload an answer, navigate questions (timing), submit, then inspect result/history.
+3. Admin account: sign in, verify `is_admin`, open version list/editor, save a test draft (do not publish a production-like exam), and verify admin-only profile/attempt screens.
+4. Non-admin student account: attempt to open Admin routes and verify server-side denial, not merely hidden navigation.
+
+No real attempt was created by the rehearsal. Do not use Production for these tests. Do not publish or delete any Staging exam as part of this checklist.
+
+### Current Security Advisor result on Staging
+
+After the ACL change, Security Advisor reports 40 `authenticated_security_definer_function_executable` warnings, matching the 40 functions intentionally retained for authenticated client access. It also reports 3 informational RLS-enabled/no-policy findings and 1 leaked-password-protection warning. The 40 function warnings still require review of body-level authorization; EXECUTE grants alone do not prove safety. No Advisor remediation was applied in this rehearsal.
+
+### Rollback
+
+The exact pre-rehearsal client-role ACL snapshot is stored in `phase-12-staging-acl-rollback.sql`. It restores the pre-change PUBLIC/anon/authenticated grants for all 72 functions and restores the previous postgres global/public default function privileges. Existing service_role grants were not altered by the rehearsal and are not rewritten by the rollback file.
+
