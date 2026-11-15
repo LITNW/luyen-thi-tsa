@@ -134,21 +134,19 @@ The main atomic authoring path is:
 
 ```text
 admin_save_exam_content_with_education
-├── admin_save_exam_content_with_category
-│   └── admin_save_exam_content
-│       ├── admin_create_exam                 [only when no draft version ID is supplied]
+├── admin_save_exam_content_with_category     [called with p_publish = false]
+│   └── admin_save_exam_content                [called with p_publish = false]
+│       ├── admin_create_exam                  [only when no draft version ID is supplied]
 │       ├── admin_save_question
 │       │   └── validate_question_answer_key
-│       ├── admin_replace_question_in_exam    [existing mapping]
-│       ├── admin_add_question_to_exam        [new mapping]
-│       └── admin_publish_exam_version       [when publishing]
-│           └── validate_question_answer_key
+│       ├── admin_replace_question_in_exam     [existing mapping]
+│       └── admin_add_question_to_exam         [new mapping]
 ├── admin_set_exam_education_subject
-└── admin_publish_exam_version               [when publishing]
+└── admin_publish_exam_version                [only after placement, when p_publish = true]
     └── validate_question_answer_key
 ```
 
-The Education-aware wrapper is important because it composes the legacy content/category save with the education-subject placement and publication guard. Replacing only the React or legacy UI call without preserving this transaction-level contract risks saving an exam without its required active subject placement or publishing before placement is valid.
+The Education-aware wrapper deliberately calls the category/content save with `p_publish = false`, assigns the education subject, and only then calls `admin_publish_exam_version` if publication was requested. This ordering is essential: the base save must not publish before the required placement exists. A standalone call to `admin_save_exam_content_with_category` has its own optional publish behavior and should not be mistaken for the Education-aware transaction boundary. Replacing only the React or legacy UI call without preserving this ordering risks publishing before placement is valid.
 
 Other authoring relationships:
 - `admin_save_question` and `admin_set_question_answer_key` call `validate_question_answer_key`.
