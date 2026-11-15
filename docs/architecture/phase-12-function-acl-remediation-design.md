@@ -296,3 +296,16 @@ After the ACL change, Security Advisor reports 40 `authenticated_security_define
 
 The exact pre-rehearsal client-role ACL snapshot is stored in `phase-12-staging-acl-rollback.sql`. It restores the pre-change PUBLIC/anon/authenticated grants for all 72 functions and restores the previous postgres global/public default function privileges. Existing service_role grants were not altered by the rehearsal and are not rewritten by the rollback file.
 
+
+
+## 10. Staging browser E2E — user-confirmed result
+
+On 2026-11-15, the project owner reported that all four Staging E2E groups completed without detecting errors:
+1. Logged-out browser / anonymous student access.
+2. Authenticated Student exam workflow.
+3. Authenticated Admin workflow.
+4. Student direct-access attempts against Admin functionality.
+
+This is recorded as **user-reported E2E PASS**. The assistant did not independently operate the authenticated browser sessions, so this report does not claim independent browser observation or attach browser/network traces.
+
+Combined with the database ACL assertions above, the Staging ACL rehearsal is considered successful for the tested flows. The ACL changes remain applied on Staging; no rollback was performed. Production remains unchanged. Continue monitoring Staging logs and error rates; do not treat this rehearsal as approval to deploy the ACL change to Production or merge the audit branch.
