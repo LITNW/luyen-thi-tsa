@@ -201,8 +201,8 @@ declare
 begin
   v_uid := auth.uid();
   select status into v_profile_status from public.profiles where id=v_uid;
-  v_shared_allowed := public.lit_can_read_question_media('question-media/ci-admin/shared.png');
-  v_question_allowed := public.lit_can_read_question_media('question-media/ci-admin/q1.png');
+  v_shared_allowed := private.lit_can_read_question_media('question-media/ci-admin/shared.png');
+  v_question_allowed := private.lit_can_read_question_media('question-media/ci-admin/q1.png');
   select count(*) into v_count from storage.objects where bucket_id='lit-question-media';
   if v_count<>2 then
     raise exception 'Student media access mismatch: visible %, shared allowed %, question allowed %, uid %, profile status %.',
