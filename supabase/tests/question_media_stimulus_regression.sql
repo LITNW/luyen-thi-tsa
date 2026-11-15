@@ -20,7 +20,7 @@ begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
 
   insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
-  values(v_student,'ci-student@example.test',now(),'{}'::jsonb)
+  values(v_student,'ci-student@example.test',now(),' {"display_name":"CI Student"}'::jsonb)
   on conflict (id) do nothing;
   update public.profiles set role='student',status='active' where id=v_student;
 
