@@ -3,10 +3,9 @@
 
 begin;
 
-do $tests$
+do $setup$
 declare
   v_admin uuid := '00000000-0000-4000-8000-000000000001';
-  v_student uuid := '00000000-0000-4000-8000-000000000002';
   v_exam uuid := '71000000-0000-4000-8000-000000000001';
   v_exam_version uuid := '71000000-0000-4000-8000-000000000002';
   v_stimulus uuid := '71000000-0000-4000-8000-000000000003';
@@ -14,7 +13,6 @@ declare
   v_offering uuid;
   v_save jsonb;
   v_admin_payload jsonb;
-  v_public_payload jsonb;
   v_question_count integer;
   v_shared_count integer;
 begin
@@ -25,13 +23,6 @@ begin
     where id=v_admin and role='admin' and status='active'
   ) then
     raise exception 'Question media regression requires the seeded active Admin.';
-  end if;
-
-  if not exists (
-    select 1 from public.profiles
-    where id=v_student and role='student' and status='active'
-  ) then
-    raise exception 'Question media regression requires the seeded active student.';
   end if;
 
   select es.id into v_offering
@@ -150,17 +141,31 @@ begin
 
   insert into storage.objects(bucket_id,name,owner_id,metadata)
   values
-    ('lit-question-media','question-media/ci-admin/shared.png',v_admin,'{"mimetype":"image/png"}'),
-    ('lit-question-media','question-media/ci-admin/q1.png',v_admin,'{"mimetype":"image/png"}');
+    ('lit-question-media','question-media/ci-admin/shared.png',v_admin::text,'{"mimetype":"image/png"}'),
+    ('lit-question-media','question-media/ci-admin/q1.png',v_admin::text,'{"mimetype":"image/png"}');
+end;
+$setup$;
 
-  -- Draft assets must not be readable by students before publication.
-  perform set_config('request.jwt.claim.sub',v_student::text,true);
-  set local role authenticated;
+-- Draft assets must not be readable by students before publication.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+do $draft_media_rls$
+begin
   if (select count(*) from storage.objects where bucket_id='lit-question-media')<>0 then
     raise exception 'Student unexpectedly read media belonging only to a draft exam.';
   end if;
-  reset role;
+end;
+$draft_media_rls$;
+reset role;
 
+do $publish$
+declare
+  v_admin uuid := '00000000-0000-4000-8000-000000000001';
+  v_exam_version uuid := '71000000-0000-4000-8000-000000000002';
+  v_stimulus_version uuid := '71000000-0000-4000-8000-000000000004';
+  v_save jsonb;
+  v_public_payload jsonb;
+begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
   v_save := public.admin_publish_exam_version(v_exam_version);
   if v_save->>'success' is distinct from 'true' then
@@ -175,14 +180,18 @@ begin
      or v_public_payload->'questions'->0->'content' ? 'explanation' then
     raise exception 'Student exam payload lost stimulus data or leaked grading fields.';
   end if;
+end;
+$publish$;
 
-  perform set_config('request.jwt.claim.sub',v_student::text,true);
-  set local role authenticated;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+do $published_media_rls$
+begin
   if (select count(*) from storage.objects where bucket_id='lit-question-media')<>2 then
     raise exception 'Student could not read exactly the media assets referenced by the published exam.';
   end if;
-  reset role;
 end;
-$tests$;
+$published_media_rls$;
+reset role;
 
 rollback;
