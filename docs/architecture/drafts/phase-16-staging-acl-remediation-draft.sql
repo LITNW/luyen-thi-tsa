@@ -20,6 +20,7 @@ DECLARE
   v_sequence_count integer;
   v_staging_sentinel boolean;
   v_target_owner_count integer;
+  v_platform_owned_public_count integer;
   v_can_manage_postgres boolean;
   v_platform_sequence_default_acl text;
   v_has_public_acl boolean;
@@ -75,6 +76,21 @@ BEGIN
 
   IF v_target_owner_count <> 15 THEN
     RAISE EXCEPTION 'Expected all 15 target objects to be postgres-owned; found %', v_target_owner_count;
+  END IF;
+
+  -- Any platform-owned relation or function in public requires separate review.
+  SELECT
+    (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+     WHERE n.nspname='public' AND c.relowner='supabase_admin'::regrole
+       AND c.relkind IN ('r','p','v','m','S','f'))
+    +
+    (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+     WHERE n.nspname='public' AND p.proowner='supabase_admin'::regrole)
+    INTO v_platform_owned_public_count;
+
+  IF v_platform_owned_public_count <> 0 THEN
+    RAISE EXCEPTION 'Found % supabase_admin-owned public relations/functions; separate platform-object review required',
+      v_platform_owned_public_count;
   END IF;
 
   -- Capture the platform-managed default ACL as an immutable baseline.
