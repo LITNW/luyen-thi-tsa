@@ -116,7 +116,7 @@ begin
 end;
 $function$;
 
-create or replace function public.lit_link_question_version_stimuli()
+create or replace function private.lit_link_question_version_stimuli()
 returns trigger
 language plpgsql
 security definer
@@ -133,11 +133,11 @@ begin
 end;
 $function$;
 
-revoke all on function public.lit_link_question_version_stimuli() from public,anon,authenticated;
+revoke all on function private.lit_link_question_version_stimuli() from public,anon,authenticated;
 
 create trigger question_versions_link_stimulus_groups
 after insert on public.question_versions
-for each row execute function public.lit_link_question_version_stimuli();
+for each row execute function private.lit_link_question_version_stimuli();
 
 -- Backfill the normalized relation for versions created by the first single-group migration.
 insert into public.question_version_stimuli(question_version_id,stimulus_version_id,position)
