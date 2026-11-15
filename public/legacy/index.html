@@ -614,25 +614,29 @@ if('serviceWorker' in navigator){
       }
       return result;
     }
-    async function signMediaManifest(items){
+    async function signMediaManifest(items,cache=new Map()){
       return Promise.all((items||[]).map(async item=>{
         if(!item?.path)return item;
+        if(cache.has(item.path))return {...item,url:cache.get(item.path)};
         const {data,error}=await sb.storage.from('lit-question-media').createSignedUrl(item.path,86400);
-        return {...item,url:error?(item.url||''):(data?.signedUrl||item.url||'')};
+        const url=error?(item.url||''):(data?.signedUrl||item.url||'');
+        cache.set(item.path,url);return {...item,url};
       }));
     }
     async function signEditorQuestionMedia(questions){
+      const cache=new Map();
       for(const question of questions||[]){
-        question.media=await signMediaManifest(question.media||[]);
-        if(question.stimulus?.content?.media)question.stimulus.content.media=await signMediaManifest(question.stimulus.content.media);
+        question.media=await signMediaManifest(question.media||[],cache);
+        if(question.stimulus?.content?.media)question.stimulus.content.media=await signMediaManifest(question.stimulus.content.media,cache);
       }
       return questions;
     }
     async function signExamMedia(exam){
+      const cache=new Map();
       for(const question of exam?.questions||[]){
         question.content=question.content||{};
-        question.content.media=await signMediaManifest(question.content.media||[]);
-        if(question.content.stimulus?.content?.media)question.content.stimulus.content.media=await signMediaManifest(question.content.stimulus.content.media);
+        question.content.media=await signMediaManifest(question.content.media||[],cache);
+        if(question.content.stimulus?.content?.media)question.content.stimulus.content.media=await signMediaManifest(question.content.stimulus.content.media,cache);
       }
       return exam;
     }
