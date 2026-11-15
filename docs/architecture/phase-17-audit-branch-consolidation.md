@@ -66,3 +66,12 @@ A draft pull request may be used for review, but merging requires separate appro
 - Phase 11–16 artifacts retained without rewriting their historical evidence.
 - Phase 15 artifact gap explicitly documented.
 - No merge, application deployment, database operation, migration, or Production change performed.
+
+
+## 6. Review pull request
+- Created draft PR #29: https://github.com/LITNW/luyen-thi-tsa/pull/29
+- Base: `main`; head: `audit/phase-16-staging-acl-remediation-design-20261115`.
+- The PR contains 27 changed files, 62 commits ahead, 0 behind at the time of opening.
+- PR is deliberately draft and unmerged. It contains audit documentation, guarded SQL drafts and evidence only.
+- CI at opening: Vercel success; Netlify deploy preview pending; recovered migration chain smoke test, Supabase clean-install compatibility, React migration CI and migration recovery integrity were running.
+- No Production deployment was triggered by the PR; Cloudflare Pages Production remains tied to `main`.
