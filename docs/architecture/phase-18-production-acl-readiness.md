@@ -32,8 +32,7 @@ Read-only snapshot captured at `2026-11-15T09:34:50.513232+00:00`, fingerprint `
 
 - All 12 target tables and all 3 target sequences exist and are owned by `postgres`.
 - `anon` currently has no effective table privileges on the 12 target tables.
-- `authenticated` currently has SELECT on 8 target tables:
-  `attempt_answers`, `attempt_question_times`, `attempts`, `audit_logs`, `exam_version_questions`, `exam_versions`, `exams`, `profiles`, `question_versions`, and `questions` (the list contains 10 names because the first four and last four plus exams/profiles total ten; only eight are currently SELECT-granted when counted by the catalog ACL groups—see the per-object snapshot for authoritative details).
+- `authenticated` currently has SELECT on 10 target tables: `attempt_answers`, `attempt_question_times`, `attempts`, `audit_logs`, `exam_version_questions`, `exam_versions`, `exams`, `profiles`, `question_versions`, and `questions`.
 - Direct INSERT/UPDATE/DELETE grants to `authenticated` exist on `exam_version_questions`, `exam_versions`, `question_versions`, and `questions`.
 - `exam_solutions` and `question_answer_keys` have no client-role table ACL entries.
 - `authenticated` has column-level `UPDATE(display_name)` on `profiles`; `anon` does not.
