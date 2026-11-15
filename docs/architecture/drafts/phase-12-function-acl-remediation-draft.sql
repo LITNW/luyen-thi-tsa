@@ -45,6 +45,12 @@ $preflight$;
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
   FROM PUBLIC, anon, authenticated;
 
+-- Prevent future application functions created by postgres in public from
+-- automatically receiving client/service EXECUTE. Do not alter the
+-- supabase_admin defaults: that role is platform-managed.
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated, service_role;
+
 -- Authenticated student APIs and attempt lifecycle.
 GRANT EXECUTE ON FUNCTION public.abandon_exam_attempt(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_my_attempt_history(integer,integer) TO authenticated;
@@ -101,6 +107,7 @@ DECLARE
   v_auth_missing integer;
   v_auth_count integer;
   v_service_count integer;
+  v_default_client_grants integer;
 BEGIN
   SELECT count(*) INTO v_anon_count
   FROM pg_catalog.pg_proc p
@@ -184,6 +191,20 @@ BEGIN
 
   IF v_service_count <> 74 THEN
     RAISE EXCEPTION 'ACL verification failed: service_role access drifted; expected 74, found %.', v_service_count;
+  END IF;
+
+  SELECT count(*) INTO v_default_client_grants
+  FROM pg_catalog.pg_default_acl d
+  JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace
+  CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) x
+  WHERE d.defaclrole = 'postgres'::regrole
+    AND n.nspname = 'public'
+    AND d.defaclobjtype = 'f'
+    AND x.privilege_type = 'EXECUTE'
+    AND x.grantee IN ('anon'::regrole, 'authenticated'::regrole, 'service_role'::regrole);
+
+  IF v_default_client_grants <> 0 THEN
+    RAISE EXCEPTION 'ACL verification failed: % client/service default EXECUTE grants remain for postgres-created public functions.', v_default_client_grants;
   END IF;
 END
 $verify$;
