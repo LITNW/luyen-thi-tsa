@@ -206,6 +206,7 @@ BEGIN
         OR has_table_privilege('anon',c.oid,'TRUNCATE')
         OR has_table_privilege('anon',c.oid,'REFERENCES')
         OR has_table_privilege('anon',c.oid,'TRIGGER')
+        OR has_table_privilege('anon',c.oid,'MAINTAIN')
       )
   ) INTO v_bad;
   IF v_bad THEN RAISE EXCEPTION 'Postflight failed: anon retains target table privilege'; END IF;
@@ -228,6 +229,7 @@ BEGIN
         OR has_table_privilege('authenticated',c.oid,'TRUNCATE')
         OR has_table_privilege('authenticated',c.oid,'REFERENCES')
         OR has_table_privilege('authenticated',c.oid,'TRIGGER')
+        OR has_table_privilege('authenticated',c.oid,'MAINTAIN')
       )
   ) INTO v_bad;
   IF v_bad THEN RAISE EXCEPTION 'Postflight failed: authenticated retains privilege on restricted table'; END IF;
@@ -243,12 +245,14 @@ BEGIN
      OR has_table_privilege('authenticated','public.profiles','TRUNCATE')
      OR has_table_privilege('authenticated','public.profiles','REFERENCES')
      OR has_table_privilege('authenticated','public.profiles','TRIGGER')
+     OR has_table_privilege('authenticated','public.profiles','MAINTAIN')
      OR has_table_privilege('authenticated','public.exams','INSERT')
      OR has_table_privilege('authenticated','public.exams','UPDATE')
      OR has_table_privilege('authenticated','public.exams','DELETE')
      OR has_table_privilege('authenticated','public.exams','TRUNCATE')
      OR has_table_privilege('authenticated','public.exams','REFERENCES')
-     OR has_table_privilege('authenticated','public.exams','TRIGGER') THEN
+     OR has_table_privilege('authenticated','public.exams','TRIGGER')
+     OR has_table_privilege('authenticated','public.exams','MAINTAIN') THEN
     RAISE EXCEPTION 'Postflight failed: unexpected authenticated write privilege remains';
   END IF;
 
