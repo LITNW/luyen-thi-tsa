@@ -99,6 +99,8 @@ DO $verify$
 DECLARE
   v_anon_count integer;
   v_auth_missing integer;
+  v_auth_count integer;
+  v_service_count integer;
 BEGIN
   SELECT count(*) INTO v_anon_count
   FROM pg_catalog.pg_proc p
@@ -160,6 +162,28 @@ BEGIN
 
   IF v_auth_missing <> 0 THEN
     RAISE EXCEPTION 'ACL verification failed: % expected authenticated grants are missing.', v_auth_missing;
+  END IF;
+
+  SELECT count(*) INTO v_auth_count
+  FROM pg_catalog.pg_proc p
+  JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.prokind = 'f'
+    AND has_function_privilege('authenticated', p.oid, 'EXECUTE');
+
+  IF v_auth_count <> 41 THEN
+    RAISE EXCEPTION 'ACL verification failed: expected exactly 41 authenticated-callable functions, found %.', v_auth_count;
+  END IF;
+
+  SELECT count(*) INTO v_service_count
+  FROM pg_catalog.pg_proc p
+  JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.prokind = 'f'
+    AND has_function_privilege('service_role', p.oid, 'EXECUTE');
+
+  IF v_service_count <> 74 THEN
+    RAISE EXCEPTION 'ACL verification failed: service_role access drifted; expected 74, found %.', v_service_count;
   END IF;
 END
 $verify$;
