@@ -17,7 +17,7 @@ No migrations, application source, schema, data, function bodies, RLS policies, 
 
 ### 2.1 Table ACL
 
-For all 12 tables, remove direct table privileges from `anon` and `authenticated`:
+For all 12 tables, remove direct table privileges from `anon` and `authenticated`. The draft uses `REVOKE ALL PRIVILEGES`; on PostgreSQL 17 this also covers the `MAINTAIN` privilege, in addition to the seven privileges highlighted in the Phase 14 matrix. Postflight checks include `MAINTAIN` explicitly:
 
 - `attempt_answers`
 - `attempt_question_times`
