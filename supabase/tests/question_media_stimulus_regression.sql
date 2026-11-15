@@ -6,6 +6,7 @@ begin;
 do $setup$
 declare
   v_admin uuid := '00000000-0000-4000-8000-000000000001';
+  v_student uuid := '00000000-0000-4000-8000-000000000002';
   v_exam uuid := '71000000-0000-4000-8000-000000000001';
   v_exam_version uuid := '71000000-0000-4000-8000-000000000002';
   v_stimulus uuid := '71000000-0000-4000-8000-000000000003';
@@ -17,6 +18,11 @@ declare
   v_shared_count integer;
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
+
+  insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
+  values(v_student,'ci-student@example.test',now(),'{}'::jsonb)
+  on conflict (id) do nothing;
+  update public.profiles set role='student',status='active' where id=v_student;
 
   if not exists (
     select 1 from public.profiles
