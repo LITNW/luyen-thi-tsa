@@ -55,6 +55,7 @@ test('legacy editor uses build-generated environment config, never a production 
 test('legacy Admin editor synchronizes the education offering selection before save', () => {
   const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
   assert.match(html, /t\.id==='f-education-subject'[\s\S]*?view\.education_subject_id=t\.value/);
+  assert.match(html, /t\.id==='f-education-subject'\)view\.education_subject_id=t\.value/);
   assert.match(html, /educationSubjectId=educationSelect\?\.value\|\|view\.education_subject_id\|\|''/);
 });
 
