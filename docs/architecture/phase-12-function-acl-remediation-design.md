@@ -126,8 +126,6 @@ These functions should not be client-callable through `anon` or `authenticated`:
 - `audit_profile_change()`
 - `education_exam_placement_guard()`
 - `education_exam_version_publish_guard()`
-- `education_hierarchy_set_updated_at()`
-- `education_level_code_immutable()`
 - `education_levels_guard()`
 - `education_nodes_guard()`
 - `education_nodes_identity_guard()`
@@ -147,19 +145,19 @@ These functions should not be client-callable through `anon` or `authenticated`:
 - `prevent_last_admin_delete()`
 - `prevent_question_identity_change()`
 - `prevent_question_version_change()`
-- `protect_exam_version_questions()`
-- `protect_exam_version()`
 - `set_updated_at()`
 
-**Other internal / service-only (7):**
+**Other internal / service-only (9):**
 
 - `guard_attempt_child()`
 - `guard_attempt_record()`
 - `handle_new_auth_user()`
 - `save_exam_atomic(uuid,text,text,integer,jsonb,jsonb,boolean,uuid)` (Production-only)
 - `validate_question_answer_key(text,jsonb,jsonb)`
-- `education_exam_version_publish_guard()` (also listed among trigger helpers; count is unique by signature)
-- Two remaining environment-specific function identities are tracked in the live catalog comparison and must be rechecked by the preflight guard before any application.
+- `education_hierarchy_set_updated_at()`
+- `education_level_code_immutable()`
+- `protect_exam_version_questions()`
+- `protect_exam_version()`
 
 > Inventory note: Production has 74 functions and Staging 72. The two Production-only identities are `abandon_exam_attempt(uuid)` and `save_exam_atomic(uuid,text,text,integer,jsonb,jsonb,boolean,uuid)`. Do not force Staging/Production identity parity by creating or deleting either function in this ACL-only phase.
 
