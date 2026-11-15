@@ -544,7 +544,7 @@ if('serviceWorker' in navigator){
     }
     function questionMediaOverviewHtml(){
       const text=document.getElementById('f-q')?.value??view.draftQuestionText??ser(view.exam?.qs||[]);
-      const count=text.split(/\\n\\s*---+\\s*\\n?/).map(block=>block.trim()).filter(Boolean).length;
+      const count=text.split(/\n\s*---+\s*\n?/).map(block=>block.trim()).filter(Boolean).length;
       if(!count)return '<p class="m">Nhập câu hỏi trước để có thể gắn ảnh.</p>';
       return '<div class="lit-media-overview"><b>Ảnh theo câu hỏi</b><div class="lit-media-overview-grid">'+Array.from({length:count},(_,index)=>{
         const items=questionMediaForEditor(index),pending=view.pendingQuestionMedia?.[index]?.length||0;
