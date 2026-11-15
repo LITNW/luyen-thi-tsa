@@ -3,6 +3,8 @@
 
 begin;
 
+create temporary table media_fixture_ids(stimulus_id uuid,stimulus_version_id uuid,exam_version_id uuid) on commit drop;
+
 do $setup$
 declare
   v_admin uuid := '00000000-0000-4000-8000-000000000001';
@@ -68,6 +70,7 @@ begin
   if v_stimulus is null or v_stimulus_version is null then
     raise exception 'Shared stimulus RPC did not return identity/version IDs.';
   end if;
+  insert into media_fixture_ids values(v_stimulus,v_stimulus_version,v_exam_version);
 
   insert into public.exams(id,title,description,duration_minutes,created_by,education_subject_id)
   values(v_exam,'Question media regression','Disposable CI fixture',30,v_admin,v_offering);
@@ -168,11 +171,12 @@ do $publish$
 declare
   v_admin uuid := '00000000-0000-4000-8000-000000000001';
   v_exam_version uuid := '71000000-0000-4000-8000-000000000002';
-  v_stimulus_version uuid := '71000000-0000-4000-8000-000000000004';
+  v_stimulus_version uuid;
   v_save jsonb;
   v_public_payload jsonb;
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
+  select stimulus_version_id into v_stimulus_version from media_fixture_ids limit 1;
   v_save := public.admin_publish_exam_version(v_exam_version);
   if v_save->>'success' is distinct from 'true' then
     raise exception 'Media fixture exam did not publish: %',v_save;
