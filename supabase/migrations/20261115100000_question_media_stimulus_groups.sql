@@ -67,8 +67,7 @@ begin
     return new;
   end if;
 
-  select sv.*,s.status
-    into v_stimulus_version,v_stimulus_status
+  select s.status into v_stimulus_status
   from public.stimulus_versions sv
   join public.stimuli s on s.id=sv.stimulus_id
   where sv.id=v_id;
@@ -77,6 +76,10 @@ begin
     raise exception using errcode='23503',
       message='The selected shared stimulus version does not exist or is archived.';
   end if;
+
+  select sv.* into v_stimulus_version
+  from public.stimulus_versions sv
+  where sv.id=v_id;
 
   if not public.lit_validate_media_manifest(v_stimulus_version.content->'media') then
     raise exception using errcode='23514',
@@ -161,6 +164,44 @@ create policy lit_question_media_admin_delete
 on storage.objects for delete to authenticated
 using (bucket_id='lit-question-media' and (select public.is_admin()));
 
+create or replace function public.lit_can_read_question_media(p_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+  select auth.uid() is not null
+    and exists (
+      select 1 from public.profiles p
+      where p.id=auth.uid() and p.status='active'
+    )
+    and exists (
+      select 1
+      from public.question_versions qv
+      join public.exam_version_questions evq on evq.question_version_id=qv.id
+      join public.exam_versions ev on ev.id=evq.exam_version_id
+      where ev.status='published'
+        and (
+          exists (
+            select 1
+            from jsonb_array_elements(coalesce(qv.content->'media','[]'::jsonb)) media(value)
+            where media.value->>'path'=p_path
+          )
+          or exists (
+            select 1
+            from jsonb_array_elements(
+              coalesce(qv.content->'stimulus'->'content'->'media','[]'::jsonb)
+            ) media(value)
+            where media.value->>'path'=p_path
+          )
+        )
+    );
+$function$;
+
+revoke all on function public.lit_can_read_question_media(text) from public,anon;
+grant execute on function public.lit_can_read_question_media(text) to authenticated;
+
 drop policy if exists lit_question_media_read_published on storage.objects;
 create policy lit_question_media_read_published
 on storage.objects for select to authenticated
@@ -168,29 +209,7 @@ using (
   bucket_id='lit-question-media'
   and (
     (select public.is_admin())
-    or exists (
-      select 1
-      from public.question_versions qv
-      join public.exam_version_questions evq
-        on evq.question_version_id=qv.id
-      join public.exam_versions ev
-        on ev.id=evq.exam_version_id
-      where ev.status='published'
-        and (
-          exists (
-            select 1
-            from jsonb_array_elements(coalesce(qv.content->'media','[]'::jsonb)) media(value)
-            where media.value->>'path'=storage.objects.name
-          )
-          or exists (
-            select 1
-            from jsonb_array_elements(
-              coalesce(qv.content->'stimulus'->'content'->'media','[]'::jsonb)
-            ) media(value)
-            where media.value->>'path'=storage.objects.name
-          )
-        )
-    )
+    or (select public.lit_can_read_question_media(name))
   )
 );
 
