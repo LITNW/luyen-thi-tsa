@@ -128,6 +128,19 @@ This is a Staging runtime snapshot. It is not proof that Production has an ident
 
 ## 4. SQL function call graph
 
+### 4.0 Direct frontend RPC surface from Phase 8
+
+The static source audit found 42 `.rpc(...)` call sites and 24 unique direct-caller RPC names across React and Legacy.
+
+| Area | Direct-caller RPCs |
+|---|---|
+| Admin | `admin_list_exam_versions_with_categories`, `admin_list_exam_categories`, `admin_set_exam_category`, `admin_set_exam_education_subject`, `admin_save_exam_category`, `admin_list_profiles`, `admin_update_profile`, `admin_list_attempts`, `admin_list_exam_versions`, `admin_delete_exam_version`, `admin_create_exam_version`, `admin_get_exam_version`, `admin_save_exam_content_with_education`, `bootstrap_first_admin` |
+| Student / exam room / legacy editor | `list_published_exams_for_education_subject`, `list_published_exams`, `get_my_attempt_history`, `get_my_attempt_state`, `get_published_exam`, `list_active_exam_categories`, `save_attempt_answer`, `record_attempt_question_time_v2`, `submit_exam_attempt`, `start_exam_attempt` |
+
+Eight RPCs are shared by both React and Legacy: `admin_list_attempts`, `admin_list_exam_versions`, `admin_list_exam_versions_with_categories`, `admin_list_profiles`, `admin_update_profile`, `get_my_attempt_history`, `get_my_attempt_state`, and `get_published_exam`.
+
+Functions present in the Staging catalog but with no direct static JavaScript caller in the Phase 8 scan include: `admin_create_exam`, `admin_set_question_answer_key`, `admin_add_question_to_exam`, `admin_remove_question_from_exam`, `admin_reorder_exam_questions`, `admin_replace_question_in_exam`, `admin_update_question_points`, `admin_update_exam_version`, `admin_list_question_bank`, `admin_save_exam_content`, `admin_save_exam_content_with_category`, `admin_save_question`, `admin_publish_exam_version`, `list_active_subjects`, and `record_attempt_question_time`. Several are called by other SQL functions or triggers; the remainder cannot be classified as dead from static caller search alone.
+
 ### 4.1 Authoring and publishing chain
 
 The main atomic authoring path is:
