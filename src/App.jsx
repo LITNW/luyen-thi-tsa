@@ -4,6 +4,7 @@ import RouteGuard from './components/RouteGuard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
+import PublicLandingPage from './pages/PublicLandingPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import HistoryPage from './pages/HistoryPage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
@@ -27,7 +28,7 @@ function LegacyExamRedirect() {
 function HomeRoute() {
   const { session, loading } = useAuth();
   if (loading) return <main className="center-state"><span className="spinner" /><p>Đang tải…</p></main>;
-  return session ? <RouteGuard><DashboardPage /></RouteGuard> : <Navigate to="/login" replace />;
+  return session ? <RouteGuard><DashboardPage /></RouteGuard> : <PublicLandingPage />;
 }
 
 export default function App() {
