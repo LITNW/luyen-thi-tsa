@@ -1154,27 +1154,21 @@ if('serviceWorker' in navigator){
       if(!educationSubjectId){m.textContent='Hãy chọn cấp học và môn học trước khi lưu hoặc xuất bản.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
       if(fe.length){m.textContent='Chưa lưu được: '+fe.length+' lỗi công thức. '+fe.slice(0,4).join(' | ');fpanel();return}
-      const stimulusTitle=document.getElementById('f-stimulus-title')?.value.trim()||'',stimulusBody=document.getElementById('f-stimulus-body')?.value||'',stimulusType=document.getElementById('f-stimulus-type')?.value||'text',stimulusQuestionSpec=document.getElementById('f-stimulus-questions')?.value.trim()||'all';
-      const stimulusMedia=view.stimulus?.content?.media||[];let stimulusVersionId=null,stimulusQuestionIndices=[];
-      if(stimulusTitle||stimulusBody.trim()||stimulusMedia.length){
-        const questionCount=qs.length;
-        if(/^all$/i.test(stimulusQuestionSpec)){stimulusQuestionIndices=qs.map((_,index)=>index+1)}
-        else{
-          const seen=new Set();
-          for(const part of stimulusQuestionSpec.split(',').map(value=>value.trim()).filter(Boolean)){
-            const match=part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-            if(!match)throw new Error('Phạm vi câu hỏi dùng ngữ liệu không hợp lệ. Ví dụ: all hoặc 1-4, 6.');
-            const start=Number(match[1]),end=Number(match[2]||match[1]);
-            if(start<1||end<start||end>questionCount)throw new Error('Phạm vi câu hỏi dùng ngữ liệu vượt quá số câu hiện có.');
-            for(let number=start;number<=end;number++){if(seen.has(number))throw new Error('Câu hỏi '+number+' bị lặp trong phạm vi ngữ liệu.');seen.add(number);stimulusQuestionIndices.push(number)}
-          }
-          if(!stimulusQuestionIndices.length)throw new Error('Hãy chọn ít nhất một câu hỏi sử dụng ngữ liệu.');
+      captureActiveStimulusForm();
+      const stimulusIdsByQuestion=new Map();
+      for(const group of view.stimuli||[]){
+        const media=group.content?.media||[],hasContent=!!(group.title.trim()||(group.content?.body||'').trim()||media.length);
+        if(!hasContent)continue;
+        const indices=parseStimulusQuestionIndices(group.questionSpec,qs.length);
+        if(group.dirty||!group.version_id)await saveStimulusGroup(group,qs.length);
+        if(!group.version_id)throw new Error('Nhóm ngữ liệu "'+(group.title||'chưa đặt tên')+'" chưa có phiên bản được lưu.');
+        for(const number of indices){
+          const ids=stimulusIdsByQuestion.get(number)||[];
+          if(!ids.includes(group.version_id))ids.push(group.version_id);
+          if(ids.length>8)throw new Error('Một câu hỏi không thể sử dụng quá 8 nhóm ngữ liệu.');
+          stimulusIdsByQuestion.set(number,ids);
         }
-        const {data:stimulusSaved,error:stimulusError}=await sb.rpc('admin_save_stimulus_version',{p_stimulus_id:view.stimulus?.id||null,p_stimulus_type:stimulusType,p_content:{body:stimulusBody,media:mediaForSave(stimulusMedia)},p_metadata:{title:stimulusTitle,question_indices:stimulusQuestionIndices}});
-        if(stimulusError)throw stimulusError;
-        stimulusVersionId=stimulusSaved.stimulus_version_id;
-        view.stimulus={id:stimulusSaved.stimulus_id,version_id:stimulusVersionId,version_no:stimulusSaved.version_no,type:stimulusType,title:stimulusTitle,metadata:{title:stimulusTitle,question_indices:stimulusQuestionIndices},content:{body:stimulusBody,media:stimulusMedia}};view.stimulusDirty=false;
-      }else{view.stimulus=null}
+      }
       const usedOld=new Set(),oldList=view.questions||[];
       const payload=qs.map((q,i)=>{
         let oldIndex=oldList.findIndex((old,j)=>!usedOld.has(j)&&old.q===q.q&&old.k===q.k);
@@ -1183,7 +1177,7 @@ if('serviceWorker' in navigator){
         if(oldIndex>=0)usedOld.add(oldIndex);
         const removed=view.removedQuestionMedia?.[oldIndex]||[],questionMedia=[...(old.media||[]).filter(item=>!removed.includes(item.path)),...(view.pendingQuestionMedia?.[i]||[])],order=view.questionMediaOrder?.[i]||[];
         questionMedia.sort((a,b)=>{const ai=order.indexOf(a.path),bi=order.indexOf(b.path);return (ai<0?999:ai)-(bi<0?999:bi)});
-        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once,media:mediaForSave(questionMedia),...(stimulusVersionId&&stimulusQuestionIndices.includes(i+1)?{stimulus_version_id:stimulusVersionId}:{})},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
+        return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once,media:mediaForSave(questionMedia),...((stimulusIdsByQuestion.get(i+1)||[]).length?{stimulus_version_ids:stimulusIdsByQuestion.get(i+1)}:{})},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
       try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_education',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_education_subject_id:educationSubjectId,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;view.education_subject_id=educationSubjectId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
