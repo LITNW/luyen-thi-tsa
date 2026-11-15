@@ -20,7 +20,10 @@ DECLARE
   v_sequence_count integer;
   v_staging_sentinel boolean;
   v_has_supabase_admin boolean;
+  v_can_manage_postgres boolean;
   v_has_public_acl boolean;
+  v_has_public_column_acl boolean;
+  v_has_public_default_acl boolean;
 BEGIN
   IF current_database() <> 'postgres' THEN
     RAISE EXCEPTION 'Unexpected database name: %', current_database();
@@ -80,6 +83,14 @@ BEGIN
     RAISE EXCEPTION 'Executor cannot manage default privileges for supabase_admin; stop and use an authorized operator';
   END IF;
 
+  SELECT rolsuper OR pg_has_role(current_user, 'postgres', 'MEMBER')
+    INTO v_can_manage_postgres
+  FROM pg_roles WHERE rolname=current_user;
+
+  IF NOT COALESCE(v_can_manage_postgres,false) THEN
+    RAISE EXCEPTION 'Executor cannot manage default privileges for postgres; stop and use an authorized operator';
+  END IF;
+
   -- Fail closed on PUBLIC ACLs rather than broadening the scope of revocation.
   SELECT EXISTS (
     SELECT 1
@@ -101,6 +112,35 @@ BEGIN
 
   IF v_has_public_acl THEN
     RAISE EXCEPTION 'Unexpected PUBLIC ACL found on a target object; expand review before remediation';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+    JOIN pg_attribute a ON a.attrelid=c.oid
+    CROSS JOIN LATERAL aclexplode(a.attacl) x
+    WHERE n.nspname='public' AND c.relname='profiles'
+      AND a.attname='display_name' AND a.attnum>0 AND NOT a.attisdropped
+      AND x.grantee=0
+  ) INTO v_has_public_column_acl;
+
+  IF v_has_public_column_acl THEN
+    RAISE EXCEPTION 'Unexpected PUBLIC column ACL found on profiles.display_name';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_default_acl d
+    JOIN pg_roles r ON r.oid=d.defaclrole
+    CROSS JOIN LATERAL aclexplode(d.defaclacl) x
+    WHERE r.rolname IN ('postgres','supabase_admin')
+      AND d.defaclobjtype='S'
+      AND d.defaclnamespace IN (0,'public'::regnamespace)
+      AND x.grantee=0
+  ) INTO v_has_public_default_acl;
+
+  IF v_has_public_default_acl THEN
+    RAISE EXCEPTION 'Unexpected PUBLIC sequence default ACL found; expand review before remediation';
   END IF;
 END
 $phase16_preflight$;
@@ -200,9 +240,15 @@ BEGIN
   IF has_table_privilege('authenticated','public.profiles','INSERT')
      OR has_table_privilege('authenticated','public.profiles','UPDATE')
      OR has_table_privilege('authenticated','public.profiles','DELETE')
+     OR has_table_privilege('authenticated','public.profiles','TRUNCATE')
+     OR has_table_privilege('authenticated','public.profiles','REFERENCES')
+     OR has_table_privilege('authenticated','public.profiles','TRIGGER')
      OR has_table_privilege('authenticated','public.exams','INSERT')
      OR has_table_privilege('authenticated','public.exams','UPDATE')
-     OR has_table_privilege('authenticated','public.exams','DELETE') THEN
+     OR has_table_privilege('authenticated','public.exams','DELETE')
+     OR has_table_privilege('authenticated','public.exams','TRUNCATE')
+     OR has_table_privilege('authenticated','public.exams','REFERENCES')
+     OR has_table_privilege('authenticated','public.exams','TRIGGER') THEN
     RAISE EXCEPTION 'Postflight failed: unexpected authenticated write privilege remains';
   END IF;
 
