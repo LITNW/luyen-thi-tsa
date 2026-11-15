@@ -200,12 +200,12 @@ jobs:
 
       - name: Run question media and shared stimulus regression
         env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
       - name: Run multiple independent stimulus groups regression
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/multiple_stimulus_groups_regression.sql
-          PGPASSWORD: postgres
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
 
       - name: Stop clean Supabase services
         if: always()
