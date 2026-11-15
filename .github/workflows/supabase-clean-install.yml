@@ -106,6 +106,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115110000_stimulus_rpc_invoker_hardening.sql
+      - name: Apply question media validator grants migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115120000_question_media_validator_grants.sql
 
       - name: Apply M2 exam category migration
         env:
