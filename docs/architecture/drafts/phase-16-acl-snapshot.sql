@@ -90,7 +90,7 @@ default_rows AS (
    AND d.defaclnamespace=ds.schema_oid
    AND d.defaclobjtype='S'
 )
-WITH payload AS (
+, payload AS (
 SELECT jsonb_build_object(
   'snapshot_format', 'phase16-acl-snapshot-v1',
   'captured_at', clock_timestamp(),
