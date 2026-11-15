@@ -20,7 +20,7 @@ The following audit branches were compared with `main`:
 | `audit/phase-14-table-acl-rls-review-20261115` | 16 | 0 | Table ACL, RLS and client-call-site review |
 | `audit/phase-16-staging-acl-remediation-design-20261115` | 54 | 0 | Phase 16 design, Staging rehearsal, rollback and evidence |
 
-All listed branches are based on the same current `main` ancestor and are not behind it. The Phase 16 branch is the cumulative audit branch for Phases 11–16. Phase 9 and Phase 10 were separate and were copied into the cumulative branch during this phase.
+All listed branches are based on the same current `main` ancestor and are not behind it. The Phase 16 branch is the cumulative audit branch. Phase 9 and Phase 10 were separate and were copied into it during this phase. Phase 17 and Phase 18 reports plus Production-specific Phase 19 draft artifacts were subsequently added to the same review branch.
 
 ## 2. Consolidated artifacts
 
@@ -32,10 +32,12 @@ The cumulative branch now includes:
 - Phase 13 full schema object parity report.
 - Phase 14 table ACL/RLS security review.
 - Phase 16 Staging ACL remediation design, guarded drafts, generated rollback, execution record, pre/post snapshots and rehearsal report.
+- Phase 18 Production ACL readiness report and read-only baseline snapshot.
+- Phase 19 Production-specific guarded remediation draft, Production rollback generator and generated rollback artifact.
 - The reconciled migration recovery manifest.
 - Phase 18 read-only Production ACL baseline evidence.
 
-The compare against `main` reports 21 changed files. These changes are documentation, SQL review artifacts, evidence JSON and the migration recovery manifest; no application source file or active migration file is part of the diff.
+The latest compare against `main` reports 27 changed files and 62 commits ahead, 0 behind. These changes are documentation, SQL review artifacts, evidence JSON and the migration recovery manifest; no application source file or active migration file is part of the diff. Phase 18 Production baseline snapshot and Phase 19 Production-specific guarded remediation/rollback artifacts are included.
 
 ## 3. Phase 15 traceability gap
 
