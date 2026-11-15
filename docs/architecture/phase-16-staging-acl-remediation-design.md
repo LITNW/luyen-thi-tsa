@@ -178,7 +178,7 @@ Phase 16 is design-complete only when:
 - Snapshot artifact: [phase-16-staging-acl-snapshot-20261115.json](evidence/phase-16-staging-acl-snapshot-20261115.json).
 
 ### Generated rollback and grantor limitation
-- The rollback generator consumed the exact exported snapshot and returned a 22,832-character SQL artifact containing 223 GRANT statements, 223 matching `SET ROLE` statements, and 20 baseline REVOKE statements. It has no COMMIT and is not executed.
+- The rollback generator consumed the exact exported snapshot and returned a 23,195-character SQL artifact containing 223 GRANT statements, 223 matching `SET ROLE` statements, and 20 baseline REVOKE statements. It has no COMMIT and is not executed.
 - A read-only role check found SQL executor `postgres`, `rolsuper=false`, membership in `postgres` true, membership in `supabase_admin` false. Therefore this executor cannot `SET ROLE supabase_admin`; the snapshot's `supabase_admin` grantor entries cannot be restored with exact grantor provenance by this execution identity.
 - Updated the rollback generator and generated artifact to fail closed before `BEGIN` unless the executor can assume `supabase_admin` or is superuser. Do not remove this guard or treat the generated rollback as executable until an authorized grantor-preserving execution identity is available. The generated SQL is a recovery draft, not proof that rollback is operationally executable.
 - Generated rollback artifact: [phase-16-staging-rollback-from-snapshot-20261115.sql](drafts/phase-16-staging-rollback-from-snapshot-20261115.sql).
