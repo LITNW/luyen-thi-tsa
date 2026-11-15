@@ -43,6 +43,8 @@ jobs:
           sudo apt-get install -y postgresql-client
       - name: Create reconstructed pre-005 schema
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/pre_005_schema.sql
+      - name: Create isolated Storage schema fixture
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/storage_schema.sql
       - name: Apply all 17 recovered Production migrations in order
         run: |
           set -euo pipefail
@@ -60,6 +62,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
       - name: Apply M1 subject/taxonomy/stimulus foundation migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
+      - name: Apply question media and shared stimulus migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115100000_question_media_stimulus_groups.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
       - name: Apply M2 follow-up for archived category preservation
@@ -123,3 +127,5 @@ jobs:
 
       - name: Run atomic education-aware editor save regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_atomic_editor_save_regression.sql
+      - name: Run question media and shared stimulus regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
