@@ -516,7 +516,7 @@ if('serviceWorker' in navigator){
     async function openNewEditor(){
       try{
         await loadEditorCategories();await loadEditorEducationSubjects();
-        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,stimulus:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[]};
+        view={n:'edit',id:null,exam_id:null,category_id:null,category_name:null,education_subject_id:null,stimulus:null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:'',desc:'',minutes:60,qs:[]},questions:[],draftQuestionText:''};
         go(view);
       }catch(e){notify('Không tải được cấu trúc học tập hoặc loại đề: '+e.message)}
     }
@@ -528,7 +528,7 @@ if('serviceWorker' in navigator){
         const currentCategory=(versions||[]).find(item=>item.exam_id===x.exam_id);
         const {data:examMeta,error:eme}=await sb.from('exams').select('education_subject_id').eq('id',x.exam_id).single();if(eme)throw eme;
         const qs=(x.questions||[]).map(mapAdminQuestion);await signEditorQuestionMedia(qs);
-        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,stimulus:qs.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs};go(view);
+        view={n:'edit',id:x.exam_version_id,exam_id:x.exam_id,category_id:currentCategory?.category_id||null,category_name:currentCategory?.category_name||null,education_subject_id:examMeta?.education_subject_id||null,stimulus:qs.find(q=>q.stimulus)?.stimulus||null,pendingQuestionMedia:{},removedQuestionMedia:{},questionMediaOrder:{},mediaQuestionIndex:0,exam:{title:x.title,desc:x.description||'',minutes:x.duration_minutes,qs},questions:qs,draftQuestionText:ser(qs)};go(view);
       }catch(e){notify('Không mở được trình soạn đề: '+e.message)}
     }
     function mediaForSave(items){return (items||[]).map((item,index)=>({path:item.path,alt:String(item.alt||'').slice(0,300),caption:String(item.caption||'').slice(0,500),position:index+1,mime_type:item.mime_type||null,size:Number(item.size)||null}))}
@@ -549,6 +549,29 @@ if('serviceWorker' in navigator){
       const items=view.stimulus?.content?.media||[];
       return '<div class="c lit-media-editor"><h3>Ngữ liệu dùng chung cho nhóm câu hỏi</h3><p class="m">Một ngữ liệu có thể được nhiều câu hỏi cùng sử dụng. Phiên bản ngữ liệu được đóng băng cùng phiên bản câu hỏi khi lưu đề.</p><label for="f-stimulus-type">Loại ngữ liệu</label><select id="f-stimulus-type">'+['text','image','table','chart','dataset','experiment','mixed'].map(type=>'<option value="'+type+'"'+(type===(view.stimulus?.type||'text')?' selected':'')+'>'+({text:'Văn bản',image:'Hình ảnh',table:'Bảng dữ liệu',chart:'Biểu đồ',dataset:'Bộ dữ liệu',experiment:'Thí nghiệm',mixed:'Hỗn hợp'}[type])+'</option>').join('')+'</select><label for="f-stimulus-title">Tiêu đề ngữ liệu</label><input id="f-stimulus-title" maxlength="240" value="'+esc(view.stimulus?.title||view.stimulus?.metadata?.title||'')+'" placeholder="Ví dụ: Đọc thông tin sau để trả lời câu 1–4"><label for="f-stimulus-body">Nội dung ngữ liệu</label><textarea id="f-stimulus-body" rows="5" placeholder="Nhập văn bản, mô tả bảng, biểu đồ hoặc bối cảnh thí nghiệm...">'+esc(view.stimulus?.content?.body||'')+'</textarea><label for="f-stimulus-files">Ảnh thuộc ngữ liệu chung</label><input id="f-stimulus-files" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif"><label for="f-stimulus-caption">Chú thích ảnh ngữ liệu (tùy chọn)</label><input id="f-stimulus-caption" maxlength="500" placeholder="Mô tả hình ảnh, đơn vị hoặc nguồn"><button class="b" data-a="uploadStimulusMedia">Tải ảnh lên ngữ liệu chung</button><div class="lit-media-grid">'+mediaPreview(items,'Stimulus',0)+'</div></div>';
     }
+    function changeQuestionMediaOrder(questionIndex,from,to){
+      const items=questionMediaForEditor(questionIndex);if(to<0||to>=items.length)return;
+      const moved=items.splice(from,1)[0];items.splice(to,0,moved);
+      view.questionMediaOrder=view.questionMediaOrder||{};view.questionMediaOrder[questionIndex]=items.map(item=>item.path);
+    }
+    function removeQuestionMedia(questionIndex,mediaIndex){
+      const items=questionMediaForEditor(questionIndex),item=items[mediaIndex];if(!item)return;
+      const old=view.questions?.[questionIndex]?.media||[];
+      if(old.some(entry=>entry.path===item.path)){
+        view.removedQuestionMedia=view.removedQuestionMedia||{};
+        view.removedQuestionMedia[questionIndex]=[...(view.removedQuestionMedia[questionIndex]||[]),item.path];
+      }else{
+        view.pendingQuestionMedia=view.pendingQuestionMedia||{};
+        view.pendingQuestionMedia[questionIndex]=(view.pendingQuestionMedia[questionIndex]||[]).filter(entry=>entry.path!==item.path);
+      }
+      view.questionMediaOrder=view.questionMediaOrder||{};
+      view.questionMediaOrder[questionIndex]=items.filter(entry=>entry.path!==item.path).map(entry=>entry.path);
+    }
+    function moveStimulusMedia(from,to){
+      const items=view.stimulus?.content?.media||[];if(to<0||to>=items.length)return;
+      const moved=items.splice(from,1)[0];items.splice(to,0,moved);
+    }
+    function removeStimulusMedia(index){const items=view.stimulus?.content?.media||[];items.splice(index,1)}
     async function uploadQuestionMedia(){
       const index=Math.max(0,Number(document.getElementById('f-media-question')?.value||1)-1),files=[...(document.getElementById('f-media-files')?.files||[])],caption=document.getElementById('f-media-caption')?.value.trim()||'';
       const questions=parse(document.getElementById('f-q')?.value||'');
@@ -559,7 +582,7 @@ if('serviceWorker' in navigator){
       const media=await uploadMediaFiles(files,caption);
       view.pendingQuestionMedia=view.pendingQuestionMedia||{};
       view.pendingQuestionMedia[index]=[...(view.pendingQuestionMedia[index]||[]),...media];
-      view.mediaQuestionIndex=index;render();notify('Đã tải ảnh lên. Ảnh sẽ được lưu cùng phiên bản câu hỏi khi bạn lưu đề.');
+      view.mediaQuestionIndex=index;view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';render();notify('Đã tải ảnh lên. Ảnh sẽ được lưu cùng phiên bản câu hỏi khi bạn lưu đề.');
     }
     async function uploadStimulusMedia(){
       const files=[...(document.getElementById('f-stimulus-files')?.files||[])],caption=document.getElementById('f-stimulus-caption')?.value.trim()||'';
@@ -569,7 +592,9 @@ if('serviceWorker' in navigator){
       const media=await uploadMediaFiles(files,caption);
       view.stimulus=view.stimulus||{id:null,type:'text',title:'',content:{body:'',media:[]},metadata:{}};
       view.stimulus.content=view.stimulus.content||{body:'',media:[]};
-      view.stimulus.content.media=[...(view.stimulus.content.media||[]),...media];
+      view.stimulus.type=document.getElementById('f-stimulus-type')?.value||view.stimulus.type||'text';view.stimulus.title=document.getElementById('f-stimulus-title')?.value||view.stimulus.title||'';view.stimulus.metadata={...(view.stimulus.metadata||{}),title:view.stimulus.title};
+      view.stimulus.content.body=document.getElementById('f-stimulus-body')?.value||view.stimulus.content.body||'';
+      view.stimulus.content.media=[...(view.stimulus.content.media||[]),...media];view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';
       render();notify('Đã tải ảnh lên ngữ liệu chung. Hãy lưu đề để tạo phiên bản ngữ liệu.');
     }
     async function uploadMediaFiles(files,caption){
@@ -628,7 +653,7 @@ if('serviceWorker' in navigator){
       const currentEducation=editorEducationSubjects.find(item=>item.id===view.education_subject_id);
       const archivedEducation=view.education_subject_id&&!currentEducation?.is_active?'<option value="'+esc(view.education_subject_id)+'" selected disabled>'+esc(currentEducation?editorEducationLabel(currentEducation):'Vị trí học tập đã ẩn')+' (đã ẩn)</option>':'';
       const educationField='<label for="f-education-subject">Cấp học và môn học *</label><select id="f-education-subject" required><option value="">Chọn cấp học / môn học</option>'+archivedEducation+educationOptions+'</select><p class="m">Bắt buộc. Nếu chưa thấy môn học, hãy tạo cấp học và môn học trong Quản trị → Cấu trúc học tập.</p>';
-      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'">'+educationField+categoryField+'<label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(ser(x.qs))+'</textarea>'+questionMediaEditorHtml()+stimulusMediaEditorHtml()+'<button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
+      return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'">'+educationField+categoryField+'<label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(view.draftQuestionText??ser(x.qs))+'</textarea>'+questionMediaEditorHtml()+stimulusMediaEditorHtml()+'<button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
     function ensureAttemptReady(a){
       const x=ex(view.id);
@@ -1379,6 +1404,12 @@ if('serviceWorker' in navigator){
         else if(k==='createVersion'){const {data:id,error}=await sb.rpc('admin_create_exam_version',{p_exam_id:b.dataset.exam});if(error)throw error;await openEditor(id,'draft',b.dataset.exam)}
         else if(k==='saveDraft')await save(false);
         else if(k==='publishDraft')await save(true);
+        else if(k==='uploadQuestionMedia')await uploadQuestionMedia();
+        else if(k==='uploadStimulusMedia')await uploadStimulusMedia();
+        else if(k==='removeQuestionMedia'){removeQuestionMedia(+b.dataset.q,+i);render();return}
+        else if(k==='moveQuestionMediaUp'||k==='moveQuestionMediaDown'){const q=+b.dataset.q,idx=+i;changeQuestionMediaOrder(q,idx,idx+(k.endsWith('Up')?-1:1));render();return}
+        else if(k==='removeStimulusMedia'){removeStimulusMedia(+i);render();return}
+        else if(k==='moveStimulusMediaUp'||k==='moveStimulusMediaDown'){const idx=+i;moveStimulusMedia(idx,idx+(k.endsWith('Up')?-1:1));render();return}
         else if(k==='imp')await imp();
         else if(k==='fchk')fpanel();
         else if(k==='start')await start(i);
@@ -1406,7 +1437,8 @@ if('serviceWorker' in navigator){
         if(k==='sub'||k==='no')render();
       }catch(err){notify(err.message||String(err))}
     });
-    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='f-education-subject'&&view.n==='edit'){view.education_subject_id=t.value||null}if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='f-education-subject'&&view.n==='edit'){view.education_subject_id=t.value||null}if(t.id==='f-media-question'&&view.n==='edit'){view.mediaQuestionIndex=Math.max(0,Number(t.value||1)-1)}if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('input',e=>{const t=e.target;if(view.n!=='edit')return;if(t.id==='f-q')view.draftQuestionText=t.value;if(t.id==='f-stimulus-title'||t.id==='f-stimulus-body'||t.id==='f-stimulus-type'){view.stimulus=view.stimulus||{id:null,type:'text',title:'',content:{body:'',media:[]},metadata:{}};view.stimulus.type=document.getElementById('f-stimulus-type')?.value||'text';view.stimulus.title=document.getElementById('f-stimulus-title')?.value||'';view.stimulus.metadata={...(view.stimulus.metadata||{}),title:view.stimulus.title};view.stimulus.content=view.stimulus.content||{body:'',media:[]};view.stimulus.content.body=document.getElementById('f-stimulus-body')?.value||''}});
     A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
     A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
     A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});
