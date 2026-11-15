@@ -19,7 +19,7 @@ Base: `main@b00f3f34ae0d06358e43a6634be4a1d52df50577`.
 
 - `/exam/:id` still redirects to the existing legacy exam runtime.
 - `/admin/import` still redirects to the existing legacy authoring/import workflow.
-- Legacy exam timer, autosave, answer persistence, submission, scoring and Supabase contracts were not modified. Visible Legacy branding now uses the official LIT symbol asset on authentication, dashboard and exam-room headers; the import workflow remains on its existing route.
+- Legacy exam timer, autosave, answer persistence, submission, scoring and Supabase contracts were not modified. Visible Legacy branding now uses the official LIT symbol asset on authentication, dashboard, exam-room and admin import headers; the import workflow remains on its existing route.
 - No database, Auth, RLS, RPC, Storage, Edge Function, secret, DNS or Production configuration was changed.
 - No merge to `main` was performed.
 
@@ -30,7 +30,7 @@ Base: `main@b00f3f34ae0d06358e43a6634be4a1d52df50577`.
 - Built JS bundle contains the public landing page content.
 - LIT SVG logo asset returns HTTP 200 with `image/svg+xml`.
 - GitHub Actions `React migration CI` completed successfully for the latest branch commit. The `Unit tests` and `Production build` steps both completed successfully.
-- Regression checks cover React branding, education branding and Legacy brand labels/logo asset references in `tests/lit-branding.test.js`, `tests/lit-education-branding.test.js` and `tests/lit-legacy-brand.test.js`.
+- Regression checks cover React branding, education branding and Legacy brand labels/logo asset references in `tests/lit-branding.test.js`, `tests/lit-education-branding.test.js` and `tests/lit-legacy-brand.test.js`, including checks for official symbol usage in Legacy screens.
 - No real browser interaction, keyboard-only or screen-reader E2E test was available in this run.
 
 ## Remaining work
