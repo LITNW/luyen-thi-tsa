@@ -159,6 +159,27 @@ begin
 end;
 $setup$;
 
+-- Exercise the authoring RPC with the actual authenticated role so RLS and
+-- function EXECUTE grants are evaluated exactly as they are in the browser.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+do $authenticated_stimulus_rpc$
+declare
+  v_result jsonb;
+begin
+  v_result := public.admin_save_stimulus_version(
+    null::uuid,
+    'text',
+    jsonb_build_object('body','Authenticated RPC permission regression','media','[]'::jsonb),
+    jsonb_build_object('title','Authenticated RPC permission regression')
+  );
+  if v_result->>'stimulus_id' is null or v_result->>'stimulus_version_id' is null then
+    raise exception 'Authenticated Admin could not create a shared stimulus version.';
+  end if;
+end;
+$authenticated_stimulus_rpc$;
+reset role;
+
 -- Draft assets must not be readable by students before publication.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
