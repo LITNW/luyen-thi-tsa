@@ -1609,7 +1609,7 @@
         "owner": "postgres"
       }
     ],
-    "captured_at": "2026-11-15T09:33:29.926676+00:00",
+    "captured_at": "2026-11-15T09:34:50.513232+00:00",
     "server_version": "17.11",
     "snapshot_format": "phase16-acl-snapshot-v1",
     "found_table_count": 12,
@@ -1792,7 +1792,8 @@
     "expected_table_count": 12,
     "found_sequence_count": 3,
     "expected_sequence_count": 3,
+    "bootstrap_definition_md5": "af408493755e9b37e2e3365206d86f06",
     "bootstrap_staging_sentinel": false
   },
-  "snapshot_fingerprint_md5": "b5cbf54738fab465928fac2b125d2d83"
+  "snapshot_fingerprint_md5": "803d6fc3d3ab475ffaa700b5eb05bae5"
 }
