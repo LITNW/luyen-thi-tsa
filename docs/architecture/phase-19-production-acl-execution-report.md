@@ -113,3 +113,35 @@ These are owner-reported results. No independent browser automation was executed
 **Phase 19: COMPLETE**, subject to the evidence qualifications above. The approved Production ACL transaction committed, database postflight passed, and all four owner-reported Production smoke-test groups passed.
 
 The separate full isolated backup-restore drill remains outstanding and is not represented as completed. PR #29 remains Draft/unmerged; no application deployment was performed as part of Phase 19.
+
+
+## 10. Consolidated PR review and CI — 2026-11-15
+
+The audit branch was compared with `main` after the Phase 19 report update:
+
+- Base: `92856f1bc65cfa2a4c8a96ab17480a554dc64aba`
+- Branch: `audit/phase-16-staging-acl-remediation-design-20261115`
+- Ahead/behind: 67 / 0
+- Changed files: 27
+- Changed paths are limited to architecture documentation, guarded SQL review/evidence artifacts, JSON evidence and `supabase/migration-recovery-manifest.json`; no application source files or active migration files are in the compare result.
+
+Latest commit CI/status:
+- Vercel: success.
+- Netlify deploy preview: success.
+- Supabase clean-install compatibility: success; all 31 job steps completed successfully.
+- Migration recovery integrity: success.
+- React migration CI: success.
+- Recovered migration chain smoke test: success.
+
+PR #29 review metadata:
+- No submitted reviews.
+- No inline review threads.
+- PR remains Draft and unmerged by design.
+
+The live Production migration ledger was read-only checked after Phase 19 and contains 30 entries. The 30 versions/names match the repository migration recovery manifest's recovered and subsequent migration inventory. No migration was added by the ACL transaction.
+
+## 11. Backup restore drill status and boundary
+
+A full isolated restore drill has **not** been run. The custom-format archive is on the owner's Windows machine, currently under `C:\Windows\system32`; the assistant's connected GitHub/Supabase tools cannot read that local file. No backup containing Production data was uploaded to a third-party environment, and no paid Supabase branch/project was created.
+
+To complete this final evidence gate, the owner must run the archive restore locally against a disposable PostgreSQL 17 instance (not Production or Staging), then verify restore completion and basic catalog/table counts. The dump should first be moved to a dedicated backup directory. This local restore test is the only remaining operational validation item before the consolidated audit package can be considered fully evidenced for approval.
