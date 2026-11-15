@@ -80,3 +80,10 @@ test('student media URLs are signed and question media metadata stays in public 
   assert.match(migration, /stimulus_version_id uuid null/);
   assert.match(migration, /question_versions_attach_stimulus_snapshot/);
 });
+
+test('shared stimulus can be scoped to a selected question range', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /id="f-stimulus-questions"/);
+  assert.match(html, /stimulusQuestionSpec\.split\(','\)/);
+  assert.match(html, /stimulusQuestionIndices\.includes\(i\+1\)/);
+});
