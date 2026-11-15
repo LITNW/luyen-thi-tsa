@@ -23,7 +23,10 @@ begin
   if p_media is null then
     return true;
   end if;
-  if jsonb_typeof(p_media) <> 'array' or jsonb_array_length(p_media) > 12 then
+  if jsonb_typeof(p_media) <> 'array' then
+    return false;
+  end if;
+  if jsonb_array_length(p_media) > 12 then
     return false;
   end if;
 
@@ -233,7 +236,7 @@ begin
   if auth.uid() is null or not public.is_admin() then
     raise exception 'Only an active Admin may save shared stimulus material.';
   end if;
-  if p_stimulus_type not in ('text','table','chart','image','dataset','experiment','mixed') then
+  if p_stimulus_type is null or p_stimulus_type not in ('text','table','chart','image','dataset','experiment','mixed') then
     raise exception 'Unsupported shared stimulus type.';
   end if;
   if p_content is null or jsonb_typeof(p_content)<>'object'
