@@ -57,3 +57,26 @@ test('legacy Admin editor synchronizes the education offering selection before s
   assert.match(html, /t\.id==='f-education-subject'[\s\S]*?view\.education_subject_id=t\.value/);
   assert.match(html, /educationSubjectId=educationSelect\?\.value\|\|view\.education_subject_id\|\|''/);
 });
+
+test('legacy exam editor supports question-local images and shared stimulus media', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /id="f-media-files"/);
+  assert.match(html, /id="f-stimulus-files"/);
+  assert.match(html, /uploadQuestionMedia/);
+  assert.match(html, /uploadStimulusMedia/);
+  assert.match(html, /admin_save_stimulus_version/);
+  assert.match(html, /stimulus_version_id:stimulusVersionId/);
+  assert.match(html, /examStimulusHtml\(q\.stimulus\)/);
+  assert.match(html, /examMediaHtml\(q\.media\)/);
+});
+
+test('student media URLs are signed and question media metadata stays in public content only', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  const migration = readFileSync(new URL('../supabase/migrations/20261115100000_question_media_stimulus_groups.sql', import.meta.url), 'utf8');
+  assert.match(html, /createSignedUrl\(item\.path,86400\)/);
+  assert.match(html, /storage\.from\('lit-question-media'\)\.upload/);
+  assert.match(migration, /lit_question_media_read_published/);
+  assert.match(migration, /lit_can_read_question_media/);
+  assert.match(migration, /stimulus_version_id uuid null/);
+  assert.match(migration, /question_versions_attach_stimulus_snapshot/);
+});
