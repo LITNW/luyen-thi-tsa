@@ -186,9 +186,21 @@ $publish$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
 do $published_media_rls$
+declare
+  v_count integer;
+  v_shared_allowed boolean;
+  v_question_allowed boolean;
+  v_uid uuid;
+  v_profile_status text;
 begin
-  if (select count(*) from storage.objects where bucket_id='lit-question-media')<>2 then
-    raise exception 'Student could not read exactly the media assets referenced by the published exam.';
+  v_uid := auth.uid();
+  select status into v_profile_status from public.profiles where id=v_uid;
+  v_shared_allowed := public.lit_can_read_question_media('question-media/ci-admin/shared.png');
+  v_question_allowed := public.lit_can_read_question_media('question-media/ci-admin/q1.png');
+  select count(*) into v_count from storage.objects where bucket_id='lit-question-media';
+  if v_count<>2 then
+    raise exception 'Student media access mismatch: visible %, shared allowed %, question allowed %, uid %, profile status %.',
+      v_count,v_shared_allowed,v_question_allowed,v_uid,v_profile_status;
   end if;
 end;
 $published_media_rls$;
