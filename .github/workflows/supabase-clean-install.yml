@@ -108,6 +108,10 @@ jobs:
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150434_stimulus_rpc_invoker_hardening.sql
       - name: Apply question media validator grants migration
         env:
+      - name: Apply multiple independent stimulus groups migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115153000_multiple_stimulus_groups.sql
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
 
@@ -196,6 +200,10 @@ jobs:
 
       - name: Run question media and shared stimulus regression
         env:
+      - name: Run multiple independent stimulus groups regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/multiple_stimulus_groups_regression.sql
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
 
