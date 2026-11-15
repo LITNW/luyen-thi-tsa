@@ -98,6 +98,11 @@ jobs:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
 
+      - name: Apply question media and shared stimulus migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115100000_question_media_stimulus_groups.sql
+
       - name: Apply M2 exam category migration
         env:
           PGPASSWORD: postgres
@@ -180,6 +185,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_atomic_editor_save_regression.sql
+
+      - name: Run question media and shared stimulus regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
 
       - name: Stop clean Supabase services
         if: always()
