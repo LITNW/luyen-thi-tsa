@@ -99,3 +99,9 @@ test('authenticated Admins can execute the media manifest validator', () => {
   const migration = readFileSync(new URL('../supabase/migrations/20261115150559_question_media_validator_grants.sql', import.meta.url), 'utf8');
   assert.match(migration, /grant execute on function public\.lit_validate_media_manifest\(jsonb\) to authenticated/i);
 });
+
+test('education subject selection reads the select element value rather than dereferencing the value helper twice', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /educationSelect=document\.getElementById\('f-education-subject'\),educationSubjectId=educationSelect\?\.value\|\|view\.education_subject_id\|\|''/);
+  assert.doesNotMatch(html, /g\('f-education-subject'\)\?\.value/);
+});
