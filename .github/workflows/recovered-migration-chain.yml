@@ -68,6 +68,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150434_stimulus_rpc_invoker_hardening.sql
       - name: Apply question media validator grants migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
+      - name: Apply multiple independent stimulus groups migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115153000_multiple_stimulus_groups.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
       - name: Apply M2 follow-up for archived category preservation
@@ -133,3 +135,5 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_atomic_editor_save_regression.sql
       - name: Run question media and shared stimulus regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/question_media_stimulus_regression.sql
+      - name: Run multiple independent stimulus groups regression
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/multiple_stimulus_groups_regression.sql
