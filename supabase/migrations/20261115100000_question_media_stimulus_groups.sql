@@ -167,7 +167,11 @@ create policy lit_question_media_admin_delete
 on storage.objects for delete to authenticated
 using (bucket_id='lit-question-media' and (select public.is_admin()));
 
-create or replace function public.lit_can_read_question_media(p_path text)
+create schema if not exists private;
+revoke all on schema private from public,anon;
+grant usage on schema private to authenticated;
+
+create or replace function private.lit_can_read_question_media(p_path text)
 returns boolean
 language sql
 stable
@@ -177,7 +181,7 @@ as $function$
   select auth.uid() is not null
     and exists (
       select 1 from public.profiles p
-      where p.id=auth.uid() and p.status='active'
+      where p.id=auth.uid() and p.role='student' and p.status='active'
     )
     and exists (
       select 1
@@ -202,8 +206,8 @@ as $function$
     );
 $function$;
 
-revoke all on function public.lit_can_read_question_media(text) from public,anon;
-grant execute on function public.lit_can_read_question_media(text) to authenticated;
+revoke all on function private.lit_can_read_question_media(text) from public,anon;
+grant execute on function private.lit_can_read_question_media(text) to authenticated;
 
 drop policy if exists lit_question_media_read_published on storage.objects;
 create policy lit_question_media_read_published
@@ -212,7 +216,7 @@ using (
   bucket_id='lit-question-media'
   and (
     (select public.is_admin())
-    or (select public.lit_can_read_question_media(name))
+    or (select private.lit_can_read_question_media(name))
   )
 );
 
