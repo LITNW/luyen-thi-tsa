@@ -22,6 +22,10 @@ declare
 begin
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
 
+  if (select prosecdef from pg_proc where oid='public.admin_save_stimulus_version(uuid,text,jsonb,jsonb)'::regprocedure) then
+    raise exception 'Shared stimulus authoring RPC must run as SECURITY INVOKER.';
+  end if;
+
   insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
   values(v_student,'ci-student@example.test',now(),' {"display_name":"CI Student"}'::jsonb)
   on conflict (id) do nothing;
