@@ -270,3 +270,11 @@ Phase 16 is design-complete only when:
 - The rollback generator was executed only as a SELECT query to produce SQL text. The remediation draft and generated rollback were not executed.
 - **Platform Grantor Resolution: resolved by supported exclusion**, not by acquiring platform role membership. The six client-role default-ACL entries are documented as immutable platform defaults for future platform-owned objects; they do not apply to the existing postgres-owned targets.
 - **Design status:** split-scope design is prepared and SELECT-only generator output is validated. This is not authorization to execute the Staging remediation. A separate explicit approval is still required for the Staging rehearsal; Production remains out of scope.
+
+
+### 6. Additional platform-default inventory (scope clarification)
+- A further SELECT-only inventory found three `supabase_admin` default-ACL categories in `public`: 32 relation privilege entries (`defaclobjtype='r'`), 12 sequence entries (`'S'`), and 4 function entries (`'f'`). These include the client-role grants documented by Supabase; the 6 sequence entries for `anon` and `authenticated` are only the client-role portion of the 12 sequence entries.
+- No `supabase_admin`-owned public relations, functions, or types were found in the current Staging catalog.
+- Phase 16 remains deliberately scoped to the 12 existing `postgres`-owned tables, three existing `postgres`-owned sequences, the `profiles.display_name` column ACL, and `postgres` sequence defaults. It does not attempt to rewrite `supabase_admin` table, sequence, or function defaults.
+- The revised remediation preflight now fails closed if any `supabase_admin`-owned relation or function appears in `public`, even if it is not one of the 15 target objects. This makes future extension/platform-owned objects a separate review gate rather than silently applying project-owned assumptions.
+- This is a scope clarification, not a claim that all platform defaults are harmless: a future extension installed into `public` may create `supabase_admin`-owned objects and inherit the platform defaults. Avoid installing extensions into `public` when the extension supports another schema; inspect ownership and ACLs after every extension installation/upgrade that can add public objects.
