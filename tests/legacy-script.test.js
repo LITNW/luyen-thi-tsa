@@ -116,3 +116,28 @@ test('legacy media editor makes per-question attachment state and shared-stimulu
   assert.match(html, /Hiện tại mỗi đề chỉ hỗ trợ một nhóm ngữ liệu chung/);
   assert.match(html, /Chọn ảnh xong, bấm Tải ảnh lên/);
 });
+
+
+test('legacy editor manages multiple independent shared stimulus groups with isolated drafts', () => {
+  const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(html, /view\.stimuli/);
+  assert.match(html, /activeStimulusId/);
+  assert.match(html, /function stimulusGroupsFromQuestions\(/);
+  assert.match(html, /function saveStimulusGroup\(/);
+  assert.match(html, /data-a="newStimulusGroup"/);
+  assert.match(html, /data-a="selectStimulusGroup"/);
+  assert.match(html, /data-a="saveStimulusGroup"/);
+  assert.match(html, /stimulus_version_ids/);
+  assert.match(html, /examStimulusHtml\(q\.stimuli\|\|q\.stimulus\)/);
+  assert.doesNotMatch(html, /Hiện tại mỗi đề chỉ hỗ trợ một nhóm ngữ liệu chung/);
+});
+
+test('multiple stimulus versions are snapshotted and authorized for published student media', () => {
+  const migration = readFileSync(new URL('../supabase/migrations/20261115153000_multiple_stimulus_groups.sql', import.meta.url), 'utf8');
+  const regression = readFileSync(new URL('../supabase/tests/multiple_stimulus_groups_regression.sql', import.meta.url), 'utf8');
+  assert.match(migration, /question_version_stimuli/);
+  assert.match(migration, /stimulus_version_ids/);
+  assert.match(migration, /jsonb_array_elements\(coalesce\(qv\.content->'stimuli'/);
+  assert.match(regression, /two independent stimulus groups/);
+  assert.match(regression, /stimulus_version_ids/);
+});
