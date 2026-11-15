@@ -19,8 +19,9 @@ DECLARE
   v_table_count integer;
   v_sequence_count integer;
   v_staging_sentinel boolean;
-  v_has_supabase_admin boolean;
+  v_target_owner_count integer;
   v_can_manage_postgres boolean;
+  v_platform_sequence_default_acl text;
   v_has_public_acl boolean;
   v_has_public_column_acl boolean;
   v_has_public_default_acl boolean;
@@ -60,6 +61,34 @@ BEGIN
     RAISE EXCEPTION 'Expected 3 target sequences; found %', v_sequence_count;
   END IF;
 
+  -- All current target relations/sequences must remain postgres-owned.
+  SELECT count(*) INTO v_target_owner_count
+  FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE n.nspname='public'
+    AND c.relname = ANY(ARRAY[
+      'attempt_answers','attempt_question_times','attempts','audit_logs',
+      'exam_solutions','exam_version_questions','exam_versions','exams',
+      'profiles','question_answer_keys','question_versions','questions',
+      'audit_logs_id_seq','import_events_id_seq','tsa_user_code_seq'
+    ])
+    AND c.relowner='postgres'::regrole;
+
+  IF v_target_owner_count <> 15 THEN
+    RAISE EXCEPTION 'Expected all 15 target objects to be postgres-owned; found %', v_target_owner_count;
+  END IF;
+
+  -- Capture the platform-managed default ACL as an immutable baseline.
+  SELECT d.defaclacl::text INTO v_platform_sequence_default_acl
+  FROM pg_default_acl d
+  WHERE d.defaclrole='supabase_admin'::regrole
+    AND d.defaclnamespace='public'::regnamespace
+    AND d.defaclobjtype='S';
+
+  IF v_platform_sequence_default_acl IS DISTINCT FROM
+     '{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}' THEN
+    RAISE EXCEPTION 'Unexpected supabase_admin/public sequence default ACL; platform-managed scope requires separate review';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM pg_attribute a
     WHERE a.attrelid='public.profiles'::regclass
@@ -73,14 +102,6 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='postgres')
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supabase_admin') THEN
     RAISE EXCEPTION 'One or more expected roles are missing';
-  END IF;
-
-  SELECT rolsuper OR pg_has_role(current_user, 'supabase_admin', 'MEMBER')
-    INTO v_has_supabase_admin
-  FROM pg_roles WHERE rolname=current_user;
-
-  IF NOT COALESCE(v_has_supabase_admin,false) THEN
-    RAISE EXCEPTION 'Executor cannot manage default privileges for supabase_admin; stop and use an authorized operator';
   END IF;
 
   SELECT rolsuper OR pg_has_role(current_user, 'postgres', 'MEMBER')
@@ -173,16 +194,17 @@ REVOKE ALL PRIVILEGES ON SEQUENCE
   public.tsa_user_code_seq
 FROM anon, authenticated;
 
--- Global and schema-specific defaults are both addressed.
+-- Only postgres-owned defaults are mutable by this project execution identity.
+-- Global and schema-specific scopes are both addressed because schema defaults
+-- add to global defaults; a schema-level REVOKE cannot cancel a global GRANT.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres
   REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin
-  REVOKE ALL ON SEQUENCES FROM anon, authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public
-  REVOKE ALL ON SEQUENCES FROM anon, authenticated;
+-- Intentionally do not ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin.
+-- Supabase reserves that platform role; its defaults apply only to objects it creates.
+-- Current target objects are all owned by postgres. Verify platform ACL remains unchanged.
 
 DO $phase16_postflight$
 DECLARE
@@ -287,12 +309,27 @@ BEGIN
     FROM pg_default_acl d
     JOIN pg_roles r ON r.oid=d.defaclrole
     CROSS JOIN LATERAL aclexplode(d.defaclacl) x
-    WHERE r.rolname IN ('postgres','supabase_admin')
+    WHERE r.rolname='postgres'
       AND d.defaclobjtype='S'
       AND d.defaclnamespace IN (0,'public'::regnamespace)
       AND x.grantee IN ('anon'::regrole,'authenticated'::regrole)
   ) THEN
-    RAISE EXCEPTION 'Postflight failed: client role remains in sequence default ACL';
+    RAISE EXCEPTION 'Postflight failed: client role remains in postgres sequence default ACL';
+  END IF;
+
+  -- Platform-managed defaults are an explicit exception, not an ACL target.
+  IF (SELECT d.defaclacl::text FROM pg_default_acl d
+      WHERE d.defaclrole='supabase_admin'::regrole
+        AND d.defaclnamespace='public'::regnamespace
+        AND d.defaclobjtype='S') IS DISTINCT FROM
+     '{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}' THEN
+    RAISE EXCEPTION 'Postflight failed: supabase_admin platform default ACL changed unexpectedly';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_default_acl d
+             WHERE d.defaclrole='supabase_admin'::regrole
+               AND d.defaclnamespace=0 AND d.defaclobjtype='S') THEN
+    RAISE EXCEPTION 'Postflight failed: unexpected global supabase_admin sequence default ACL appeared';
   END IF;
 END
 $phase16_postflight$;
