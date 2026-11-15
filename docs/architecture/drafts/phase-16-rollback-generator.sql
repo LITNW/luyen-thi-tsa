@@ -10,7 +10,7 @@ PASTE_EXPORTED_PHASE16_SNAPSHOT_JSON_HERE
 $phase16_snapshot$::jsonb AS wrapper
 ),
 snapshot AS (
-  SELECT COALESCE(wrapper->'snapshot', wrapper) AS doc FROM raw_snapshot
+  SELECT COALESCE(wrapper->'snapshot', wrapper) AS doc, wrapper FROM raw_snapshot
 ),
 table_grants AS (
   SELECT
@@ -101,6 +101,9 @@ all_restore AS (
 )
 SELECT CASE
   WHEN (SELECT doc->>'snapshot_format' FROM snapshot) <> 'phase16-acl-snapshot-v1'
+    OR (SELECT wrapper->>'snapshot_fingerprint_md5' FROM snapshot) IS DISTINCT FROM
+       (SELECT md5(doc::text) FROM snapshot)
+    OR (SELECT (doc->>'expected_table_count')::integer FROM snapshot) <> 12
     OR (SELECT (doc->>'found_table_count')::integer FROM snapshot) <> 12
     OR (SELECT (doc->>'found_sequence_count')::integer FROM snapshot) <> 3
     OR (SELECT (doc->>'bootstrap_staging_sentinel')::boolean FROM snapshot) IS DISTINCT FROM true
