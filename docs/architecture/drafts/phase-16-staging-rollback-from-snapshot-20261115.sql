@@ -1,8 +1,9 @@
 DO $phase16_rollback_role_guard$
 BEGIN
-  IF NOT pg_has_role(current_user, 'supabase_admin', 'MEMBER')
+  IF current_user <> 'postgres'
+     AND NOT pg_has_role(current_user, 'postgres', 'SET')
      AND NOT COALESCE((SELECT rolsuper FROM pg_roles WHERE rolname=current_user), false) THEN
-    RAISE EXCEPTION 'Rollback blocked: executor cannot SET ROLE supabase_admin; grantor provenance cannot be preserved';
+    RAISE EXCEPTION 'Rollback blocked: executor cannot SET ROLE postgres';
   END IF;
 END
 $phase16_rollback_role_guard$;
@@ -12,10 +13,6 @@ BEGIN;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON SEQUENCES FROM anon, authenticated;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
-
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 
 REVOKE ALL PRIVILEGES ON SEQUENCE public.audit_logs_id_seq FROM anon, authenticated;
 
@@ -915,30 +912,6 @@ RESET ROLE;
 
 SET ROLE postgres;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT USAGE ON SEQUENCES TO authenticated;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT ON SEQUENCES TO anon;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT SELECT ON SEQUENCES TO authenticated;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT UPDATE ON SEQUENCES TO anon;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT UPDATE ON SEQUENCES TO authenticated;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT USAGE ON SEQUENCES TO anon;
-RESET ROLE;
-
-SET ROLE supabase_admin;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT USAGE ON SEQUENCES TO authenticated;
 RESET ROLE;
 
 -- Verify restored ACLs against original snapshot. COMMIT only after exact review.
