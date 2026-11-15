@@ -73,7 +73,7 @@ test('legacy exam editor supports question-local images and shared stimulus medi
 
 test('student media URLs are signed and question media metadata stays in public content only', () => {
   const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
-  const migration = readFileSync(new URL('../supabase/migrations/20261115100000_question_media_stimulus_groups.sql', import.meta.url), 'utf8');
+  const migration = readFileSync(new URL('../supabase/migrations/20261115150336_question_media_stimulus_groups.sql', import.meta.url), 'utf8');
   assert.match(html, /createSignedUrl\(item\.path,86400\)/);
   assert.match(html, /storage\.from\('lit-question-media'\)\.upload/);
   assert.match(migration, /lit_question_media_read_published/);
@@ -90,12 +90,12 @@ test('shared stimulus can be scoped to a selected question range', () => {
 });
 
 test('shared stimulus RPC runs with invoker privileges', () => {
-  const migration = readFileSync(new URL('../supabase/migrations/20261115110000_stimulus_rpc_invoker_hardening.sql', import.meta.url), 'utf8');
+  const migration = readFileSync(new URL('../supabase/migrations/20261115150434_stimulus_rpc_invoker_hardening.sql', import.meta.url), 'utf8');
   assert.match(migration, /security invoker/i);
   assert.match(migration, /grant execute on function public\.admin_save_stimulus_version/);
 });
 
 test('authenticated Admins can execute the media manifest validator', () => {
-  const migration = readFileSync(new URL('../supabase/migrations/20261115120000_question_media_validator_grants.sql', import.meta.url), 'utf8');
+  const migration = readFileSync(new URL('../supabase/migrations/20261115150559_question_media_validator_grants.sql', import.meta.url), 'utf8');
   assert.match(migration, /grant execute on function public\.lit_validate_media_manifest\(jsonb\) to authenticated/i);
 });
