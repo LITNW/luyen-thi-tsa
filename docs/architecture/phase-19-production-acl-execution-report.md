@@ -95,3 +95,21 @@ The owner should perform these checks in the Production website and report the o
 **Production browser E2E: PENDING owner verification.**  
 **PR #29: remains Draft and unmerged.**  
 **Production deployment: unchanged.**
+
+
+## 8. Production browser smoke test — owner-reported
+
+On 2026-11-15, the owner reported all four requested Production smoke-test groups as passing:
+
+1. Logged-out visitor: PASS (owner-reported).
+2. Student sign-in, profile display, catalogue loading, and exam-room access: PASS (owner-reported; no real attempt/submit performed).
+3. Admin sign-in and required administration screens: PASS (owner-reported; no content save or publication performed).
+4. Student denial of Admin-only routes/workflows: PASS (owner-reported).
+
+These are owner-reported results. No independent browser automation was executed by the assistant in this verification step.
+
+## 9. Phase 19 closure
+
+**Phase 19: COMPLETE**, subject to the evidence qualifications above. The approved Production ACL transaction committed, database postflight passed, and all four owner-reported Production smoke-test groups passed.
+
+The separate full isolated backup-restore drill remains outstanding and is not represented as completed. PR #29 remains Draft/unmerged; no application deployment was performed as part of Phase 19.
