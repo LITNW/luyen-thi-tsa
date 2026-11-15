@@ -66,7 +66,7 @@ test('legacy exam editor supports question-local images and shared stimulus medi
   assert.match(html, /uploadQuestionMedia/);
   assert.match(html, /uploadStimulusMedia/);
   assert.match(html, /admin_save_stimulus_version/);
-  assert.match(html, /stimulus_version_id:stimulusVersionId/);
+  assert.match(html, /stimulus_version_ids:stimulusIdsByQuestion\.get\(i\+1\)/);
   assert.match(html, /examStimulusHtml\(q\.stimulus\)/);
   assert.match(html, /examMediaHtml\(q\.media\)/);
 });
@@ -85,7 +85,7 @@ test('student media URLs are signed and question media metadata stays in public 
 test('shared stimulus can be scoped to a selected question range', () => {
   const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
   assert.match(html, /id="f-stimulus-questions"/);
-  assert.match(html, /stimulusQuestionSpec\.split\(','\)/);
+  assert.match(html, /function parseStimulusQuestionIndices\(/);
   assert.match(html, /stimulusQuestionIndices\.includes\(i\+1\)/);
 });
 
@@ -113,7 +113,7 @@ test('legacy media editor makes per-question attachment state and shared-stimulu
   assert.match(html, /Đã tải lên · chưa lưu bản nháp/);
   assert.match(html, /Đã lưu trong bản nháp/);
   assert.match(html, /data-a=\"selectMediaQuestion\"/);
-  assert.match(html, /Hiện tại mỗi đề chỉ hỗ trợ một nhóm ngữ liệu chung/);
+  assert.match(html, /Mỗi nhóm có nội dung, ảnh, phạm vi câu hỏi và phiên bản lưu độc lập/);
   assert.match(html, /Chọn ảnh xong, bấm Tải ảnh lên/);
 });
 
