@@ -7,14 +7,14 @@ function AdminFrame({ eyebrow = 'ADMIN WORKSPACE', title, children }) {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>KHU VỰC QUẢN TRỊ</small></span></Link>
+        <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Khu vực quản trị" /></Link>
         <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link><Link to="/admin/users">Tài khoản</Link><Link to="/admin/attempts">Lượt làm</Link><Link to="/">Trang chủ</Link></nav>
       </header>
       <main className="narrow-page">
         <p className="eyebrow">{eyebrow}</p><h1>{title}</h1>
         {children}
       </main>
-      <footer className="footer">TSA PRACTICE PLATFORM · ADMIN</footer>
+      <footer className="footer">LIT · ADMIN WORKSPACE</footer>
     </div>
   );
 }
