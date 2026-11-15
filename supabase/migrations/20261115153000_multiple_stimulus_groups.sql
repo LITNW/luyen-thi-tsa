@@ -15,6 +15,8 @@ create table public.question_version_stimuli (
 create index question_version_stimuli_stimulus_version_idx
   on public.question_version_stimuli(stimulus_version_id);
 
+alter table public.question_version_stimuli enable row level security;
+
 revoke all on public.question_version_stimuli from public, anon, authenticated;
 
 create or replace function public.lit_validate_question_media_and_stimulus()
