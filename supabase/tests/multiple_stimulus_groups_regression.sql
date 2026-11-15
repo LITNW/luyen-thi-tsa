@@ -8,6 +8,9 @@ begin
   if to_regclass('public.question_version_stimuli') is null then
     raise exception 'Normalized question-to-stimulus relation is missing.';
   end if;
+  if not (select relrowsecurity from pg_class where oid='public.question_version_stimuli'::regclass) then
+    raise exception 'Question-to-stimulus link table must have RLS enabled.';
+  end if;
   if not exists (
     select 1 from pg_trigger
     where tgname='question_versions_link_stimulus_groups'
