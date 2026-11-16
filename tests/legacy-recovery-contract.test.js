@@ -79,3 +79,11 @@ test('offline legacy shell also caches the IndexedDB adapter required to reopen 
   assert.match(serviceWorker, /url\.pathname===ATTEMPT_STORAGE_SCRIPT/);
   assert.match(serviceWorker, /cache\.match\(ATTEMPT_STORAGE_SCRIPT\)/);
 });
+
+
+test('quota failures switch to a visible localStorage fallback without dropping the in-memory draft', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /mode = 'legacy-fallback'/);
+  assert.match(storage, /root\.localStorage\.setItem\(key, JSON\.stringify\(value\)\)/);
+  assert.match(storage, /emitError\(error, 'write'\)/);
+});
