@@ -24,7 +24,7 @@ File: `public/legacy/index.html`
 
 - The legacy registration form also collects display name, email, and password.
 - Its `signup()` handler calls Supabase Auth `signUp` directly.
-- It has no policy link or consent checkbox.
+- It has no policy link or checkbox.
 - The legacy app remains reachable at `/legacy/index.html`; this path must be covered or disabled before a release can pass the compliance gate.
 
 ### Public landing page
@@ -59,7 +59,6 @@ The database inventory also includes question banks, exam content, taxonomies an
 - Supabase Production currently reports no deployed Edge Functions in the project inventory. Do not describe an AI processing provider as an active recipient until deployment and data flow are verified.
 - Vercel and Cloudflare are part of the known deployment/infrastructure architecture and require contract, region, log-retention and subprocessor review before the policy describes their roles precisely.
 
-
 ## 3A. Additional live-database checks (read-only)
 
 - An `AFTER INSERT` trigger on `auth.users` calls `public.handle_new_auth_user()`. It creates `public.profiles` using the submitted `display_name` and email. It currently does not require or record a privacy-consent decision. This is a critical backend enforcement gap: changing only the React form would leave the legacy client and direct Auth API path unguarded.
@@ -68,7 +67,6 @@ The database inventory also includes question banks, exam content, taxonomies an
 - The `tsa-imports` Storage bucket is private, limited to 25 MiB per file, and has admin-only select/insert/update/delete policies. At audit time it contained zero objects; `import_jobs` and `import_events` also contained zero records. This is a snapshot, not proof that no future uploads will occur.
 - `audit_logs` contained three records at audit time. Do not inspect or reproduce their personal details in this report.
 - The inspected Supabase project currently has no deployed Edge Functions. The `handle_new_auth_user` trigger is database-side logic, not an Edge Function.
-
 
 ## 3B. Hosting, retention and user-rights checks
 
@@ -101,26 +99,37 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 - Complete source-wide collection-path review, including account/profile edits, admin imports, storage buckets, RPCs, database triggers, logs, analytics and deployment providers.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
-- Obtain confirmed controller identity and privacy contact, approved purposes, legal bases, retention schedule and intended user age/eligibility.
+- Confirm a public privacy contact email, approved purposes, legal bases, retention schedule and detailed user eligibility.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
 - Implement the public policy, registration controls in both React and legacy surfaces (or retire legacy registration), user rights request path, retention/deletion workflows and vendor disclosures.
 - Validate on Staging; production rollout requires a separate explicit release approval.
 
+## 7. Confirmed operator and product decisions (2026-11-16)
+
+- The operator describes LIT as a small group project, currently free to use and temporarily non-profit, with no company or other registered organization.
+- The user confirms they personally operate LIT and will be the responsible contact for privacy requests. This does not establish that LIT is a separate legal person. The final notice must accurately identify the individual operator/controller as advised by qualified Vietnamese counsel; do not invent a legal name or residential address.
+- The operator intends to create and publicly disclose a dedicated LIT project email for privacy requests. The actual address has not yet been supplied; do not publish a placeholder or personal email.
+- LIT permits users under 16 to register and use the service.
+- The operator approved a product control requiring parent/legal-representative email confirmation before activating an account for a user under 16.
+- The confirmation workflow must retain a server-controlled, verifiable record of the confirming address, confirmation event/time, exact notice and consent text/version, purposes, child account reference and outcome. Email link possession proves control of that mailbox, not by itself the person's legal status as the child's representative. The flow must include an explicit representation/attestation and a proportionate verification/risk process; do not label the representative as legally verified solely because an email link was clicked.
+- Minimize age-gating data. Prefer a minimal age threshold/age-band decision rather than retaining a full date of birth unless legal review establishes that exact DOB is necessary.
+- Do not conflate the representative's role in exercising a child's data-subject rights with consent for every processing purpose. Implement purpose-specific consent and preserve any additional child assent required by law for the relevant processing. In particular, Article 24(2) of Law 91/2025/QH15 requires both the child's and legal representative's consent for processing intended to publish or disclose private-life/personal-secret information of a child aged 7 or older.
+- The legal text must be checked against the official current consolidated instruments before launch. This technical design is not a legal opinion.
 
 ## 8. Legal baseline checked on 2026-11-16
 
-- Primary law: Law 91/2025/QH15 on Personal Data Protection, effective 2026-01-01. Article 9 requires voluntary, informed, verifiable consent and consent by purpose; silence/non-response is not consent. Article 11 addresses collection consent. Article 14 governs deletion/destruction/de-identification, including exceptions. Article 20 covers cross-border transfers and impact-assessment duties, subject to statutory and decree exceptions.
-- Implementing decree: Decree 356/2025/ND-CP, effective 2026-01-01. Decree 13/2023/ND-CP ceased to have effect when Decree 356 took effect; do not use Decree 13 as the current sole implementation basis.
+- Primary law: Law 91/2025/QH15 on Personal Data Protection, effective 2026-01-01. Article 9 requires voluntary, informed, verifiable consent and consent by purpose; silence/non-response is not consent. Article 11 addresses collection consent. Article 14 governs deletion/destruction/de-identification, including exceptions. Article 20 covers cross-border transfers and impact-assessment duties, subject to statutory and decree exceptions. Article 24 governs children's data and representation.
+- Implementing decree: Decree 356/2025/ND-CP, effective 2026-01-01. Article 6 recognizes written, recorded-call, SMS, email, and suitably verifiable electronic/platform methods of expressing consent; the controller/controller-processor must retain evidence and bears the burden of proving consent. Decree 13/2023/ND-CP ceased to have effect when Decree 356 took effect; do not use Decree 13 as the current sole implementation basis.
 - Decree 392/2026/ND-CP took effect 2026-11-15 and amends certain administrative procedures in the security-and-order field, including procedural provisions related to Decree 356. Legal review must use the consolidated/current text as of the release date.
-- Decree 356 Article 41 contains conditional transitional relief for certain small/start-up and micro businesses from specified impact-assessment/personnel obligations. LIT's legal operator type, size, activity, sensitive-data handling and scale have not been established, so no exemption is assumed.
+- Decree 356 Article 41 contains conditional transitional relief for certain small/start-up and micro businesses from specified impact-assessment/personnel obligations. LIT's operator type, size, activity, sensitive-data handling and scale have not been established, so no exemption is assumed.
 
 Official references:
 - Law 91/2025/QH15: https://vanban.chinhphu.vn/?docid=214590&pageid=27160
 - Decree 356/2025/ND-CP: https://vanban.chinhphu.vn/?docid=216387&pageid=27160
 - Decree 392/2026/ND-CP: https://congbao.chinhphu.vn/van-ban-dang-cong-bao/nghi-dinh-l1/trang-2.htm
 
-## 7. Current release gate
+## 9. Current release gate
 
 **BLOCKED — do not declare LIT privacy-compliant or release the compliance changes to Production.**
 
-The confirmed owner/controller identity, privacy contact, retention periods, and approved processing purposes are business/legal facts that cannot be inferred from the repository. They must be confirmed before final policy text and retention enforcement are committed.
+The actual public privacy contact email, final operator identity wording, retention periods, approved processing purposes and legal bases remain to be confirmed. The under-16 parent-confirmation requirement is approved as a product control, but its legal sufficiency and representative-verification design require review. Do not infer legal exemptions from LIT's informal, non-profit status.
