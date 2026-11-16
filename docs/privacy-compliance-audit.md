@@ -202,3 +202,32 @@ The privacy contact email and minimum processing-purpose scope are confirmed. Fi
 - The Supabase organization is confirmed on the Free plan. Supabase Auth Hooks documentation lists Before User Created as available on Free and Pro, and supports a Postgres-function hook; this can be used without deploying an Edge Function or upgrading. Keep the database trigger as the final atomic gate for single-use registration intent consumption.
 - Supabase's default Auth SMTP currently allows only 2 messages/hour and restricts delivery to pre-authorized project-team addresses. Public parent-confirmation email requires custom SMTP. Supabase documents support for any SMTP provider; the Gmail SMTP protocol is documented by Google at `smtp.gmail.com` ports 465/587. Personal Gmail is limited to 500 messages/day. Do not configure it without explicit sender approval, 2-Step Verification and a dedicated App Password. References: https://supabase.com/docs/guides/auth/auth-smtp and https://developers.google.com/workspace/gmail/imap/imap-smtp
 - The implementation design proposes provisional operational retention defaults for approval: 30-day raw IP/user-agent retention; 90-day minimized security telemetry; 12-month administrative audit logs; 30-day successful import-source retention and 7-day failed/cancelled source retention; 30-day browser-cache TTL plus clearing on logout/submission; 3-year privacy-request record retention. Consent/parent-confirmation evidence duration remains open for qualified legal review. These are engineering proposals, not statutory periods; do not automate deletion until approved and legally reviewed.
+
+
+## 3G. Revalidated registration enforcement baseline (read-only, 2026-11-16 17:00 ICT)
+
+A second read-only inspection was run against both Supabase projects after the browser-storage PR verification.
+
+| Check | Staging `cppalwtdkditlhojpeyc` | Production `hwqtsopvpucadgpkigqz` |
+|---|---|---|
+| Project health | `ACTIVE_HEALTHY` | Queried read-only; no schema write performed |
+| `auth.users` profile trigger | `on_auth_user_created_profile` → `public.handle_new_auth_user()` | Same trigger name/function |
+| Trigger behavior | Creates profile with `status='active'` | Creates profile with `status='active'` |
+| Profile status constraint | Only `active`, `suspended` | Only `active`, `suspended` |
+| Consent/registration/parent tables | No matching tables found in `public` or `private` | No matching tables found in `public` or `private` |
+| Auth hook setting exposed through database settings | No matching PostgreSQL setting was visible; this does not prove Dashboard Auth Hook state | Same limitation |
+
+The two trigger bodies are not identical: Staging derives a fallback display name from the email local-part when none is supplied and validates email; Production requires a supplied display name and validates it. Both insert an active student profile and neither consumes a registration intent or writes immutable consent/parent evidence.
+
+**Consequence:** do not implement a frontend-only checkbox and do not add `pending_parent` without a complete authorization migration. A valid end-to-end design must cover React and legacy registration, direct Auth API attempts, atomic one-time registration-intent consumption, immutable policy-versioned evidence, parent confirmation, account activation, and RLS/RPC enforcement. The Before User Created Hook can provide early rejection, but the Auth-user trigger remains the final transactional gate. Dashboard hook enablement must be verified separately from PostgreSQL catalog inspection.
+
+The Staging migration ledger currently contains a reconstructed pre-005 baseline plus Staging-specific migrations, including question-media/stimulus changes and archive behavior. Production has a different migration ledger. A migration that passes only on Staging is not sufficient release evidence; the exact Production schema baseline and migration chain must be reconciled before any Production DDL.
+
+## 3H. Browser-storage PR verification refresh (read-only, 2026-11-16 17:00 ICT)
+
+- PR #33 remains Draft and unmerged.
+- React migration CI run #356 completed successfully: dependency installation, unit tests and production build all passed. Run #355 also passed.
+- Cloudflare Pages reported a successful Preview deployment for commit `6cbd7d7bbc36dff65874281f83523ae7966deba3`: https://77d03733.luyen-thi-tsa.pages.dev/
+- A separate Cloudflare Worker build notification reported failures for the same commit. The account API shows a Worker named `luyen-thi-tsa` with a build trigger restricted to the `main` branch; the Worker has no attached routes in the inspected account snapshot. The failed notification is therefore not evidence that the Pages Preview failed or that the Worker serves the Pages application. Its relationship to the active Pages runtime remains unproven.
+- Vercel's PR deployment notification reports the Free-plan daily deployment limit. This does not block the verified Cloudflare Pages Preview or GitHub Actions build.
+- No Production schema, Auth settings, secrets, environment variables or deployment settings were changed during these checks.
