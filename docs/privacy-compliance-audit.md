@@ -96,6 +96,19 @@ The database inventory also includes question banks, exam content, taxonomies an
 - Implement the public policy, registration controls in both React and legacy surfaces (or retire legacy registration), user rights request path, retention/deletion workflows and vendor disclosures.
 - Validate on Staging; production rollout requires a separate explicit release approval.
 
+
+## 8. Legal baseline checked on 2026-11-16
+
+- Primary law: Law 91/2025/QH15 on Personal Data Protection, effective 2026-01-01. Article 9 requires voluntary, informed, verifiable consent and consent by purpose; silence/non-response is not consent. Article 11 addresses collection consent. Article 14 governs deletion/destruction/de-identification, including exceptions. Article 20 covers cross-border transfers and impact-assessment duties, subject to statutory and decree exceptions.
+- Implementing decree: Decree 356/2025/ND-CP, effective 2026-01-01. Decree 13/2023/ND-CP ceased to have effect when Decree 356 took effect; do not use Decree 13 as the current sole implementation basis.
+- Decree 392/2026/ND-CP took effect 2026-11-15 and amends certain administrative procedures in the security-and-order field, including procedural provisions related to Decree 356. Legal review must use the consolidated/current text as of the release date.
+- Decree 356 Article 41 contains conditional transitional relief for certain small/start-up and micro businesses from specified impact-assessment/personnel obligations. LIT's legal operator type, size, activity, sensitive-data handling and scale have not been established, so no exemption is assumed.
+
+Official references:
+- Law 91/2025/QH15: https://vanban.chinhphu.vn/?docid=214590&pageid=27160
+- Decree 356/2025/ND-CP: https://vanban.chinhphu.vn/?docid=216387&pageid=27160
+- Decree 392/2026/ND-CP: https://congbao.chinhphu.vn/van-ban-dang-cong-bao/nghi-dinh-l1/trang-2.htm
+
 ## 7. Current release gate
 
 **BLOCKED — do not declare LIT privacy-compliant or release the compliance changes to Production.**
