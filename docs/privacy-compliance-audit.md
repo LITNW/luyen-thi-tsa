@@ -88,6 +88,18 @@ The database inventory also includes question banks, exam content, taxonomies an
 - Reviewed React and legacy source paths did not reveal a configured analytics SDK (for example, Google Analytics, PostHog or Sentry) or an explicit phone/date-of-birth collection field. This is a bounded source review, not proof that no provider-side telemetry or hosting logs exist.
 - The React account page and legacy profile view expose account details and logout but do not provide account deletion, export or consent-withdrawal controls. The legacy signup function remains a direct Supabase Auth `signUp` call without a consent gate, as does the React signup path through `AuthContext`.
 
+
+
+## 3D. Additional security and hosting checks (read-only, 2026-11-16)
+
+- Supabase Security Advisor reported 40 `SECURITY DEFINER` functions in the exposed `public` schema callable by the `authenticated` role. This is an exposure-surface warning, not by itself proof of an authorization bypass. Read-only inspection of representative account/admin/attempt functions found explicit `auth.uid()` checks, owner matching for learner attempt operations, and `public.is_admin()` checks in the reviewed admin functions. The reviewed functions generally use an empty `search_path`. This sample does not yet establish that all 40 functions have correct authorization; each remaining function and its call graph must be reviewed before release.
+- `bootstrap_first_admin()` remains executable by `authenticated` users. Its body checks for a confirmed hard-coded bootstrap email and refuses to proceed once an admin exists. Treat this as a special bootstrap endpoint and verify the intended account/retirement state; do not infer that all authenticated callers can grant themselves admin.
+- The three tables flagged by the advisor for RLS without policies are `attempt_question_time_events`, `exam_solutions`, and `question_answer_keys`. A direct read-only grants check found only `postgres` and `service_role` table grants for these tables, with no `anon` or `authenticated` table grants at the audit snapshot. This indicates no direct Data API table access for ordinary client roles at that snapshot; retain the restricted design and verify any future RPC/service-role access separately.
+- Supabase Security Advisor also reports leaked-password protection disabled. This is an authentication hardening item to assess and enable through a separately tested configuration change; it was not changed during this audit.
+- The Vercel project metadata confirms SSO protection is enabled for deployments except custom domains, while password protection and trusted-IP restrictions are disabled. The project reports `live: false` and the latest deployment target was null at inspection time. These metadata do not establish the complete public access model or all log-retention settings; verify the effective Production/custom-domain configuration before publication.
+- Vercel environment-variable metadata was inspected without decrypting values. The visible names include Supabase connection/public-client variables and database connection variables. No variable values were read or copied into this report. This metadata alone does not establish provider-side processing locations or log retention.
+- The connected Cloudflare identity is available, but the current audit has not yet established which Cloudflare products/resources are actively serving LIT traffic, their configuration, data categories, or retention. Do not describe Cloudflare as a confirmed processor for a particular data flow until that mapping is completed.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
@@ -108,12 +120,12 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 ## 6. Work remaining
 
-- Continue source-wide and live-provider verification, especially all RPC/function data paths, local browser caches, deployment logs, provider telemetry, storage lifecycle and any future AI processing deployment.
+- Continue source-wide and live-provider verification, especially the remaining `SECURITY DEFINER` function bodies/call graph, all RPC/function data paths, local browser caches, deployment logs, provider telemetry, Cloudflare product usage, storage lifecycle and any future AI processing deployment.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
 - Confirm approved purposes, legal bases, retention schedule and detailed user eligibility. The dedicated privacy contact email is now confirmed as `lit.privacy.vn@gmail.com`.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
 - Implement the public policy, registration controls in both React and legacy surfaces (or retire legacy registration), user rights request path, retention/deletion workflows and vendor disclosures.
-- Validate on Staging; production rollout requires a separate explicit release approval.
+- Review all Security Advisor findings and authentication hardening, preserving the restricted no-policy table grants where intentional; validate all changes on Staging. Production rollout requires a separate explicit release approval.
 
 ## 7. Confirmed operator and product decisions (2026-11-16)
 
