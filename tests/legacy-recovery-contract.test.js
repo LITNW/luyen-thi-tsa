@@ -41,7 +41,7 @@ test('legacy exam persistence is account-scoped in IndexedDB and waits for migra
 
 test('legacy attempt drafts preserve old data until every IndexedDB record is read back and verified', () => {
   const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
-  assert.match(storage, /verify/);
+  assert.match(storage, /verified/);
   assert.match(storage, /JSON\.stringify/);
   assert.match(storage, /transaction\.oncomplete/);
   assert.match(storage, /migration/i);
