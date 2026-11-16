@@ -381,7 +381,7 @@ input::placeholder, textarea::placeholder {
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('/legacy/sw.js',{scope:'/legacy/'}).catch(()=>{}));
 }
-</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script id="app-js">
+</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script src="/legacy/attempt-storage.js"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
     let editorCategories=[],editorEducationSubjects=[],editorEducationLevels=[],editorEducationNodes=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
     const SB_CONFIG=window.__SUPABASE_CONFIG__||{};
@@ -389,7 +389,7 @@ if('serviceWorker' in navigator){
     const SB_KEY=SB_CONFIG.publishableKey||'';
     const sb=window.supabase?.createClient&&SB_URL&&SB_KEY?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
     const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const st={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+    const st={get:k=>window.LITAttemptStorage.get(k),set:(k,v)=>window.LITAttemptStorage.set(k,v),del:k=>window.LITAttemptStorage.del(k)};
     const ex=id=>D.exams.find(x=>x.id===id),fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
     const TL={mc:'Trắc nghiệm',ms:'Nhiều đáp án',tf:'Đúng/Sai',num:'Điền số',dnd:'Ghép nối'},K=q=>q.k||'mc',P=q=>q.p||1,mx=x=>x.qs.reduce((s,q)=>s+P(q),0),num=s=>parseFloat(String(s).replace(',','.'));
     const any=(q,v)=>v!=null&&(Array.isArray(v)?v.some(z=>z!=null):v!=='');
@@ -432,6 +432,7 @@ if('serviceWorker' in navigator){
     function auth(){return '<main class="auth-shell"><section class="auth-intro"><img class="legacy-brand-symbol auth-brand-symbol" src="/brand/lit-symbol.svg" alt="LIT"><p class="eyebrow">LIT · LEARN · PRACTICE · GROW</p><h1>Chuẩn bị tốt hơn.<br><span>Bứt phá giới hạn.</span></h1><p class="auth-lead">Không gian luyện tập tập trung cho kỳ thi Đánh giá tư duy: làm bài có thời gian, theo dõi tiến độ và xem lại kết quả.</p><div class="auth-points"><div><b>01</b><span>Luyện tập theo đề thi</span></div><div><b>02</b><span>Chấm điểm tự động</span></div><div><b>03</b><span>Lưu lịch sử học tập</span></div></div><p class="auth-foot">LIT · LEARN · PRACTICE · GROW</p></section><section class="auth-panel"><div class="auth-panel-head"><span class="eyebrow">BẮT ĐẦU HỌC TẬP</span><h2>Chào mừng trở lại</h2><p class="m">Đăng nhập để tiếp tục hành trình ôn luyện.</p></div><div class="auth-form"><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" placeholder="name@example.com"><label for="login-password">Mật khẩu</label><input id="login-password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu"><button class="b bp auth-submit" data-a="login">Đăng nhập <span>→</span></button></div><div class="auth-divider"><span>CHƯA CÓ TÀI KHOẢN?</span></div><details class="signup-box"><summary>Tạo tài khoản học sinh <span>＋</span></summary><div class="auth-form signup-form"><p class="m">Hệ thống sẽ gửi email xác minh trước khi bạn có thể đăng nhập.</p><label for="signup-name">Tên hiển thị</label><input id="signup-name" maxlength="80" autocomplete="name" placeholder="Tên của bạn"><label for="signup-email">Email</label><input id="signup-email" type="email" autocomplete="email" placeholder="Email đăng ký"><label for="signup-password">Mật khẩu</label><input id="signup-password" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự"><button class="b" data-a="signup">Đăng ký tài khoản</button></div></details><p id="global-msg" class="m auth-message"></p></section></main>'}
     function profilePage(){return '<h1>Tài khoản</h1><div class="c"><h3>'+esc(profile.display_name)+'</h3><p>Email: '+esc(profile.email)+'</p><p>Mã tài khoản: <b>'+esc(profile.user_code)+'</b></p><p>Vai trò: '+(me?'Admin':'Học sinh')+'</p><p>Trạng thái: '+esc(profile.status)+'</p><button class="b" data-a="signout">Đăng xuất</button> <button class="b" data-a="home">Quay lại</button></div><p id="global-msg" class="m"></p>'}
     async function refreshData(user){
+      await window.LITAttemptStorage.setAccount(user?.id||null);
       if(!user){profile=null;me=false;D.exams=[];adminVersions=[];view={n:'auth'};render();return}
       const {data:p,error:pe}=await sb.from('profiles').select('id,email,display_name,user_code,role,status,created_at').eq('id',user.id).single();
       if(pe||!p){if(restoreOfflineAttempt(user.id))return;profile=null;me=false;view={n:'auth'};render();notify('Không tải được hồ sơ tài khoản: '+(pe?.message||'chưa có hồ sơ'));return}
@@ -464,6 +465,7 @@ if('serviceWorker' in navigator){
         notify('Không kết nối được Supabase: '+(e.message||String(e))+' Bạn vẫn có thể xem trang đăng nhập; hãy thử tải lại sau.');
       }
     }
+    window.addEventListener('lit-attempt-storage-error',e=>notify('Không thể lưu bản nháp an toàn trên thiết bị: '+(e.detail?.message||'lỗi IndexedDB')+'. Dữ liệu cũ được giữ lại nếu chưa xác minh chuyển đổi.'));
     window.addEventListener('error',e=>{
       if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi JavaScript khi khởi động.</p><pre>'+esc(e.message||'Lỗi không xác định')+'</pre></div>';
     });
