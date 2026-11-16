@@ -59,6 +59,16 @@ The database inventory also includes question banks, exam content, taxonomies an
 - Supabase Production currently reports no deployed Edge Functions in the project inventory. Do not describe an AI processing provider as an active recipient until deployment and data flow are verified.
 - Vercel and Cloudflare are part of the known deployment/infrastructure architecture and require contract, region, log-retention and subprocessor review before the policy describes their roles precisely.
 
+
+## 3A. Additional live-database checks (read-only)
+
+- An `AFTER INSERT` trigger on `auth.users` calls `public.handle_new_auth_user()`. It creates `public.profiles` using the submitted `display_name` and email. It currently does not require or record a privacy-consent decision. This is a critical backend enforcement gap: changing only the React form would leave the legacy client and direct Auth API path unguarded.
+- The profile audit trigger records role/status changes and includes the profile email in `audit_logs.details`. This is another personal-data location that must be included in access and retention rules.
+- RLS policies were observed for profile self/admin access, attempt owner/admin access, admin-only import records, and admin-only storage access for the `tsa-imports` bucket. These controls reduce unauthorized access but do not establish a retention schedule or fulfill notice/consent duties.
+- The `tsa-imports` Storage bucket is private, limited to 25 MiB per file, and has admin-only select/insert/update/delete policies. At audit time it contained zero objects; `import_jobs` and `import_events` also contained zero records. This is a snapshot, not proof that no future uploads will occur.
+- `audit_logs` contained three records at audit time. Do not inspect or reproduce their personal details in this report.
+- The inspected Supabase project currently has no deployed Edge Functions. The `handle_new_auth_user` trigger is database-side logic, not an Edge Function.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
