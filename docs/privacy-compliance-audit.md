@@ -57,7 +57,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 - The client uses the public Supabase URL and publishable key; no service-role key was observed in the inspected client files.
 - The legacy client loads PDF.js assets from cdnjs. This is an external resource request and should be documented in the vendor/data-flow inventory; determine whether request metadata is shared with the CDN.
 - Supabase Production currently reports no deployed Edge Functions in the project inventory. Do not describe an AI processing provider as an active recipient until deployment and data flow are verified.
-- Vercel and Cloudflare are part of the known deployment/infrastructure architecture and require contract, region, log-retention and subprocessor review before the policy describes their roles precisely.
+- Cloudflare Pages is confirmed as the active hosting platform for the current repository deployment; Vercel project metadata also exists but does not establish an active Production role. Provider contracts, processing locations, access logs, retention and subprocessors still require review before the policy describes their roles precisely.
 
 ## 3A. Additional live-database checks (read-only)
 
@@ -100,6 +100,18 @@ The database inventory also includes question banks, exam content, taxonomies an
 - Vercel environment-variable metadata was inspected without decrypting values. The visible names include Supabase connection/public-client variables and database connection variables. No variable values were read or copied into this report. This metadata alone does not establish provider-side processing locations or log retention.
 - The connected Cloudflare identity is available, but the current audit has not yet established which Cloudflare products/resources are actively serving LIT traffic, their configuration, data categories, or retention. Do not describe Cloudflare as a confirmed processor for a particular data flow until that mapping is completed.
 
+
+
+## 3E. Cloudflare Pages and Worker deployment verification (read-only, 2026-11-16)
+
+- Cloudflare account inspection confirms an active Pages project named `luyen-thi-tsa`, connected to GitHub repository `LITNW/luyen-thi-tsa`, with `main` as the production branch and preview deployments enabled for all branches.
+- The Pages project exposes `luyen-thi-tsa.pages.dev`; the project API returned no custom domains. The latest canonical Production deployment was successful and points to the `main` branch. The Pages build configuration has no Cloudflare Web Analytics tag/token configured at the time of inspection.
+- The Pages Preview environment is configured with the Supabase Staging project `cppalwtdkditlhojpeyc`; the Pages Production environment is configured with Supabase Production `hwqtsopvpucadgpkigqz`. The public client uses the publishable key in both environments. This is the verified environment split; never point a Preview build at Production for privacy feature testing.
+- The Preview build triggered by this documentation-only audit commit was skipped by the Pages path configuration. This does not indicate a failed application build; the changed file is documentation.
+- A separate Cloudflare Worker script named `luyen-thi-tsa` is also present in the account. Its observability is enabled with 100% head sampling, persisted invocation logs enabled, and query-string redaction disabled. The script has no Worker Domain or route attached in the inspected Worker API, and its relationship to the Pages-managed production/preview Workers has not yet been established. Do not assume this is the primary Pages runtime; map the script and inspect its request/log payloads before deciding whether query-string redaction or reduced logging is required.
+- The Vercel project with the similar application name still exists, but its project metadata reports `live: false`; Cloudflare Pages is the confirmed current deployment platform from the account configuration. Vercel remains a possible ancillary/legacy deployment surface until its domains, aliases and active deployment use are fully reconciled.
+- No Cloudflare Zone was returned for the connected account, and the Pages project API returned only its `pages.dev` hostname. Reconfirm domain ownership/routing if LIT later attaches a custom domain or uses another Cloudflare account.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
@@ -120,7 +132,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 ## 6. Work remaining
 
-- Continue source-wide and live-provider verification, especially the remaining `SECURITY DEFINER` function bodies/call graph, all RPC/function data paths, local browser caches, deployment logs, provider telemetry, Cloudflare product usage, storage lifecycle and any future AI processing deployment.
+- Continue source-wide and live-provider verification, especially the remaining `SECURITY DEFINER` function bodies/call graph, all RPC/function data paths, local browser caches, deployment logs, provider telemetry, Cloudflare Pages/Worker logs and product usage, storage lifecycle and any future AI processing deployment.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
 - Confirm approved purposes, legal bases, retention schedule and detailed user eligibility. The dedicated privacy contact email is now confirmed as `lit.privacy.vn@gmail.com`.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
