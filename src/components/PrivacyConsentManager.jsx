@@ -9,7 +9,7 @@ import './privacy-consent.css';
 
 const CATEGORIES = [
   { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ phiên đăng nhập và chức năng cốt lõi. Trong phòng thi cũ, bản nháp lượt thi, câu trả lời chờ đồng bộ, trạng thái câu hỏi và snapshot cần khôi phục hiện được lưu tạm trên thiết bị. Luôn bật.' , locked: true },
-  { key: 'security', title: 'Bảo mật và chống gian lận', detail: 'Hỗ trợ phát hiện truy cập bất thường, bảo vệ phiên và ngăn hành vi lạm dụng. Không dùng cho quảng cáo.', locked: true },
+  { key: 'security', title: 'Bảo mật và chống gian lận', detail: 'Dành cho các kiểm soát bảo mật và chống lạm dụng ở mức cần thiết. LIT không bật fingerprinting, theo dõi quảng cáo hoặc dịch vụ chống gian lận bên thứ ba.', locked: true },
   { key: 'preferences', title: 'Tùy chọn người dùng', detail: 'Dành cho tùy chọn giao diện không nhạy cảm. Các tính năng lưu tùy chọn giao diện chưa được tích hợp; bật mục này hiện chưa kích hoạt việc thu thập dữ liệu mới.' },
   { key: 'pageState', title: 'Duy trì trạng thái trang', detail: 'Dành cho trạng thái điều hướng và thao tác tạm thời. Chức năng lưu trạng thái trang chưa được tích hợp; bật mục này hiện chưa kích hoạt việc lưu dữ liệu mới.' },
   { key: 'analytics', title: 'Phân tích và đo lường hiệu suất', detail: 'Đo lường mức độ ổn định và hiệu suất. Hiện LIT chưa kích hoạt nhà cung cấp phân tích; mục này đang tắt.' , unavailable: true },
