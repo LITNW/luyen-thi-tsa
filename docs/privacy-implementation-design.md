@@ -185,7 +185,25 @@ Law 91/2025/QH15 Article 14 provides purpose/period-based deletion grounds and s
 
 Supabase's default Auth SMTP is restricted to team-authorized addresses and currently limited to 2 messages/hour; it is not suitable for public parent-confirmation recipients. Supabase supports custom SMTP. LIT's Supabase organization is on the Free plan, and the Before User Created Hook is documented as available on Free and Pro.
 
-**Recommended zero-additional-cost interim option:** use `lit.privacy.vn@gmail.com` as the transactional sender through Gmail SMTP, only if the operator approves and enables 2-Step Verification plus a dedicated App Password. Use `smtp.gmail.com:587` with STARTTLS, store the App Password only in Supabase Auth SMTP configuration, and never put it in GitHub, frontend code, logs or chat. Google documents personal Gmail SMTP limits of up to 500 messages/day. This is suitable only for low-volume transactional messages and has less isolation/reliability than a dedicated transactional provider.
+**APPROVED interim sender (2026-11-16):** use `lit.privacy.vn@gmail.com` as the transactional sender through Gmail SMTP. Configuration is not yet applied: the operator must create a dedicated App Password after enabling 2-Step Verification and provide it through a secure configuration path. The App Password must never be placed in GitHub, frontend code, logs or chat. Use `smtp.gmail.com:587` with STARTTLS, store the App Password only in Supabase Auth SMTP configuration, and never put it in GitHub, frontend code, logs or chat. Google documents personal Gmail SMTP limits of up to 500 messages/day. This is suitable only for low-volume transactional messages and has less isolation/reliability than a dedicated transactional provider.
 
 Alternative: Resend Free advertises 3,000 messages/month and 100/day, but LIT would need a verified sending domain; the current Pages setup has no custom domain. Brevo Free advertises 300/day but adds provider branding. Neither provider is selected.
 
+
+### 5.3 Client-side storage strategy to reduce server load
+
+Use browser storage to cache data and hold temporary work, not as the authoritative record:
+
+- Cache API + service worker: versioned static assets (JS/CSS/fonts/icons) and public, non-personal exam media. This reduces repeated downloads and CDN/origin requests. Do not cache authenticated API responses or private exam payloads with a shared Cache-first policy.
+- IndexedDB: temporary exam-session state, unsent answer drafts, question navigation state, and a bounded cache of recently viewed question content. Use per-account namespaces, explicit TTL/LRU cleanup, schema versioning, and clear account-scoped data on logout/account switch. Drafts should sync to the server when connectivity returns; a local draft is not a submitted answer.
+- localStorage: only small non-sensitive preferences such as theme, font size, display settings, and last-selected filters. Never store passwords, access/refresh tokens, consent proof, parent confirmation tokens, or authoritative scores here.
+- sessionStorage: ephemeral UI state for a single tab/session, such as current filter or temporary navigation state.
+- Cookies: only small session/security identifiers when required by the auth architecture. Use Secure, HttpOnly and an appropriate SameSite policy for server-set session cookies; never store question sets, answers, scores, profile data or other bulk content in cookies.
+- Server remains authoritative for account identity, consent/parent evidence, submitted attempts, final answers, scores, abuse/security events and administrative audit records. Client storage is untrusted and can be edited or cleared by the user/browser.
+- Browser storage is best-effort and may be evicted, cleared by private browsing, or unavailable under quota pressure. Never rely on it as the sole copy of data users expect to retain. Handle quota errors and network loss explicitly.
+- Data minimization: don't cache more questions or media than needed; prefer a small rolling cache with TTL, and don't pre-download full exam banks. Avoid caching data belonging to one account for another account on shared devices.
+- Cache-control: use immutable hashed asset filenames for public static assets; use `private, no-store` (or carefully scoped authenticated revalidation) for private responses. Ensure service-worker cache rules cannot override server privacy headers.
+
+Expected benefits: fewer repeated static/media downloads, fewer repeated reads for recently viewed content, and fewer server writes for unsent interaction state. This does not reduce the database footprint of authoritative submitted attempts unless the product deliberately stops retaining them, which would affect learning-history functionality and requires a separate purpose/retention decision.
+
+Implementation should start with static assets and non-personal public content caching, then a small IndexedDB draft/cache layer. Do not move submitted answer/result records off the server as a cost-saving measure.
