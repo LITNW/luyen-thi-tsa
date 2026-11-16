@@ -8,7 +8,7 @@ import {
 import './privacy-consent.css';
 
 const CATEGORIES = [
-  { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ phiên đăng nhập và chức năng cốt lõi. Trong phòng thi cũ, bản nháp lượt thi, câu trả lời chờ đồng bộ, trạng thái câu hỏi và snapshot cần khôi phục hiện được lưu tạm trên thiết bị. Luôn bật.' , locked: true },
+  { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ phiên đăng nhập và chức năng cốt lõi. Bản nháp lượt thi, câu trả lời chờ đồng bộ, trạng thái câu hỏi và snapshot cần khôi phục được lưu tạm trên thiết bị bằng IndexedDB; localStorage chỉ được dùng làm cơ chế dự phòng khi IndexedDB không khả dụng. Luôn bật.' , locked: true },
   { key: 'security', title: 'Bảo mật và chống gian lận', detail: 'Dành cho các kiểm soát bảo mật và chống lạm dụng ở mức cần thiết. LIT không bật fingerprinting, theo dõi quảng cáo hoặc dịch vụ chống gian lận bên thứ ba.', locked: true },
   { key: 'preferences', title: 'Tùy chọn người dùng', detail: 'Dành cho tùy chọn giao diện không nhạy cảm. Các tính năng lưu tùy chọn giao diện chưa được tích hợp; bật mục này hiện chưa kích hoạt việc thu thập dữ liệu mới.' },
   { key: 'pageState', title: 'Duy trì trạng thái trang', detail: 'Dành cho trạng thái điều hướng và thao tác tạm thời. Chức năng lưu trạng thái trang chưa được tích hợp; bật mục này hiện chưa kích hoạt việc lưu dữ liệu mới.' },
@@ -87,7 +87,7 @@ export default function PrivacyConsentManager() {
             </div>
             <details className="lit-privacy-details" open={details} onToggle={(event) => setDetails(event.currentTarget.open)}>
               <summary>Thông tin về dữ liệu được lưu</summary>
-              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Phòng thi cũ đang dùng localStorage để lưu tạm câu trả lời, trạng thái câu hỏi, dữ liệu chờ đồng bộ và snapshot của lượt thi nhằm hỗ trợ khôi phục khi mất mạng hoặc tải lại trang. Đây là bản đệm trên thiết bị, không thay thế dữ liệu đã đồng bộ trên máy chủ. Các mục tùy chọn giao diện và trạng thái trang hiện mới lưu lựa chọn; chức năng tương ứng chưa được tích hợp. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
+              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Phòng thi lưu tạm câu trả lời, trạng thái câu hỏi, dữ liệu chờ đồng bộ và snapshot của lượt thi trong IndexedDB theo phạm vi tài khoản để hỗ trợ khôi phục khi mất mạng hoặc tải lại trang; localStorage chỉ là cơ chế dự phòng khi IndexedDB không khả dụng. Đây là bản đệm trên thiết bị, không thay thế dữ liệu đã đồng bộ trên máy chủ. Các mục tùy chọn giao diện và trạng thái trang hiện mới lưu lựa chọn; chức năng tương ứng chưa được tích hợp. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
               <p>Lựa chọn này được lưu trên thiết bị bằng localStorage, có phiên bản và thời điểm cập nhật. Xóa dữ liệu trình duyệt có thể xóa lựa chọn này. Không lưu mật khẩu, token xác thực hoặc bằng chứng đồng ý trong localStorage.</p>
               <p>Liên hệ quyền riêng tư: <a href="mailto:lit.privacy.vn@gmail.com">lit.privacy.vn@gmail.com</a>. Phiên bản lựa chọn: {CONSENT_VERSION}.</p>
             </details>
