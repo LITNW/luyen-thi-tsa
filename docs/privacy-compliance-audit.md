@@ -77,6 +77,17 @@ The database inventory also includes question banks, exam content, taxonomies an
 - The account page currently displays profile details and supports sign-out only. No self-service data export, consent withdrawal, account deletion, or privacy request path was found in the inspected client routes.
 - No telephone input was found in the React registration or retained legacy registration; phone is not a currently confirmed collection field.
 
+
+
+## 3C. Additional application and AI data-flow findings (source review, 2026-11-16)
+
+- The retained legacy application writes offline/resume state to browser `localStorage` under `tsa-attempt-*`, `tsa-active-attempt-*` and `tsa-active-attempt-index`. The cached attempt includes answer/progress state and an exam snapshot, and pointers include attempt/user identifiers. This data is stored on the learner's device outside the server retention lifecycle; shared-device exposure, logout cleanup, browser clearing and local retention must be addressed in the notice and product controls. Do not describe this as server-side storage.
+- The legacy admin import workflow stores source files in the private `tsa-imports` bucket and records original filenames, MIME type, size, source format, storage path and preprocessing warnings in `import_jobs` / `import_events`. Original filenames may themselves contain personal information.
+- The repository contains source for the Supabase Edge Function `tsa-import-process`. The live project inventory at the earlier read-only audit snapshot showed no deployed Edge Functions; therefore, do not claim the Anthropic transfer is currently active solely because source code exists. However, when this function is deployed and invoked, it downloads the uploaded source document (or preprocessed text) and sends its contents to `https://api.anthropic.com/v1/messages` using the configured Claude model. It writes extracted question content and source metadata back to Supabase. This is a material third-party disclosure path that must be assessed and disclosed before enabling the feature for personal or confidential source material.
+- The Edge Function source authenticates the caller, checks for an active admin profile, verifies that the import job belongs to that user, and uses a service-role client for server-side processing. These are relevant security controls, but they do not establish Anthropic's retention/training terms, processing region, transfer mechanism, or a lawful basis for sending personal data. Those provider terms and the deployed function/secrets state must be verified before launch.
+- Reviewed React and legacy source paths did not reveal a configured analytics SDK (for example, Google Analytics, PostHog or Sentry) or an explicit phone/date-of-birth collection field. This is a bounded source review, not proof that no provider-side telemetry or hosting logs exist.
+- The React account page and legacy profile view expose account details and logout but do not provide account deletion, export or consent-withdrawal controls. The legacy signup function remains a direct Supabase Auth `signUp` call without a consent gate, as does the React signup path through `AuthContext`.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
@@ -97,7 +108,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 ## 6. Work remaining
 
-- Complete source-wide collection-path review, including account/profile edits, admin imports, storage buckets, RPCs, database triggers, logs, analytics and deployment providers.
+- Continue source-wide and live-provider verification, especially all RPC/function data paths, local browser caches, deployment logs, provider telemetry, storage lifecycle and any future AI processing deployment.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
 - Confirm approved purposes, legal bases, retention schedule and detailed user eligibility. The dedicated privacy contact email is now confirmed as `lit.privacy.vn@gmail.com`.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
