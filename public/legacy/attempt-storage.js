@@ -128,7 +128,7 @@
           const actual = verifiedById.get(expected.id);
           return actual && JSON.stringify(actual.value) === JSON.stringify(expected.value);
         });
-        if (!allVerified) throw new Error('IndexedDB migration verified failed; legacy records were retained.');
+        if (!allVerified) throw new Error('Legacy migration verified failed; legacy records were retained.');
 
         migratedIds.forEach(attemptId => {
           removeLegacy('tsa-active-attempt-' + attemptId);
