@@ -207,3 +207,19 @@ Use browser storage to cache data and hold temporary work, not as the authoritat
 Expected benefits: fewer repeated static/media downloads, fewer repeated reads for recently viewed content, and fewer server writes for unsent interaction state. This does not reduce the database footprint of authoritative submitted attempts unless the product deliberately stops retaining them, which would affect learning-history functionality and requires a separate purpose/retention decision.
 
 Implementation should start with static assets and non-personal public content caching, then a small IndexedDB draft/cache layer. Do not move submitted answer/result records off the server as a cost-saving measure.
+
+
+## 12. Client-side storage and Cookie controls implementation status (2026-11-16)
+
+Implemented on feature branch `feat/privacy-cookie-controls`; not merged or deployed:
+
+- Added a versioned, fail-safe preference record in `localStorage`. Essential and security categories are fixed on; preferences and page-state choices are independently selectable; analytics is hard-disabled because no analytics provider is approved or configured.
+- Added a React consent/preferences panel mounted across React routes, with reject-optional, save-selection, accept-available-options, and persistent settings launcher.
+- Added a matching consent panel to the retained legacy exam client. Both interfaces share the same storage key and consent version.
+- Added a service worker that caches only same-origin public static assets under `/assets/` and `/brand/`, with bounded cache size and cache-version cleanup. It does not cache HTML, Supabase/API responses, authenticated requests, exam payloads, answers, or private media.
+- Added an IndexedDB helper for bounded temporary, per-account records with TTL, payload-size limit, and account-scoped cleanup. React AuthContext clears this temporary store when the authenticated account changes.
+- The legacy exam engine currently has its own existing `localStorage` attempt-cache implementation. It has not yet been migrated to IndexedDB because its persistence and recovery paths are synchronous and coupled to offline exam recovery. Do not claim that active exam drafts have moved to IndexedDB. They remain browser-local and account-keyed, with server synchronization remaining authoritative.
+- Supabase JS Auth currently uses its default browser storage for persisted sessions; no HttpOnly server-set session cookie was introduced. The notice explicitly discloses this current behavior.
+- The optional page-state and preferences categories are preference records only; no analytics is active. Any future feature consuming these categories must check the saved choice before writing optional data.
+- Consent choices are client-side preference records only, not legal consent evidence. The server-side registration intent and immutable consent-evidence architecture in Sections 3.1–3.2 remains unimplemented. No compliance claim is made.
+- Unit tests cover consent defaults, immutable required categories, analytics hard-disable, version mismatch/malformed data and storage failures; browser-storage tests cover account scoping and preflight size validation. Build and full browser integration verification remain pending CI/Preview evidence.
