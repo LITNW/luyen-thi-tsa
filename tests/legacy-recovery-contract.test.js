@@ -85,5 +85,5 @@ test('quota failures switch to a visible localStorage fallback without dropping 
   const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
   assert.match(storage, /mode = 'legacy-fallback'/);
   assert.match(storage, /root\.localStorage\.setItem\(key, JSON\.stringify\(value\)\)/);
-  assert.match(storage, /emitError\(error, 'write'\)/);
+  assert.match(storage, /emitError\(error, label\)/);
 });
