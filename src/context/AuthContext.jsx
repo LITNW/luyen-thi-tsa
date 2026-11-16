@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
+import { clearAccountTemporaryRecords } from '../lib/browser-storage.js';
 
 const AuthContext = createContext(null);
 const PROFILE_FIELDS = 'id,email,display_name,user_code,role,status,created_at';
@@ -15,9 +16,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let alive = true;
+    let previousAccountId = null;
 
     const syncSession = async (session) => {
       if (!alive) return;
+      const nextAccountId = session?.user?.id || null;
+      if (previousAccountId && previousAccountId !== nextAccountId) {
+        void clearAccountTemporaryRecords(previousAccountId).catch(() => {});
+      }
+      previousAccountId = nextAccountId;
       if (!session?.user) {
         setAuth({ session: null, user: null, profile: null, loading: false, error: '' });
         return;
