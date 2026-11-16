@@ -70,3 +70,12 @@ test('storage adapter is awaited before authenticated restore and account change
   assert.match(storage, /activeAccountId/);
   assert.doesNotMatch(storage, /clearAccount\(/);
 });
+
+
+test('offline legacy shell also caches the IndexedDB adapter required to reopen a saved attempt', () => {
+  const serviceWorker = readFileSync(new URL('../public/legacy/sw.js', import.meta.url), 'utf8');
+  assert.match(serviceWorker, /ATTEMPT_STORAGE_SCRIPT='\/legacy\/attempt-storage\.js'/);
+  assert.match(serviceWorker, /cache\.add\(ATTEMPT_STORAGE_SCRIPT\)/);
+  assert.match(serviceWorker, /url\.pathname===ATTEMPT_STORAGE_SCRIPT/);
+  assert.match(serviceWorker, /cache\.match\(ATTEMPT_STORAGE_SCRIPT\)/);
+});
