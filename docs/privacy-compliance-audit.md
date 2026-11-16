@@ -112,6 +112,16 @@ The database inventory also includes question banks, exam content, taxonomies an
 - The Vercel project with the similar application name still exists, but its project metadata reports `live: false`; Cloudflare Pages is the confirmed current deployment platform from the account configuration. Vercel remains a possible ancillary/legacy deployment surface until its domains, aliases and active deployment use are fully reconciled.
 - No Cloudflare Zone was returned for the connected account, and the Pages project API returned only its `pages.dev` hostname. Reconfirm domain ownership/routing if LIT later attaches a custom domain or uses another Cloudflare account.
 
+
+
+## 3F. Supabase Staging environment and migration drift (read-only, 2026-11-16)
+
+- Supabase Staging is confirmed as project `tsa-practice-staging`, ref `cppalwtdkditlhojpeyc`, region `ap-southeast-1`. Cloudflare Pages Preview points to this project; Production points to `hwqtsopvpucadgpkigqz`.
+- Neither Production nor Staging currently reports a deployed Edge Function. The AI-import Edge Function source is not an active deployed data-transfer path in either project at this snapshot.
+- Production and Staging migration histories are not identical. Production includes `temporarily_revoke_authenticated_exam_version_delete`; Staging instead has a reconstructed pre-005 baseline, a staging-specific profile fallback, additional question-media/stimulus migrations and a different archive-exam migration. Staging migration versions were reconstructed/re-stamped and do not provide a one-to-one chronological mirror of Production.
+- This is a known schema/migration-history divergence, not a reason to modify either database blindly. Before creating or applying a privacy migration, compare the relevant live objects, grants, triggers, constraints and function definitions on both projects; design a forward-only migration that is valid against both intended release baselines. Do not reset, repair, or restamp either migration history as part of this privacy task.
+- The current Staging project is healthy and can be used for isolated feature development, but its extra schema changes mean a green Staging test alone does not prove Production compatibility. Maintain explicit Production parity checks in the release evidence.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
@@ -132,7 +142,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 ## 6. Work remaining
 
-- Continue source-wide and live-provider verification, especially the remaining `SECURITY DEFINER` function bodies/call graph, all RPC/function data paths, local browser caches, deployment logs, provider telemetry, Cloudflare Pages/Worker logs and product usage, storage lifecycle and any future AI processing deployment.
+- Continue source-wide and live-provider verification, especially the remaining `SECURITY DEFINER` function bodies/call graph, all RPC/function data paths, local browser caches, deployment logs, provider telemetry, Cloudflare Pages/Worker logs and product usage, storage lifecycle, Staging/Production schema parity and any future AI processing deployment.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
 - Confirm approved purposes, legal bases, retention schedule and detailed user eligibility. The dedicated privacy contact email is now confirmed as `lit.privacy.vn@gmail.com`.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
