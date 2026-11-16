@@ -69,6 +69,16 @@ The database inventory also includes question banks, exam content, taxonomies an
 - `audit_logs` contained three records at audit time. Do not inspect or reproduce their personal details in this report.
 - The inspected Supabase project currently has no deployed Edge Functions. The `handle_new_auth_user` trigger is database-side logic, not an Edge Function.
 
+
+## 3B. Hosting, retention and user-rights checks
+
+- Supabase Production project metadata reports region `ap-southeast-1` (Singapore). Because the user base and data subjects may be in Viet Nam, this is a **potential cross-border personal-data transfer** requiring a legal assessment under the current law and applicable exceptions. The region alone does not establish the full transfer path or settle the filing/exemption question.
+- The Vercel project metadata inspected does not establish a Vietnam-only processing region. Its current deployment/project settings and subprocessors must be confirmed before publishing precise location statements.
+- The repository's `vercel.json` contains only an SPA rewrite; no Vercel Cron schedule was found there. Supabase Production has no `pg_cron` extension/job table, and no Edge Functions are deployed. No automated retention/deletion job was identified in the inspected infrastructure.
+- The `tsa-imports` bucket is currently empty, and no import job or event records were present at the time of the snapshot. The existence of the bucket and admin upload code still means future uploads need retention controls.
+- The account page currently displays profile details and supports sign-out only. No self-service data export, consent withdrawal, account deletion, or privacy request path was found in the inspected client routes.
+- No telephone input was found in the React registration or retained legacy registration; phone is not a currently confirmed collection field.
+
 ## 4. Confirmed compliance gaps
 
 1. No public Privacy Policy route/page was found in the inspected route map.
