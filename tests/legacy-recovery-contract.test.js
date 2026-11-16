@@ -53,3 +53,20 @@ test('IndexedDB writes are serialized and storage failures remain observable ins
   assert.match(storage, /lit-attempt-storage-error/);
   assert.match(storage, /flush/);
 });
+
+
+test('network restoration reconciles server state, retries dirty answers and time events, and preserves pending submission', () => {
+  assert.match(html, /window\.addEventListener\('online',[\s\S]*?a\.needsServerReconcile=true;[\s\S]*?await syncPending\(a\)/);
+  assert.match(html, /while\(true\)\{[\s\S]*?Object\.keys\(a\.dirtyAnswers/);
+  assert.match(html, /while\(\(a\.timeQueue\|\|\[\]\)\.length\)/);
+  assert.match(html, /a\.pendingSubmit=true/);
+  assert.match(html, /sb\.rpc\('submit_exam_attempt'/);
+});
+
+test('storage adapter is awaited before authenticated restore and account changes do not erase another account namespace', () => {
+  assert.match(html, /await window\.LITAttemptStorage\.setAccount\(user\?\.id\|\|null\);[\s\S]*?if\(!user\)/);
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /recordId\(accountId, logicalKey\)/);
+  assert.match(storage, /activeAccountId/);
+  assert.doesNotMatch(storage, /clearAccount\(/);
+});
