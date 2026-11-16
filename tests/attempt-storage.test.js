@@ -134,3 +134,19 @@ test('a new page context can restore a draft after an offline reload without rel
   assert.equal(reloaded.storage.get('tsa-attempt-offline').ans[0], 'saved-answer');
   assert.equal(reloaded.storage.get('tsa-attempt-offline').timeQueue[0].seconds, 12);
 });
+
+
+test('retains legacy drafts when the IndexedDB migration transaction fails', async () => {
+  const legacy = new Map([
+    ['tsa-active-attempt-index', JSON.stringify(['attempt-a'])],
+    ['tsa-active-attempt-attempt-a', JSON.stringify({ attemptId: 'attempt-a', userId: 'user-a', examSnapshot: { questions: [] } })],
+    ['tsa-attempt-attempt-a', JSON.stringify({ ans: ['not-lost'] })]
+  ]);
+  const db = new FakeDatabase();
+  db.failWrites = true;
+  const env = makeEnvironment(db, legacy);
+  await env.storage.setAccount('user-a');
+  assert.equal(legacy.has('tsa-active-attempt-attempt-a'), true);
+  assert.equal(legacy.has('tsa-attempt-attempt-a'), true);
+  assert.equal(env.storage.get('tsa-attempt-attempt-a').ans[0], 'not-lost');
+});
