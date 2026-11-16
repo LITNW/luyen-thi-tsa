@@ -87,7 +87,7 @@ export default function PrivacyConsentManager() {
             </div>
             <details className="lit-privacy-details" open={details} onToggle={(event) => setDetails(event.currentTarget.open)}>
               <summary>Thông tin về dữ liệu được lưu</summary>
-              <p>Cookie cần thiết và bảo mật có thể được dùng cho phiên đăng nhập. Tùy chọn giao diện được lưu cục bộ. Trạng thái trang và bản nháp tạm thời có thể được lưu trong bộ nhớ trình duyệt. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
+              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Tùy chọn quyền riêng tư được lưu cục bộ. Trạng thái trang và bản nháp tạm thời chỉ được lưu khi chức năng tương ứng được triển khai và lựa chọn có hiệu lực. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
               <p>Lựa chọn này được lưu trên thiết bị bằng localStorage, có phiên bản và thời điểm cập nhật. Xóa dữ liệu trình duyệt có thể xóa lựa chọn này. Không lưu mật khẩu, token xác thực hoặc bằng chứng đồng ý trong localStorage.</p>
               <p>Liên hệ quyền riêng tư: <a href="mailto:lit.privacy.vn@gmail.com">lit.privacy.vn@gmail.com</a>. Phiên bản lựa chọn: {CONSENT_VERSION}.</p>
             </details>
