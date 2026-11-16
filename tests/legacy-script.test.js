@@ -51,3 +51,11 @@ test('legacy editor uses build-generated environment config, never a production 
   assert.match(generator, /VITE_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(generator, /dist\/legacy\/supabase-config\.js/);
 });
+
+
+test('legacy IndexedDB adapter and offline service worker remain syntactically valid', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  const serviceWorker = readFileSync(new URL('../public/legacy/sw.js', import.meta.url), 'utf8');
+  assert.doesNotThrow(() => new vm.Script(storage));
+  assert.doesNotThrow(() => new vm.Script(serviceWorker));
+});
