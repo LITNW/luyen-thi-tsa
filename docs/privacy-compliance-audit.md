@@ -99,7 +99,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 - Complete source-wide collection-path review, including account/profile edits, admin imports, storage buckets, RPCs, database triggers, logs, analytics and deployment providers.
 - Determine controller/processor roles, actual provider regions, subprocessors, cross-border transfers and applicable impact-assessment obligations.
-- Confirm a public privacy contact email, approved purposes, legal bases, retention schedule and detailed user eligibility.
+- Confirm approved purposes, legal bases, retention schedule and detailed user eligibility. The dedicated privacy contact email is now confirmed as `lit.privacy.vn@gmail.com`.
 - Design consent capture and audit trail server-side, then implement tests before behavior changes.
 - Implement the public policy, registration controls in both React and legacy surfaces (or retire legacy registration), user rights request path, retention/deletion workflows and vendor disclosures.
 - Validate on Staging; production rollout requires a separate explicit release approval.
@@ -108,7 +108,7 @@ The database inventory also includes question banks, exam content, taxonomies an
 
 - The operator describes LIT as a small group project, currently free to use and temporarily non-profit, with no company or other registered organization.
 - The user confirms they personally operate LIT and will be the responsible contact for privacy requests. This does not establish that LIT is a separate legal person. The final notice must accurately identify the individual operator/controller as advised by qualified Vietnamese counsel; do not invent a legal name or residential address.
-- The operator intends to create and publicly disclose a dedicated LIT project email for privacy requests. The actual address has not yet been supplied; do not publish a placeholder or personal email.
+- The operator has created and confirmed the dedicated LIT privacy contact email: `lit.privacy.vn@gmail.com`. This is the intended public contact for privacy requests. Before publication, verify that the mailbox is accessible to the operator, has appropriate account security/recovery controls, and is monitored for data-subject requests.
 - LIT permits users under 16 to register and use the service.
 - The operator approved a product control requiring parent/legal-representative email confirmation before activating an account for a user under 16.
 - The confirmation workflow must retain a server-controlled, verifiable record of the confirming address, confirmation event/time, exact notice and consent text/version, purposes, child account reference and outcome. Email link possession proves control of that mailbox, not by itself the person's legal status as the child's representative. The flow must include an explicit representation/attestation and a proportionate verification/risk process; do not label the representative as legally verified solely because an email link was clicked.
