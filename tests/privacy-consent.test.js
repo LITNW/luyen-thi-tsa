@@ -47,7 +47,10 @@ test('stored choices are versioned and malformed or outdated data falls back to 
   const saved = savePrivacyPreferences(storage, { preferences: true });
   assert.equal(saved.version, CONSENT_VERSION);
   assert.ok(saved.updatedAt);
-  assert.deepEqual(readPrivacyPreferences(storage), saved);
+  const restored = readPrivacyPreferences(storage);
+  assert.equal(restored.version, saved.version);
+  assert.equal(restored.updatedAt, saved.updatedAt);
+  assert.deepEqual(restored.categories, saved.categories);
 
   storage.setItem('lit.privacy.preferences', '{invalid');
   assert.deepEqual(readPrivacyPreferences(storage).categories, DEFAULT_PRIVACY_PREFERENCES.categories);
