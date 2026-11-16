@@ -465,7 +465,7 @@ if('serviceWorker' in navigator){
         notify('Không kết nối được Supabase: '+(e.message||String(e))+' Bạn vẫn có thể xem trang đăng nhập; hãy thử tải lại sau.');
       }
     }
-    window.addEventListener('lit-attempt-storage-error',e=>notify('Không thể lưu bản nháp an toàn trên thiết bị: '+(e.detail?.message||'lỗi IndexedDB')+'. Dữ liệu cũ được giữ lại nếu chưa xác minh chuyển đổi.'));
+    window.addEventListener('lit-attempt-storage-error',e=>notify('IndexedDB gặp lỗi khi lưu bản nháp: '+(e.detail?.message||'lỗi lưu trữ')+'. Ứng dụng đang chuyển sang cơ chế lưu dự phòng; không đóng trang cho đến khi lưu trữ ổn định.'));
     window.addEventListener('error',e=>{
       if(A&&!A.textContent.trim())A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Ứng dụng gặp lỗi JavaScript khi khởi động.</p><pre>'+esc(e.message||'Lỗi không xác định')+'</pre></div>';
     });
