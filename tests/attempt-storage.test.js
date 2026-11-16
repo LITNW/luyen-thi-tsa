@@ -7,25 +7,37 @@ const source = readFileSync(new URL('../public/legacy/attempt-storage.js', impor
 
 class FakeRequest {}
 class FakeObjectStore {
-  constructor(database) { this.database = database; }
+  constructor(database, transaction) { this.database = database; this.transaction = transaction; }
   createIndex() { return {}; }
   put(record) {
     if (this.database.failWrites) throw new Error('QuotaExceededError');
     this.database.records.set(record.id, structuredClone(record));
+    queueMicrotask(() => this.transaction.oncomplete?.());
     return new FakeRequest();
   }
-  delete(id) { this.database.records.delete(id); queueMicrotask(() => this.transaction.oncomplete?.()); return new FakeRequest(); }
-  getAll() { const request = new FakeRequest(); request.result = [...this.database.records.values()]; queueMicrotask(() => { request.onsuccess?.(); queueMicrotask(() => this.transaction.oncomplete?.()); }); return request; }
-  index() { return { getAll: accountId => {
+  delete(id) {
+    this.database.records.delete(id);
+    queueMicrotask(() => this.transaction.oncomplete?.());
+    return new FakeRequest();
+  }
+  getAll() {
     const request = new FakeRequest();
-    request.result = [...this.database.records.values()].filter(record => record.accountId === accountId);
+    request.result = [...this.database.records.values()];
+    queueMicrotask(() => { request.onsuccess?.(); queueMicrotask(() => this.transaction.oncomplete?.()); });
     return request;
-  }}; }
+  }
+  index() {
+    return { getAll: accountId => {
+      const request = new FakeRequest();
+      request.result = [...this.database.records.values()].filter(record => record.accountId === accountId);
+      queueMicrotask(() => { request.onsuccess?.(); queueMicrotask(() => this.transaction.oncomplete?.()); });
+      return request;
+    }};
+  }
 }
 class FakeTransaction {
   constructor(database) { this.database = database; }
-  objectStore() { return new FakeObjectStore(this.database); }
-  finish() { queueMicrotask(() => this.oncomplete?.()); }
+  objectStore() { return new FakeObjectStore(this.database, this); }
 }
 class FakeDatabase {
   constructor() {
@@ -33,14 +45,8 @@ class FakeDatabase {
     this.failWrites = false;
     this.objectStoreNames = { contains: () => true };
   }
-  createObjectStore() { return new FakeObjectStore(this); }
-  transaction() {
-    const tx = new FakeTransaction(this);
-    const finish = tx.finish.bind(tx);
-    tx.finish = finish;
-    queueMicrotask(() => tx.oncomplete?.());
-    return tx;
-  }
+  createObjectStore() { return new FakeObjectStore(this, null); }
+  transaction() { return new FakeTransaction(this); }
 }
 function makeEnvironment(database = new FakeDatabase(), legacy = new Map()) {
   const localStorage = {
@@ -54,7 +60,7 @@ function makeEnvironment(database = new FakeDatabase(), legacy = new Map()) {
     indexedDB: { open: () => {
       const request = new FakeRequest();
       request.result = database;
-      queueMicrotask(() => { request.onsuccess?.(); });
+      queueMicrotask(() => request.onsuccess?.());
       return request;
     }},
     dispatchEvent: event => { listeners.push(event); return true; }
