@@ -32,7 +32,7 @@ test('concurrent answer edits cannot clear the dirty marker for a newer revision
 test('legacy exam persistence is account-scoped in IndexedDB and waits for migration before restoring', () => {
   const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
   assert.match(html, /src="\/legacy\/attempt-storage\.js"/);
-  assert.match(html, /await window\.LITAttemptStorage\.setAccount\(user\.id\)/);
+  assert.match(html, /await window\\.LITAttemptStorage\\.setAccount\\(user\\?\\.id\\|\\|null\\)/);
   assert.match(storage, /indexedDB\.open/);
   assert.match(storage, /accountId/);
   assert.match(storage, /legacy migration verified/i);
