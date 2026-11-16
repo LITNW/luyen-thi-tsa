@@ -27,3 +27,29 @@ test('concurrent answer edits cannot clear the dirty marker for a newer revision
   assert.match(html, /while\(true\)\{\s*const key=Object\.keys\(a\.dirtyAnswers\|\|\{\}\)\.filter\(k=>a\.dirtyAnswers\[k\]\)/);
   assert.match(html, /a\.dirtyAnswers\[i\]=\(Number\(a\.dirtyAnswers\[i\]\)\|\|0\)\+1/);
 });
+
+
+test('legacy exam persistence is account-scoped in IndexedDB and waits for migration before restoring', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(html, /src="\/legacy\/attempt-storage\.js"/);
+  assert.match(html, /await window\.LITAttemptStorage\.setAccount\(user\.id\)/);
+  assert.match(storage, /indexedDB\.open/);
+  assert.match(storage, /accountId/);
+  assert.match(storage, /legacy migration verified/i);
+  assert.match(storage, /localStorage\.removeItem/);
+});
+
+test('legacy attempt drafts preserve old data until every IndexedDB record is read back and verified', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /verify/);
+  assert.match(storage, /JSON\.stringify/);
+  assert.match(storage, /transaction\.oncomplete/);
+  assert.match(storage, /migration/i);
+});
+
+test('IndexedDB writes are serialized and storage failures remain observable instead of being swallowed', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /writeQueue/);
+  assert.match(storage, /lit-attempt-storage-error/);
+  assert.match(storage, /flush/);
+});
