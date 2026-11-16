@@ -8,10 +8,10 @@ import {
 import './privacy-consent.css';
 
 const CATEGORIES = [
-  { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ đăng nhập, duy trì phiên, ghi nhớ lựa chọn bảo mật và vận hành chức năng cốt lõi. Luôn bật.' , locked: true },
+  { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ phiên đăng nhập và chức năng cốt lõi. Trong phòng thi cũ, bản nháp lượt thi, câu trả lời chờ đồng bộ, trạng thái câu hỏi và snapshot cần khôi phục hiện được lưu tạm trên thiết bị. Luôn bật.' , locked: true },
   { key: 'security', title: 'Bảo mật và chống gian lận', detail: 'Hỗ trợ phát hiện truy cập bất thường, bảo vệ phiên và ngăn hành vi lạm dụng. Không dùng cho quảng cáo.', locked: true },
-  { key: 'preferences', title: 'Tùy chọn người dùng', detail: 'Ghi nhớ các tùy chọn giao diện không nhạy cảm như chế độ hiển thị và cỡ chữ.' },
-  { key: 'pageState', title: 'Duy trì trạng thái trang', detail: 'Ghi nhớ trạng thái điều hướng và thao tác tạm thời để bạn tiếp tục công việc trên cùng thiết bị.' },
+  { key: 'preferences', title: 'Tùy chọn người dùng', detail: 'Dành cho tùy chọn giao diện không nhạy cảm. Các tính năng lưu tùy chọn giao diện chưa được tích hợp; bật mục này hiện chưa kích hoạt việc thu thập dữ liệu mới.' },
+  { key: 'pageState', title: 'Duy trì trạng thái trang', detail: 'Dành cho trạng thái điều hướng và thao tác tạm thời. Chức năng lưu trạng thái trang chưa được tích hợp; bật mục này hiện chưa kích hoạt việc lưu dữ liệu mới.' },
   { key: 'analytics', title: 'Phân tích và đo lường hiệu suất', detail: 'Đo lường mức độ ổn định và hiệu suất. Hiện LIT chưa kích hoạt nhà cung cấp phân tích; mục này đang tắt.' , unavailable: true },
 ];
 
@@ -87,7 +87,7 @@ export default function PrivacyConsentManager() {
             </div>
             <details className="lit-privacy-details" open={details} onToggle={(event) => setDetails(event.currentTarget.open)}>
               <summary>Thông tin về dữ liệu được lưu</summary>
-              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Tùy chọn quyền riêng tư được lưu cục bộ. Trạng thái trang và bản nháp tạm thời chỉ được lưu khi chức năng tương ứng được triển khai và lựa chọn có hiệu lực. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
+              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Phòng thi cũ đang dùng localStorage để lưu tạm câu trả lời, trạng thái câu hỏi, dữ liệu chờ đồng bộ và snapshot của lượt thi nhằm hỗ trợ khôi phục khi mất mạng hoặc tải lại trang. Đây là bản đệm trên thiết bị, không thay thế dữ liệu đã đồng bộ trên máy chủ. Các mục tùy chọn giao diện và trạng thái trang hiện mới lưu lựa chọn; chức năng tương ứng chưa được tích hợp. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
               <p>Lựa chọn này được lưu trên thiết bị bằng localStorage, có phiên bản và thời điểm cập nhật. Xóa dữ liệu trình duyệt có thể xóa lựa chọn này. Không lưu mật khẩu, token xác thực hoặc bằng chứng đồng ý trong localStorage.</p>
               <p>Liên hệ quyền riêng tư: <a href="mailto:lit.privacy.vn@gmail.com">lit.privacy.vn@gmail.com</a>. Phiên bản lựa chọn: {CONSENT_VERSION}.</p>
             </details>
