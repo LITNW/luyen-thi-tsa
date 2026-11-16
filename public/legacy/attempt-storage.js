@@ -73,7 +73,7 @@
   }
 
   function queueWrite(operation, label) {
-    writeQueue = writeQueue.then(operation).catch(error => {
+    writeQueue = writeQueue.catch(() => {}).then(operation).catch(error => {
       emitError(error, label);
       throw error;
     });
@@ -140,6 +140,9 @@
 
       const records = await getAllForAccount(db, activeAccountId);
       records.forEach(record => memory.set(record.logicalKey, record.value));
+      const activeIds = records.filter(record => record.logicalKey.startsWith('tsa-active-attempt-') && record.logicalKey !== LEGACY_INDEX)
+        .map(record => record.logicalKey.slice('tsa-active-attempt-'.length));
+      memory.set(LEGACY_INDEX, activeIds);
     } catch (error) {
       mode = 'legacy-fallback';
       emitError(error, 'initialize');
