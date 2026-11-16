@@ -15,7 +15,7 @@ class FakeObjectStore {
     return new FakeRequest();
   }
   delete(id) { this.database.records.delete(id); return new FakeRequest(); }
-  getAll() { const request = new FakeRequest(); request.result = [...this.database.records.values()]; return request; }
+  getAll() { const request = new FakeRequest(); request.result = [...this.database.records.values()]; queueMicrotask(() => request.onsuccess?.()); return request; }
   index() { return { getAll: accountId => {
     const request = new FakeRequest();
     request.result = [...this.database.records.values()].filter(record => record.accountId === accountId);
