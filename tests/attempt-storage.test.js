@@ -14,8 +14,8 @@ class FakeObjectStore {
     this.database.records.set(record.id, structuredClone(record));
     return new FakeRequest();
   }
-  delete(id) { this.database.records.delete(id); return new FakeRequest(); }
-  getAll() { const request = new FakeRequest(); request.result = [...this.database.records.values()]; queueMicrotask(() => request.onsuccess?.()); return request; }
+  delete(id) { this.database.records.delete(id); queueMicrotask(() => this.transaction.oncomplete?.()); return new FakeRequest(); }
+  getAll() { const request = new FakeRequest(); request.result = [...this.database.records.values()]; queueMicrotask(() => { request.onsuccess?.(); queueMicrotask(() => this.transaction.oncomplete?.()); }); return request; }
   index() { return { getAll: accountId => {
     const request = new FakeRequest();
     request.result = [...this.database.records.values()].filter(record => record.accountId === accountId);
