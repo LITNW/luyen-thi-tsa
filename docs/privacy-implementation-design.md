@@ -1,6 +1,6 @@
 # LIT — Privacy Implementation Design
 
-Status: **Draft for operator decisions and technical/legal review**  
+Status: **Draft for technical/legal review; purpose scope approved 2026-11-16**  
 Date: 2026-11-16  
 Related audit: [Privacy & Personal Data Compliance Audit](privacy-compliance-audit.md)  
 Repository: `LITNW/luyen-thi-tsa`
@@ -18,7 +18,7 @@ Repository: `LITNW/luyen-thi-tsa`
 7. Under-16 accounts remain restricted until the approved parent/legal-representative confirmation flow completes.
 8. Build and test on Supabase Staging and Cloudflare Pages Preview only. Production changes and public release require separate approval.
 
-## 2. Proposed purpose inventory — operator confirmation required
+## 2. Approved minimum purpose inventory (operator approval: 2026-11-16)
 
 | Purpose | Data involved | Proposed default |
 |---|---|---|
@@ -31,7 +31,7 @@ Repository: `LITNW/luyen-thi-tsa`
 | AI-assisted content import | Admin-uploaded source documents and extracted content | Keep disabled until provider terms, transfer, purpose and access are approved |
 | Analytics and marketing | Not currently confirmed as configured | Keep disabled unless separately approved |
 
-**OPEN:** The operator must confirm which purposes LIT intends to support. The proposed minimum scope is account/service, learning history, security, support/privacy requests, and parent confirmation only. Marketing and AI processing of personal data remain off; AI import may process administrator-supplied source material only after its own review.
+**APPROVED:** The operator approved this minimum scope on 2026-11-16: account creation/security; exam practice; learner-selected history/progress/results; security and abuse prevention; support/privacy requests; and parent/legal-representative confirmation for under-16 accounts. Marketing, third-party analytics, and AI processing of learners' personal data remain disabled. AI-assisted import of administrator-supplied material is a separate future assessment and is not authorized by this purpose approval. Legal bases and final notice wording still require qualified Vietnamese legal review.
 
 ## 3. Proposed consent and registration architecture
 
@@ -52,7 +52,7 @@ Proposed flow:
 
 1. Registration page presents the applicable notice, version and separate purpose choices. Optional purposes start unchecked.
 2. A server endpoint creates a short-lived registration intent and stores the submitted decisions server-side.
-3. Supabase Auth signup consumes a one-time registration token. The Auth user trigger validates and consumes the matching intent; a missing, expired, replayed or mismatched token rejects registration.
+3. A Supabase Auth Before User Created Hook should perform early server-side validation of the registration intent and reject missing/invalid tokens before user creation. The AFTER INSERT auth.users database trigger remains the authoritative transactional gate: it must atomically consume the matching single-use intent, write immutable consent evidence, and reject/roll back creation if the token is missing, expired, replayed, email/policy mismatched, or the purpose scope is not allowed. Client-supplied user_metadata may carry only an opaque intent token; it is never treated as evidence. If the Auth hook is unavailable on the current plan/configuration, the database trigger still must enforce the gate.
 4. Adult accounts proceed to the normal email-verification process and become active only after the required account checks.
 5. Users who declare they are under 16 enter a restricted `pending_parent` state. They cannot access exams, history or other protected features until the representative confirmation succeeds.
 6. The legacy signup path must use the same server-side gate or be disabled. A frontend-only checkbox is insufficient.
@@ -114,7 +114,7 @@ Cloudflare Workers Logs documentation states a maximum retention of seven days, 
 
 ## 7. Implementation sequence
 
-1. **Decision gate:** confirm purpose scope, optional purposes, retention durations, transactional email method, and public operator identity wording.
+1. **Decision gate:** purpose scope is approved. Remaining decisions are retention durations, transactional email method, and public operator identity wording; legal bases and final notices require qualified review.
 2. **Technical preflight:** compare relevant Staging/Production schema, triggers, grants and functions; preserve existing migration history; record a forward-only migration design.
 3. **Backend foundation:** implement versioned policy records, registration intents, append-only consent events, parent authorization records and server-only functions.
 4. **Registration integration:** add React controls; adapt legacy signup or retire it; enforce backend gate against direct Auth API calls.
@@ -144,9 +144,18 @@ Cloudflare Workers Logs documentation states a maximum retention of seven days, 
 ## 9. Current blockers
 
 - **OPEN — Public controller/operator identity wording:** the operator is an individual and LIT has no registered legal entity. Qualified Vietnamese counsel must confirm the accurate public wording and required contact details.
-- **OPEN — Purpose scope and legal bases:** the operator must approve the actual processing purposes; counsel must validate the applicable legal bases and notice/consent wording.
+- **APPROVED — Purpose scope:** the minimum scope in Section 2 is approved. **OPEN — Legal bases:** counsel must validate the applicable legal bases and notice/consent wording.
 - **OPEN — Retention periods:** durations must be chosen per data class and checked against applicable obligations.
 - **OPEN — Transactional email:** no provider/configuration is confirmed for parent-confirmation email.
 - **OPEN — Cloudflare log scope and localization:** the separate Worker's relation to the Pages runtime and Customer Metadata Boundary setting are unknown.
 - **OPEN — Legal review:** current consolidated Vietnamese instruments and the under-16 design require qualified review before publication/release.
 - **BLOCKED — Production:** no Production schema/configuration change or public compliance claim is authorized by this design.
+
+## 10. Operator approval and live technical preflight (2026-11-16)
+
+- The operator approved the minimum purpose scope in Section 2. This approval does not authorize marketing, third-party analytics, or AI processing of learners' personal data. Administrator-supplied AI import remains a separate future review.
+- A live read-only comparison confirmed that Production and Staging both have an `AFTER INSERT ON auth.users` trigger named `on_auth_user_created_profile`, but the trigger function bodies differ. Staging has a fallback display-name path and email validation; Production requires a supplied display name. Do not assume migration-history parity or deploy a shared migration without comparing the complete target objects.
+- Both environments currently create the profile as `status = 'active'` and have no consent/registration-intent gate in the trigger. The current profile status constraint allows only `active` and `suspended`; the under-16 `pending_parent` state therefore requires an explicit schema and authorization design before implementation.
+- Supabase's current documentation describes a Before User Created Hook that can reject a signup before the Auth user row is inserted. Recommended defense-in-depth: use it for early rejection, while keeping the Auth-user database trigger as the final atomic enforcement point that consumes the one-time registration intent and records consent in the same transaction as user/profile creation. The hook must not be the sole control unless atomic single-use behavior is proven. Official guide: https://supabase.com/docs/guides/auth/auth-hooks/before-user-created-hook
+- Cloudflare account API reinspection confirms the Pages project has only `luyen-thi-tsa.pages.dev` listed, no configured Web Analytics tag/token, and Production/Preview each expose only the expected Supabase URL and publishable-key variable names. Secret values were not retrieved. The separate Worker `luyen-thi-tsa` is present with invocation logs enabled, persisted, 100% head sampling, and query-string redaction disabled; traces are disabled. Its linkage to Pages/user traffic is still unproven. Do not change logging settings until the Worker route/custom-domain association and actual request flow are mapped.
+- Cloudflare account-level metadata returned a standard account type but did not establish a Workers plan, Customer Metadata Boundary, or legal transfer basis. These remain open; do not infer location or retention from the account type.
