@@ -89,15 +89,15 @@ Deletion must be designed by data class. Revoke active sessions before account d
 
 | Data class | Current location | Proposed lifecycle rule | Duration |
 |---|---|---|---|
-| Auth identity/profile | Supabase Auth and `profiles` | While account is active; delete/anonymize after closure unless a documented exception applies | **OPEN** |
-| Attempts, answers, timing and results | Supabase learning tables; legacy browser cache | Retain only while needed for learning history; provide deletion/anonymization path | **OPEN** |
-| Security/admin audit logs | Supabase `audit_logs`, provider telemetry | Minimize fields; restrict access; fixed retention and incident/legal-hold exceptions | **OPEN** |
-| Sessions and hosting/Worker logs | Supabase Auth, Cloudflare and possibly Vercel | Provider-specific retention; do not assume the application controls provider logs | **OPEN** |
-| Import source files and job metadata | Private Supabase Storage and import tables | Delete source files after a defined processing/review period; retain only approved canonical question content where justified | **OPEN** |
-| Consent and parent-confirmation evidence | Proposed private consent tables | Preserve versioned evidence for the legally justified period; restrict access and deletion | **OPEN** |
-| Privacy requests | Proposed request register/email mailbox | Retain until fulfilled plus a justified dispute/accountability period | **OPEN** |
+| Auth identity/profile | Supabase Auth and `profiles` | While account is active; process a valid deletion request within the applicable statutory window, subject to documented exceptions | **20 days proposed for LIT action; third-party action may require 30 days** |
+| Attempts, answers, timing and results | Supabase learning tables; legacy browser cache | Retain while the account is active and history feature is used; support user-initiated deletion and account-closure deletion | **No inactivity expiry proposed yet; deletion request 20 days proposed** |
+| Security/admin audit logs | Supabase `audit_logs`, provider telemetry | Raw IP/user-agent only where necessary; restrict access; preserve incident/legal-hold exceptions | **90 days for operational security logs; 12 months for admin audit events proposed** |
+| Sessions and hosting/Worker logs | Supabase Auth, Cloudflare and possibly Vercel | Revoke sessions on closure; disclose provider-controlled log retention separately | **Session until expiry/revocation; provider retention to be verified** |
+| Import source files and job metadata | Private Supabase Storage and import tables | Delete source files after successful processing/review; purge failed/cancelled uploads sooner | **30 days after success; 7 days after failure/cancellation proposed** |
+| Consent and parent-confirmation evidence | Proposed private consent tables | Preserve versioned evidence for the legally justified period; restrict access and deletion | **OPEN — qualified legal review required before selecting a period** |
+| Privacy requests | Proposed request register/email mailbox | Retain until fulfilled plus a justified dispute/accountability period; minimize message contents | **3 years after closure proposed, subject to legal review** |
 
-No automatic deletion job should be implemented until the operator approves durations and legal review confirms any required minimum periods or exceptions.
+No automatic deletion job should be implemented until the operator approves the provisional operational defaults and legal review confirms the retention periods and exceptions.
 
 ## 6. Third-party and transfer register to complete
 
@@ -167,3 +167,25 @@ Cloudflare Workers Logs documentation states a maximum retention of seven days, 
 - Supabase's default Auth SMTP is not production-suitable: the current documented limit is 2 messages per hour and messages are restricted to pre-authorized project-team addresses unless custom SMTP is configured. A real under-16 parent-confirmation flow cannot rely on default SMTP for public recipients. Reference: https://supabase.com/docs/guides/auth/auth-smtp
 - Current provider comparison: Resend Free advertises 3,000 emails/month, 100/day, 3 verified domains and 30-day provider data retention; Brevo Free advertises 300 emails/day and transactional email but adds Brevo branding. Both require sender/domain verification for reliable production use. Neither has been selected or connected. References: https://resend.com/pricing/ and https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan
 - LIT currently has no custom domain in the verified Cloudflare Pages project; only `luyen-thi-tsa.pages.dev` is configured. A dedicated sending domain or subdomain is therefore an unresolved dependency for a branded transactional sender. The existing privacy Gmail address is a confirmed contact mailbox but is not yet approved/configured as the transactional sender.
+
+### 5.1 Proposed operational defaults — approval pending
+
+The durations above are engineering recommendations for a small service, not statutory retention periods. They must be validated against the final legal classification and any applicable recordkeeping obligations before publication or automated deletion.
+
+- Browser-side attempt cache: clear on logout and after successful submission; apply a 30-day maximum TTL as a fallback for abandoned attempts.
+- Security telemetry: retain raw IP/user-agent only for 30 days where needed for abuse/security investigations; keep minimized or pseudonymized security events for up to 90 days.
+- Administrative audit events: 12 months, restricted to security/accountability events; avoid copying email addresses or other direct identifiers into free-form `details` unless necessary.
+- Import source files: 30 days after successful import/review; 7 days after failed/cancelled import. No personal/confidential source material may be sent to an AI provider under the current approval.
+- Consent and parent-confirmation evidence: do not configure automatic deletion until qualified counsel confirms the legally defensible retention period and exceptions.
+- Privacy request records: 3 years after closure is a provisional operational proposal, not a legal requirement; counsel must confirm or revise it.
+
+Law 91/2025/QH15 Article 14 provides purpose/period-based deletion grounds and statutory exceptions, but no single blanket retention period for every LIT data class. Decree 356/2025/ND-CP Article 5 separately establishes request-processing deadlines: respond with procedure information within 2 working days; withdrawal/restriction/objection within 15 days (20 days where a processor/third party must also stop); access/correction/data provision within 10 days (15 days where a processor/third party is involved); deletion within 20 days (30 days where a processor/third party must act), subject to the decree's limited extension rules. These fulfilment deadlines must not be confused with retention periods.
+
+### 5.2 Email sender decision
+
+Supabase's default Auth SMTP is restricted to team-authorized addresses and currently limited to 2 messages/hour; it is not suitable for public parent-confirmation recipients. Supabase supports custom SMTP. LIT's Supabase organization is on the Free plan, and the Before User Created Hook is documented as available on Free and Pro.
+
+**Recommended zero-additional-cost interim option:** use `lit.privacy.vn@gmail.com` as the transactional sender through Gmail SMTP, only if the operator approves and enables 2-Step Verification plus a dedicated App Password. Use `smtp.gmail.com:587` with STARTTLS, store the App Password only in Supabase Auth SMTP configuration, and never put it in GitHub, frontend code, logs or chat. Google documents personal Gmail SMTP limits of up to 500 messages/day. This is suitable only for low-volume transactional messages and has less isolation/reliability than a dedicated transactional provider.
+
+Alternative: Resend Free advertises 3,000 messages/month and 100/day, but LIT would need a verified sending domain; the current Pages setup has no custom domain. Brevo Free advertises 300/day but adds provider branding. Neither provider is selected.
+
