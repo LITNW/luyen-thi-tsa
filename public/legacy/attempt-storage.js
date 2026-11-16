@@ -188,7 +188,16 @@
       });
       await transactionDone(tx);
       return true;
-    }, 'write');
+    }, 'write').catch(error => {
+      try {
+        root.localStorage.setItem(key, JSON.stringify(value));
+        mode = 'legacy-fallback';
+        return true;
+      } catch (fallbackError) {
+        emitError(fallbackError, 'fallback-write');
+        throw error;
+      }
+    });
   }
 
   function del(key) {
