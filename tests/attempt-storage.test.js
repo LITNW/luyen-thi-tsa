@@ -112,6 +112,7 @@ test('reports quota failures and does not silently discard the in-memory draft',
   env.database.failWrites = true;
   await assert.rejects(env.storage.set('tsa-attempt-a1', { ans: ['unsynced'] }), /QuotaExceededError/);
   assert.deepEqual(env.storage.get('tsa-attempt-a1'), { ans: ['unsynced'] });
+  assert.equal(JSON.parse(env.legacy.get('tsa-attempt-a1')).ans[0], 'unsynced');
   assert.ok(env.listeners.some(event => event.type === 'lit-attempt-storage-error'));
 });
 
