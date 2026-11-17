@@ -62,16 +62,16 @@ test('legacy exam analytics is bundled and injected into the static legacy appli
   assert.match(legacy, /legacy_exam_start_clicked/);
   assert.match(legacy, /legacy_exam_submit_confirmed/);
   assert.match(vite, /legacyAnalytics/);
-  assert.match(vite, /manifest:\\s*true/);
-  assert.match(generator, /src\\/legacy-analytics\\.js/);
-  assert.match(generator, /<script type="module"/);
+  assert.ok(vite.includes('manifest: true'));
+  assert.ok(generator.includes('src/legacy-analytics.js'));
+  assert.ok(generator.includes('<script type="module"'));
 });
 
 test('analytics events include only deployment environment and bounded route metadata', () => {
   const analytics = read('../src/lib/analytics.js');
   assert.match(analytics, /VITE_POSTHOG_ENVIRONMENT/);
-  assert.match(analytics, /safeProperties\\.environment/);
-  assert.match(analytics, /normalizeRoute/);
-  assert.match(analytics, /ALLOWED_ROUTES/);
+  assert.ok(analytics.includes('safeProperties.environment'));
+  assert.ok(analytics.includes('normalizeRoute'));
+  assert.ok(analytics.includes('ALLOWED_ROUTES'));
   assert.doesNotMatch(analytics, /window\\.location\\.search/);
 });
