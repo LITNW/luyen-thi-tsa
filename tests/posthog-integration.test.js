@@ -53,3 +53,25 @@ test('future engineering tasks inherit the LIT analytics and Superpowers rules',
   assert.match(agents, /TDD/);
   assert.match(agents, /Do not send/);
 });
+
+
+test('legacy exam analytics is bundled and injected into the static legacy application', () => {
+  const legacy = read('../src/legacy-analytics.js');
+  const vite = read('../vite.config.js');
+  const generator = read('../scripts/generate-legacy-config.js');
+  assert.match(legacy, /legacy_exam_start_clicked/);
+  assert.match(legacy, /legacy_exam_submit_confirmed/);
+  assert.match(vite, /legacyAnalytics/);
+  assert.match(vite, /manifest:\\s*true/);
+  assert.match(generator, /src\\/legacy-analytics\\.js/);
+  assert.match(generator, /<script type="module"/);
+});
+
+test('analytics events include only deployment environment and bounded route metadata', () => {
+  const analytics = read('../src/lib/analytics.js');
+  assert.match(analytics, /VITE_POSTHOG_ENVIRONMENT/);
+  assert.match(analytics, /safeProperties\\.environment/);
+  assert.match(analytics, /normalizeRoute/);
+  assert.match(analytics, /ALLOWED_ROUTES/);
+  assert.doesNotMatch(analytics, /window\\.location\\.search/);
+});
