@@ -3,6 +3,7 @@ import posthog from 'posthog-js';
 const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 const runtimeEnvironment = import.meta.env.VITE_POSTHOG_ENVIRONMENT;
+const collectionEnabled = import.meta.env.VITE_POSTHOG_ENABLED === 'true';
 
 export const ALLOWED_ANALYTICS_EVENTS = new Set([
   'page_view',
@@ -25,7 +26,7 @@ let initialized = false;
 
 export function initializeAnalytics() {
   if (initialized) return true;
-  if (!projectToken) return false;
+  if (!projectToken || !collectionEnabled) return false;
 
   posthog.init(projectToken, {
     api_host: apiHost,
@@ -37,7 +38,6 @@ export function initializeAnalytics() {
     disable_external_dependency_loading: true,
     persistence: 'memory',
     person_profiles: 'identified_only',
-    ip: false,
   });
 
   initialized = true;
