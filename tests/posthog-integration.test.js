@@ -4,12 +4,14 @@ import { readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('PostHog initializes only when an explicit project token is configured', () => {
+test('PostHog initializes only when an explicit project token and activation flag are configured', () => {
   const analytics = read('../src/lib/analytics.js');
   assert.match(analytics, /VITE_POSTHOG_PROJECT_TOKEN/);
   assert.match(analytics, /VITE_POSTHOG_HOST/);
+  assert.match(analytics, /VITE_POSTHOG_ENABLED/);
   assert.match(analytics, /posthog\.init/);
   assert.match(analytics, /https:\/\/us\.i\.posthog\.com/);
+  assert.match(analytics, /if \(!projectToken \|\| !collectionEnabled\) return false/);
 });
 
 test('PostHog collection is privacy-minimized for a learning platform used by minors', () => {
@@ -17,9 +19,9 @@ test('PostHog collection is privacy-minimized for a learning platform used by mi
   assert.match(analytics, /autocapture:\s*false/);
   assert.match(analytics, /capture_pageview:\s*false/);
   assert.match(analytics, /disable_session_recording:\s*true/);
-  assert.match(analytics, /ip:\s*false/);
   assert.match(analytics, /persistence:\s*['"]memory['"]/);
   assert.doesNotMatch(analytics, /identify\s*\(/);
+  assert.doesNotMatch(analytics, /ip:\s*false/);
 });
 
 test('analytics exposes a bounded event API and rejects arbitrary payload data', () => {
