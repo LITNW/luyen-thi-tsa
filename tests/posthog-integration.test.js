@@ -55,7 +55,7 @@ test('future engineering tasks inherit the LIT analytics and Superpowers rules',
   assert.match(agents, /Superpowers/);
   assert.match(agents, /PostHog/);
   assert.match(agents, /Test-Driven Development/);
-  assert.match(agents, /Do not send/);
+  assert.match(agents, /Never send/);
 });
 
 test('legacy exam analytics is bundled and injected into the static legacy application', () => {
