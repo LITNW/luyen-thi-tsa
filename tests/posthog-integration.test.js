@@ -19,6 +19,8 @@ test('PostHog collection is privacy-minimized for a learning platform used by mi
   assert.match(analytics, /autocapture:\s*false/);
   assert.match(analytics, /capture_pageview:\s*false/);
   assert.match(analytics, /disable_session_recording:\s*true/);
+  assert.match(analytics, /before_send/);
+  assert.match(analytics, /REDACTED_AUTOMATIC_PROPERTIES/);
   assert.match(analytics, /persistence:\s*['"]memory['"]/);
   assert.doesNotMatch(analytics, /identify\s*\(/);
   assert.doesNotMatch(analytics, /ip:\s*false/);
