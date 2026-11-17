@@ -22,6 +22,30 @@ const ALLOWED_ROUTES = new Set([
   'education_subject', 'exam', 'results', 'legacy', 'other',
 ]);
 
+const REDACTED_AUTOMATIC_PROPERTIES = new Set([
+  '$current_url',
+  '$pathname',
+  '$referrer',
+  '$initial_referrer',
+  '$initial_current_url',
+  '$session_entry_url',
+  '$host',
+  '$user_agent',
+  '$ip',
+]);
+
+function redactAutomaticProperties(event) {
+  if (!event) return null;
+  for (const key of ['properties', '$set', '$set_once']) {
+    const values = event[key];
+    if (!values || typeof values !== 'object') continue;
+    for (const property of REDACTED_AUTOMATIC_PROPERTIES) {
+      delete values[property];
+    }
+  }
+  return event;
+}
+
 let initialized = false;
 
 export function initializeAnalytics() {
@@ -38,6 +62,7 @@ export function initializeAnalytics() {
     disable_external_dependency_loading: true,
     persistence: 'memory',
     person_profiles: 'identified_only',
+    before_send: redactAutomaticProperties,
   });
 
   initialized = true;
