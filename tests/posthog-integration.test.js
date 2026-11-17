@@ -1,0 +1,55 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
+
+test('PostHog initializes only when an explicit project token is configured', () => {
+  const analytics = read('../src/lib/analytics.js');
+  assert.match(analytics, /VITE_POSTHOG_PROJECT_TOKEN/);
+  assert.match(analytics, /VITE_POSTHOG_HOST/);
+  assert.match(analytics, /posthog\.init/);
+  assert.match(analytics, /https:\/\/us\.i\.posthog\.com/);
+});
+
+test('PostHog collection is privacy-minimized for a learning platform used by minors', () => {
+  const analytics = read('../src/lib/analytics.js');
+  assert.match(analytics, /autocapture:\s*false/);
+  assert.match(analytics, /capture_pageview:\s*false/);
+  assert.match(analytics, /disable_session_recording:\s*true/);
+  assert.match(analytics, /ip:\s*false/);
+  assert.match(analytics, /persistence:\s*['"]memory['"]/);
+  assert.doesNotMatch(analytics, /identify\s*\(/);
+});
+
+test('analytics exposes a bounded event API and rejects arbitrary payload data', () => {
+  const analytics = read('../src/lib/analytics.js');
+  assert.match(analytics, /export function trackEvent/);
+  assert.match(analytics, /ALLOWED_ANALYTICS_EVENTS/);
+  assert.match(analytics, /properties/);
+  assert.match(analytics, /sanitize|allowlist|ALLOWED/);
+});
+
+test('React route changes emit a normalized page_view without query strings', () => {
+  const app = read('../src/App.jsx');
+  assert.match(app, /useLocation/);
+  assert.match(app, /trackEvent\(['"]page_view['"]/);
+  assert.match(app, /pathname/);
+  assert.doesNotMatch(app, /searchParams.*trackEvent/);
+});
+
+test('authentication emits outcome events without sending account identifiers', () => {
+  const auth = read('../src/context/AuthContext.jsx');
+  assert.match(auth, /auth_login_succeeded/);
+  assert.match(auth, /auth_signup_succeeded/);
+  assert.match(auth, /auth_logout_succeeded/);
+  assert.doesNotMatch(auth, /trackEvent\([^)]*(email|user\.id|display_name)/i);
+});
+
+test('future engineering tasks inherit the LIT analytics and Superpowers rules', () => {
+  const agents = read('../AGENTS.md');
+  assert.match(agents, /Superpowers/);
+  assert.match(agents, /PostHog/);
+  assert.match(agents, /TDD/);
+  assert.match(agents, /Do not send/);
+});
