@@ -54,7 +54,7 @@ test('future engineering tasks inherit the LIT analytics and Superpowers rules',
   const agents = read('../AGENTS.md');
   assert.match(agents, /Superpowers/);
   assert.match(agents, /PostHog/);
-  assert.match(agents, /TDD/);
+  assert.match(agents, /Test-Driven Development/);
   assert.match(agents, /Do not send/);
 });
 
