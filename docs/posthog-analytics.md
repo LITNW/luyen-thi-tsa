@@ -2,7 +2,7 @@
 
 ## Purpose
 
-PostHog is used for aggregate product analytics and operational product-health signals. It is not a learner assessment database, an identity provider, or a source of truth for exam outcomes.
+PostHog instrumentation and dashboards are prepared, but third-party analytics is not currently an approved LIT purpose and event collection remains disabled. The operator-approved purpose scope recorded in privacy PR #32 excludes third-party analytics. This integration must not be activated until that scope is explicitly amended and the privacy/consent controls described below are implemented and reviewed. PostHog is not a learner assessment database, an identity provider, or a source of truth for exam outcomes.
 
 ## Runtime configuration
 
@@ -26,7 +26,7 @@ The shared SDK configuration deliberately:
 - sends only allowlisted event names and bounded route labels;
 - never sends query strings, dynamic route IDs, learner identities, exam content, answers, scores, or free text.
 
-These technical defaults reduce collected data; they do not replace the project's privacy notice, legal basis, or any required consent process. Collection stays disabled (`VITE_POSTHOG_ENABLED=false`) until project-level IP discarding is enabled and the privacy review authorizes the purpose and data categories.
+These technical defaults reduce collected data; they do not replace the project's privacy notice, legal basis, or any required consent process. Project-level IP discarding is now enabled (`anonymize_ips=true`), but that does not authorize collection. Keep `VITE_POSTHOG_ENABLED=false` in all environments until (1) the operator explicitly amends the approved purpose scope to include third-party analytics, (2) a public privacy notice and provider disclosures are in place, (3) applicable legal basis and consent controls are reviewed, (4) server-side consent evidence is implemented, and (5) required parental/legal-representative authorization for under-16 learners is addressed. PR #32 records third-party analytics as disabled; PR #33 records that closing the notice is not consent and client preferences are not server-side legal evidence.
 
 ## Current event contract
 
