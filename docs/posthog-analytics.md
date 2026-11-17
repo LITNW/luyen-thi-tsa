@@ -8,6 +8,7 @@ PostHog is used for aggregate product analytics and operational product-health s
 
 Set these Vite environment variables in Vercel and local development:
 
+- `VITE_POSTHOG_ENABLED`: set to `true` only after the required privacy approval and IP-discard setting are confirmed; default is `false`.
 - `VITE_POSTHOG_PROJECT_TOKEN`: PostHog project token for the LIT project.
 - `VITE_POSTHOG_HOST`: `https://us.i.posthog.com` (optional; this is the application fallback).
 
@@ -19,12 +20,12 @@ The shared SDK configuration deliberately:
 - disables autocapture and automatic pageview/pageleave capture;
 - disables session recording;
 - uses in-memory persistence rather than cookies or local storage;
-- disables IP capture;
+- does not rely on the deprecated SDK `ip` option; collection remains disabled until the PostHog project-level IP-discard setting is approved and enabled;
 - avoids `identify` and person-profile creation;
 - sends only allowlisted event names and bounded route labels;
 - never sends query strings, dynamic route IDs, learner identities, exam content, answers, scores, or free text.
 
-These technical defaults reduce collected data; they do not replace the project's privacy notice, legal basis, or any required consent process. Do not expand collection until the privacy review authorizes the purpose and data categories.
+These technical defaults reduce collected data; they do not replace the project's privacy notice, legal basis, or any required consent process. Collection stays disabled (`VITE_POSTHOG_ENABLED=false`) until project-level IP discarding is enabled and the privacy review authorizes the purpose and data categories.
 
 ## Current event contract
 
