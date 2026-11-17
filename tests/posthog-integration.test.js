@@ -27,13 +27,13 @@ test('analytics exposes a bounded event API and rejects arbitrary payload data',
   assert.match(analytics, /export function trackEvent/);
   assert.match(analytics, /ALLOWED_ANALYTICS_EVENTS/);
   assert.match(analytics, /properties/);
-  assert.match(analytics, /sanitize|allowlist|ALLOWED/);
+  assert.match(analytics, /ALLOWED/);
 });
 
-test('React route changes emit a normalized page_view without query strings', () => {
+test('React route changes emit normalized page views without query strings', () => {
   const app = read('../src/App.jsx');
   assert.match(app, /useLocation/);
-  assert.match(app, /trackEvent\(['"]page_view['"]/);
+  assert.ok(app.includes('trackPageView(pathname)'));
   assert.match(app, /pathname/);
   assert.doesNotMatch(app, /searchParams.*trackEvent/);
 });
@@ -54,7 +54,6 @@ test('future engineering tasks inherit the LIT analytics and Superpowers rules',
   assert.match(agents, /Do not send/);
 });
 
-
 test('legacy exam analytics is bundled and injected into the static legacy application', () => {
   const legacy = read('../src/legacy-analytics.js');
   const vite = read('../vite.config.js');
@@ -73,5 +72,5 @@ test('analytics events include only deployment environment and bounded route met
   assert.ok(analytics.includes('safeProperties.environment'));
   assert.ok(analytics.includes('normalizeRoute'));
   assert.ok(analytics.includes('ALLOWED_ROUTES'));
-  assert.doesNotMatch(analytics, /window\\.location\\.search/);
+  assert.ok(!analytics.includes('window.location.search'));
 });
