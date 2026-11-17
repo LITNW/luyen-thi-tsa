@@ -26,5 +26,6 @@
 
 - LIT serves learners, including users under 16. Apply data minimization by default.
 - Analytics is anonymous and in-memory by default. No person identification or session replay.
-- Keep `VITE_POSTHOG_ENABLED=false` until PostHog project-level IP discarding (`anonymize_ips=true`) and the privacy activation decision are explicitly approved.
+- The operator-approved purpose scope currently excludes third-party analytics. Keep `VITE_POSTHOG_ENABLED=false` in every environment; enabling it requires a separate explicit change to the approved purpose scope.
+- IP anonymization (`anonymize_ips=true`) is necessary but not sufficient. Do not enable collection until the public privacy notice, applicable legal basis/consent flow, server-side consent evidence, provider disclosures/retention, and any required parental authorization for under-16 learners are implemented and reviewed.
 - Do not add tracking for educational performance or assessment answers without a separate approved data-purpose and privacy review.
