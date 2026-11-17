@@ -20,6 +20,7 @@ The shared SDK configuration deliberately:
 - disables autocapture and automatic pageview/pageleave capture;
 - disables session recording;
 - uses in-memory persistence rather than cookies or local storage;
+- removes automatically attached full URLs, pathnames, referrers, host, user-agent, and IP properties with a `before_send` redaction hook;
 - does not rely on the deprecated SDK `ip` option; collection remains disabled until the PostHog project-level IP-discard setting is approved and enabled;
 - avoids `identify` and person-profile creation;
 - sends only allowlisted event names and bounded route labels;
