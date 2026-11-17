@@ -85,7 +85,7 @@ test('analytics remains unauthorized until purpose scope and server-side consent
   const docs = read('../docs/posthog-analytics.md');
   assert.match(agents, /purpose scope currently excludes third-party analytics/i);
   assert.match(agents, /server-side consent evidence/i);
-  assert.match(docs, /third-party analytics is not currently an approved purpose/i);
+  assert.match(docs, /third-party analytics is not an approved LIT purpose/i);
   assert.match(docs, /server-side consent evidence/i);
   assert.match(docs, /VITE_POSTHOG_ENABLED=false/);
 });
