@@ -2,6 +2,7 @@ import posthog from 'posthog-js';
 
 const projectToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const apiHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
+const runtimeEnvironment = import.meta.env.VITE_POSTHOG_ENVIRONMENT;
 
 export const ALLOWED_ANALYTICS_EVENTS = new Set([
   'page_view',
@@ -47,6 +48,9 @@ export function trackEvent(eventName, properties = {}) {
   if (!initialized || !ALLOWED_ANALYTICS_EVENTS.has(eventName)) return false;
 
   const safeProperties = {};
+  if (['production', 'preview', 'development'].includes(runtimeEnvironment)) {
+    safeProperties.environment = runtimeEnvironment;
+  }
   if (eventName === 'page_view' && ALLOWED_ROUTES.has(properties.route)) {
     safeProperties.route = properties.route;
   }
