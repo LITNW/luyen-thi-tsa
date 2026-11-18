@@ -222,6 +222,35 @@
       "source": "Database-level guard rejects every publication path unless the exam has an active education-subject placement",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "verified_against_live_ledgers": "2026-11-15"
+    },
+    {
+      "version": "20261115150336",
+      "name": "question_media_stimulus_groups",
+      "status": "proposed_in_feature_branch_not_applied",
+      "source": "Feature branch PR #31: private question image storage, published-media read authorization, and immutable shared-stimulus snapshots",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261115150434",
+      "name": "stimulus_rpc_invoker_hardening",
+      "status": "proposed_in_feature_branch_not_applied",
+      "source": "Feature branch PR #31: switch admin_save_stimulus_version to SECURITY INVOKER and rely on existing Admin-only RLS policies",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261115150559",
+      "name": "question_media_validator_grants",
+      "status": "proposed_in_feature_branch_not_applied",
+      "source": "Feature branch PR #31: grant authenticated Admins execution on the pure media manifest validator used by stimulus RPC and insert triggers",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+    },
+    {
+      "version": "20261115154958",
+      "name": "multiple_stimulus_groups",
+      "status": "applied_in_staging_verified_2026-11-15",
+      "source": "Feature branch PR #31 follow-up: normalized question-to-stimulus links, immutable multi-group snapshots, and published student media authorization for every attached group",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_status": "applied_in_staging_verified_2026-11-15"
     }
   ],
   "last_verified_against_live_ledgers": {
