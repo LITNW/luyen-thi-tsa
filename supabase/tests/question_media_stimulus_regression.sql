@@ -273,6 +273,7 @@ $published_media_rls$;
 reset role;
 
 -- Archived published exams must not expose either the exam payload or its media.
+select set_config('app.allow_exam_version_delete','on',true);
 update public.exam_versions
 set archived_at=now()
 where id='71000000-0000-4000-8000-000000000002';
