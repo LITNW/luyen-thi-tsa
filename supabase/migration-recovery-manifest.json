@@ -251,12 +251,20 @@
       "source": "Feature branch PR #31 follow-up: normalized question-to-stimulus links, immutable multi-group snapshots, and published student media authorization for every attached group",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "staging_status": "applied_in_staging_verified_2026-11-15"
+    },
+    {
+      "version": "20261118032350",
+      "name": "exclude_archived_exam_media",
+      "status": "applied_in_staging_verified_2026-11-18",
+      "staging_status": "applied_in_staging_verified_2026-11-18",
+      "source": "Forward-only function replacement: reject archived exam versions in get_published_exam and private question-media authorization.",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
     }
   ],
   "last_verified_against_live_ledgers": {
-    "date": "2026-11-15",
+    "date": "2026-11-18",
     "production_project_ref": "hwqtsopvpucadgpkigqz",
     "staging_project_ref": "cppalwtdkditlhojpeyc",
-    "note": "Live Supabase migration ledgers queried read-only on 2026-11-15. This records ledger presence only; it does not assert that SQL object definitions are identical or that every object originated from the corresponding migration."
+    "note": "Production and Staging migration ledgers queried read-only on 2026-11-18; this follow-up migration is applied and regression-tested on Staging only. Production remains unchanged."
   }
 }
