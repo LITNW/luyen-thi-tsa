@@ -272,4 +272,35 @@ end;
 $published_media_rls$;
 reset role;
 
+-- Archived published exams must not expose either the exam payload or its media.
+update public.exam_versions
+set archived_at=now()
+where id='71000000-0000-4000-8000-000000000002';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+do $archived_media_gate$
+declare
+  v_rejected boolean := false;
+begin
+  if private.lit_can_read_question_media('question-media/ci-admin/shared.png') then
+    raise exception 'Student can read media after its published exam version is archived.';
+  end if;
+
+  begin
+    perform public.get_published_exam('71000000-0000-4000-8000-000000000002');
+  exception when others then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Student can still read the exam payload after its version is archived.';
+  end if;
+
+  if exists (select 1 from storage.objects where bucket_id='lit-question-media') then
+    raise exception 'Storage RLS still exposes media after its published exam version is archived.';
+  end if;
+end;
+$archived_media_gate$;
+reset role;
+
 rollback;
