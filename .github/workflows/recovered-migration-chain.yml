@@ -69,6 +69,9 @@ jobs:
       - name: Apply question media validator grants migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
       - name: Apply multiple independent stimulus groups migration
+
+      - name: Exclude archived exams from published payload and media access
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115154958_multiple_stimulus_groups.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
