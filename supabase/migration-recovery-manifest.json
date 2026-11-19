@@ -1,7 +1,7 @@
 {
   "source": "Production supabase_migrations.schema_migrations.statements[1]",
   "recovered_at": "2026-11-12",
-  "note": "The migrations array is the exact 17-statement recovery fingerprint set. recovery_snapshot_pending records the historical 2026-11-12 status only. subsequent_migrations lists later repository migrations; their current Production status must be verified against the live Supabase migration ledger.",
+  "note": "The migrations array is the exact 17-statement Production recovery fingerprint set. Staging uses a reconstructed pre-005 baseline and re-recorded versions of these 17 migrations; see staging_ledger_reconstruction. Environment-specific operational SQL is recorded separately and is not part of the shared active migration chain.",
   "migrations": [
     {
       "version": "20261111145710",
@@ -120,151 +120,310 @@
     {
       "version": "20261112050000",
       "name": "ai_exam_import_staging",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "repository migration added after the 17-statement recovery snapshot",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261112170000",
       "name": "centralize_exam_answer_validation",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "merged PR #22 migration",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113100000",
       "name": "m1_subject_taxonomy_stimuli",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "M1 additive foundation migration proposed in stacked PR after architecture PR #24",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113120000",
       "name": "exam_categories_admin",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "M2 Admin-managed exam category feature proposed after M1 foundation",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113140000",
       "name": "exam_category_archived_assignment_preservation",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "M2 follow-up migration: preserve existing inactive category assignment while editing its exam",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_version": "20261113100149",
+      "verified_against_live_ledgers": "2026-11-19",
+      "note": "Staging and Production use different ledger versions; current related live function fingerprints match."
     },
     {
       "version": "20261113150000",
       "name": "exam_category_admin_list_archived_version_filter",
-      "status": "applied_in_production",
+      "status": "applied_in_both_environments",
       "source": "M2 follow-up: preserve legacy Admin list behavior by excluding soft-archived exam versions",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_production_ledger": "2026-11-13"
+      "verified_against_live_production_ledger": "2026-11-13",
+      "staging_version": "20261113100429",
+      "verified_against_live_ledgers": "2026-11-19",
+      "note": "Staging and Production use different ledger versions; current related live function fingerprints match."
     },
     {
       "version": "20261113155228",
       "name": "education_hierarchy_foundation",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Education-first architecture foundation; additive schema only, no existing exam placement backfill",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113155356",
       "name": "education_hierarchy_active_profile_read_policies",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Tightens education catalogue SELECT policies to active authenticated profiles",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113155742",
       "name": "education_hierarchy_identity_guards",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Protect stable education level/node/subject-offering identities once referenced; reject active nodes under inactive levels",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113160130",
       "name": "education_exam_placement_and_scoped_catalogue",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Adds Admin education-subject assignment and Student exam catalogue scoped to one active offering",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113160231",
       "name": "education_exam_placement_identity_guard",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Ensures exam education placement cannot be changed after it has attempts",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261113161654",
       "name": "education_atomic_editor_save",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Adds atomic legacy editor save wrapper that persists education placement before optional publish",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261114024035",
       "name": "education_exam_version_publish_guard",
-      "status": "applied_in_production_verified_2026-11-15",
+      "status": "applied_in_both_environments",
       "staging_status": "applied_in_staging_verified_2026-11-15",
       "source": "Database-level guard rejects every publication path unless the exam has an active education-subject placement",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "verified_against_live_ledgers": "2026-11-15"
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261115150336",
       "name": "question_media_stimulus_groups",
-      "status": "proposed_in_feature_branch_not_applied",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
       "source": "Feature branch PR #31: private question image storage, published-media read authorization, and immutable shared-stimulus snapshots",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_status": "applied",
+      "production_status": "not_applied",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261115150434",
       "name": "stimulus_rpc_invoker_hardening",
-      "status": "proposed_in_feature_branch_not_applied",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
       "source": "Feature branch PR #31: switch admin_save_stimulus_version to SECURITY INVOKER and rely on existing Admin-only RLS policies",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_status": "applied",
+      "production_status": "not_applied",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261115150559",
       "name": "question_media_validator_grants",
-      "status": "proposed_in_feature_branch_not_applied",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
       "source": "Feature branch PR #31: grant authenticated Admins execution on the pure media manifest validator used by stimulus RPC and insert triggers",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "staging_status": "applied",
+      "production_status": "not_applied",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261115154958",
       "name": "multiple_stimulus_groups",
-      "status": "applied_in_staging_verified_2026-11-15",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
       "source": "Feature branch PR #31 follow-up: normalized question-to-stimulus links, immutable multi-group snapshots, and published student media authorization for every attached group",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "staging_status": "applied_in_staging_verified_2026-11-15"
+      "staging_status": "applied",
+      "production_status": "not_applied",
+      "verified_against_live_ledgers": "2026-11-19"
     },
     {
       "version": "20261118032350",
       "name": "exclude_archived_exam_media",
-      "status": "applied_in_staging_verified_2026-11-18",
-      "staging_status": "applied_in_staging_verified_2026-11-18",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
+      "staging_status": "applied",
       "source": "Forward-only function replacement: reject archived exam versions in get_published_exam and private question-media authorization.",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest"
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "production_status": "not_applied",
+      "verified_against_live_ledgers": "2026-11-19"
+    },
+    {
+      "version": "20261116033209",
+      "name": "archive_exam_versions_without_physical_deletion",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
+      "staging_status": "applied",
+      "production_status": "not_applied",
+      "staging_ledger_md5": "af047b7d66c69899175735f974fe7ff8",
+      "source": "Staging migration ledger; replaces admin_delete_exam_version with archive-only behavior and atomic audit logging.",
+      "acl_behavior": "No GRANT/REVOKE; CREATE OR REPLACE preserves each environment's existing ACL.",
+      "fingerprint_scope": "Staging ledger statement fingerprint; not part of the original Production recovery manifest.",
+      "verified_against_live_ledgers": "2026-11-19"
     }
   ],
   "last_verified_against_live_ledgers": {
-    "date": "2026-11-18",
+    "date": "2026-11-19",
     "production_project_ref": "hwqtsopvpucadgpkigqz",
     "staging_project_ref": "cppalwtdkditlhojpeyc",
-    "note": "Production and Staging migration ledgers queried read-only on 2026-11-18; this follow-up migration is applied and regression-tested on Staging only. Production remains unchanged."
+    "note": "Both migration ledgers and relevant live function definitions queried read-only. Staging has the shared media/stimulus/archive migrations; Production does not. Production-only authenticated EXECUTE revocation and Staging-only signup fallback are recorded separately."
+  },
+  "staging_ledger_reconstruction": {
+    "project_ref": "cppalwtdkditlhojpeyc",
+    "ledger_rows": 38,
+    "postgres_version": "17.11.0.019",
+    "reconstructed_baseline": {
+      "version": "20261113082626",
+      "name": "staging_pre_005_reconstructed_baseline",
+      "status": "Staging-only reconstructed test/deployment baseline; not original historical SQL."
+    },
+    "re_recorded_recovered_migrations": [
+      {
+        "staging_version": "20261113082636",
+        "production_version": "20261111145710"
+      },
+      {
+        "staging_version": "20261113082639",
+        "production_version": "20261111145753"
+      },
+      {
+        "staging_version": "20261113082643",
+        "production_version": "20261111145830"
+      },
+      {
+        "staging_version": "20261113082646",
+        "production_version": "20261111145854"
+      },
+      {
+        "staging_version": "20261113082650",
+        "production_version": "20261111145919"
+      },
+      {
+        "staging_version": "20261113082708",
+        "production_version": "20261111150635"
+      },
+      {
+        "staging_version": "20261113082711",
+        "production_version": "20261111151348"
+      },
+      {
+        "staging_version": "20261113082716",
+        "production_version": "20261111151520"
+      },
+      {
+        "staging_version": "20261113082722",
+        "production_version": "20261111151651"
+      },
+      {
+        "staging_version": "20261113082728",
+        "production_version": "20261111151737"
+      },
+      {
+        "staging_version": "20261113082738",
+        "production_version": "20261111151747"
+      },
+      {
+        "staging_version": "20261113082742",
+        "production_version": "20261111152621"
+      },
+      {
+        "staging_version": "20261113082746",
+        "production_version": "20261111152717"
+      },
+      {
+        "staging_version": "20261113082751",
+        "production_version": "20261112023553"
+      },
+      {
+        "staging_version": "20261113082755",
+        "production_version": "20261112023833"
+      },
+      {
+        "staging_version": "20261113082805",
+        "production_version": "20261112024205"
+      },
+      {
+        "staging_version": "20261113082809",
+        "production_version": "20261112041845"
+      }
+    ],
+    "note": "Staging re-recorded the recovered Production SQL under 17 new 202611130826xx ledger versions; names retain original Production versions. Do not migration-repair these entries just to align version strings."
+  },
+  "environment_specific_migrations": {
+    "staging_only": [
+      {
+        "version": "20261113090912",
+        "name": "staging_auth_profile_display_name_fallback",
+        "statement_md5": "58aab26f7158e84dc77bf2a63e841778",
+        "evidence_file": "supabase/ops/staging/20261113090912_staging_auth_profile_display_name_fallback.sql",
+        "status": "applied_in_staging_not_production",
+        "note": "Signup display-name fallback from email local-part; not promoted because it changes signup behavior."
+      }
+    ],
+    "production_only": [
+      {
+        "version": "20261116033119",
+        "name": "temporarily_revoke_authenticated_exam_version_delete",
+        "statement_md5": "d5d97874e0ce49a188a5a539664229f2",
+        "evidence_file": "supabase/ops/production/20261116033119_temporarily_revoke_authenticated_exam_version_delete.sql",
+        "status": "applied_in_production_not_staging",
+        "note": "Preserve authenticated EXECUTE revocation; the shared archive-only migration intentionally contains no GRANT/REVOKE."
+      }
+    ]
+  },
+  "reconciliation_snapshot": {
+    "verified_at": "2026-11-19",
+    "production": {
+      "project_ref": "hwqtsopvpucadgpkigqz",
+      "ledger_rows": 31,
+      "postgres_version": "17.11.0.018"
+    },
+    "staging": {
+      "project_ref": "cppalwtdkditlhojpeyc",
+      "ledger_rows": 38,
+      "postgres_version": "17.11.0.019"
+    },
+    "shared_category_function_fingerprints_equal": true,
+    "compared_functions": [
+      "public.admin_get_exam_version(uuid)",
+      "public.admin_list_exam_categories()",
+      "public.admin_list_exam_versions()",
+      "public.admin_save_exam_content_with_education(uuid,text,text,integer,jsonb,uuid,uuid,boolean)"
+    ],
+    "note": "Read-only live ledger and catalog comparison. No SQL migration or database write was performed."
   }
 }
