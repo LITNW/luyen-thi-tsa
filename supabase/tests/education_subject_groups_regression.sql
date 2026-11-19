@@ -108,6 +108,7 @@ begin
     raise exception 'Idempotent default seeding created a duplicate group.';
   end if;
   update public.education_subject_groups set is_active=true where id=v_group;
+  update public.education_subjects set is_active=true where id=v_course;
 
   -- Cover the editor RPC with a newly grouped University course, then edit its draft.
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
