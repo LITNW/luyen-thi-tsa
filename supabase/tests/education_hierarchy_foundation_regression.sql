@@ -106,6 +106,25 @@ begin
     v_university_offer,v_uni,v_major,v_math,'ME-CALC-1','Giải tích 1'
   );
 
+  -- One canonical subject may have multiple distinct university course offerings
+  -- in the same context (e.g. Algebra, Calculus I, Calculus II).
+  insert into public.education_subjects(
+    education_level_id,education_node_id,subject_id,local_code,display_name
+  ) values
+    (v_uni,v_major,v_math,'ME-ALG-1','Đại số'),
+    (v_uni,v_major,v_math,'ME-CALC-2','Giải tích 2'),
+    (v_uni,v_major,v_math,'ME-CALC-3','Giải tích 3');
+
+  if (
+    select count(*)
+    from public.education_subjects
+    where education_level_id=v_uni
+      and education_node_id=v_major
+      and subject_id=v_math
+  ) <> 4 then
+    raise exception 'Multiple university course offerings for one canonical subject were not preserved.';
+  end if;
+
   -- A node's stable hierarchy identity cannot be changed after an offering depends on it.
   v_rejected := false;
   begin
