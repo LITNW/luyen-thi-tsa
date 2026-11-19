@@ -54,6 +54,8 @@ jobs:
           done < <(jq -r '.migrations[] | "\(.version)_\(.name).sql"' supabase/migration-recovery-manifest.json)
       - name: Verify recovered schema and RPCs
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/recovered_migration_chain_smoke.sql
+      - name: Apply recovered Production AI import migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112050000_ai_exam_import_staging.sql
       - name: Verify merged answer-validation migration and regression test
         run: |
           test -s supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
@@ -62,24 +64,12 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112170000_centralize_exam_answer_validation.sql
       - name: Apply M1 subject/taxonomy/stimulus foundation migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
-      - name: Apply question media and shared stimulus migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150336_question_media_stimulus_groups.sql
-      - name: Apply stimulus RPC invoker hardening migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150434_stimulus_rpc_invoker_hardening.sql
-      - name: Apply question media validator grants migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
-      - name: Apply multiple independent stimulus groups migration
-
-      - name: Exclude archived exams from published payload and media access
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115154958_multiple_stimulus_groups.sql
       - name: Apply M2 exam category migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
       - name: Apply M2 follow-up for archived category preservation
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
       - name: Apply M2 follow-up for archived version listing
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
-
       - name: Apply education hierarchy foundation
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
       - name: Apply education hierarchy active-profile read policies
@@ -94,6 +84,18 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
       - name: Enforce education placement for every publication path
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
+      - name: Apply question media and shared stimulus migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150336_question_media_stimulus_groups.sql
+      - name: Apply stimulus RPC invoker hardening migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150434_stimulus_rpc_invoker_hardening.sql
+      - name: Apply question media validator grants migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
+      - name: Apply multiple independent stimulus groups migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115154958_multiple_stimulus_groups.sql
+      - name: Apply archive-only exam version RPC migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261116033209_archive_exam_versions_without_physical_deletion.sql
+      - name: Exclude archived exams from published payload and media access
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -119,6 +121,9 @@ jobs:
           END;
           $assert$;
           SQL
+      - name: Run archive-only exam version regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/archive_exam_versions_without_physical_deletion_regression.sql
+
       - name: Run answer-validation regression suite on recovered schema
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/answer_validation_regression.sql
 
