@@ -113,6 +113,14 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
+      - name: Allow multiple offerings per canonical subject
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261119130000_allow_multiple_offerings_per_catalogue_subject.sql
+      - name: Apply education knowledge-group classification
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261119150000_add_education_knowledge_groups.sql
       - name: Apply education knowledge-group classification
         env:
           PGPASSWORD: postgres
