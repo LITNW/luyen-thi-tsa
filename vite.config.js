@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
 
 // Expose only the public Supabase URL and publishable key to the browser.
 // The fallback supports projects that already store these under SUPABASE_* names.
@@ -17,8 +18,13 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     emptyOutDir: true,
+    manifest: true,
     rollupOptions: {
+      input: {
+        app: resolve(process.cwd(), 'index.html'),
+      },
       output: {
+        entryFileNames: 'assets/[name]-[hash].js',
         manualChunks(id) {
           if (id.includes('/node_modules/@supabase/')) return 'supabase';
           if (id.includes('/node_modules/react-router')) return 'router';
