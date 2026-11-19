@@ -30,7 +30,7 @@ function AdminEducationFrame({ children }) {
     </header>
     <main className="narrow-page admin-education-page">
       <p className="eyebrow">EDUCATION STRUCTURE</p><h1>Quản lý cấu trúc học tập</h1>
-      <p className="muted">Tạo cấp học, các tầng ngữ cảnh tùy chọn và môn học được mở tại từng ngữ cảnh. Không cần tạo lớp/trường/ngành nếu mô hình hiện tại không sử dụng chúng.</p>
+      <p className="muted">Quản lý học phần theo cấp học và nhóm kiến thức. Chỉ gắn ngành với học phần cơ sở ngành hoặc chuyên ngành; khoa học cơ bản và lý luận chính trị được phân loại độc lập.</p>
       {children}
     </main>
     <footer className="footer">LIT · EDUCATION ADMIN</footer>
@@ -223,7 +223,7 @@ export default function AdminEducationPage() {
       </section>
 
       {selectedLevel && <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">OPTIONAL CONTEXT</p><h2>Ngành / chuyên ngành · {levelName}</h2><p className="muted">Chỉ cần tạo ngành khi phân loại học phần cơ sở ngành hoặc chuyên ngành. Khoa học cơ bản và lý luận chính trị được phân loại độc lập.</p></div></div>
+        <div className="section-heading"><div><p className="eyebrow">MAJORS</p><h2>Ngành / chuyên ngành · {levelName}</h2><p className="muted">Chỉ cần tạo ngành khi phân loại học phần cơ sở ngành hoặc chuyên ngành. Khoa học cơ bản và lý luận chính trị được phân loại độc lập.</p></div></div>
         <form className="category-form form-stack" onSubmit={saveNode}>
           <h3>{nodeForm.id ? 'Chỉnh sửa ngành' : 'Thêm ngành'}</h3>
           <div className="admin-form-grid">

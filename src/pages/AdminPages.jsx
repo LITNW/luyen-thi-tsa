@@ -23,8 +23,8 @@ export function AdminHomePage() {
   return <AdminFrame title="Quản trị hệ thống">
     <p className="muted">Quản lý cấu trúc giáo dục, nội dung thi và tài khoản. Loại đề chỉ là metadata tùy chọn, không phải tầng điều hướng.</p>
     <div className="admin-grid">
-      <Link className="admin-card featured" to="/admin/education"><b>Cấu trúc học tập</b><span>Cấp học, ngữ cảnh, danh mục môn và môn học mở</span></Link>
-      <Link className="admin-card" to="/admin/exams"><b>Quản lý đề thi</b><span>Vị trí học tập, loại đề, phiên bản và trạng thái</span></Link>
+      <Link className="admin-card featured" to="/admin/education"><b>Cấu trúc học tập</b><span>Cấp học, nhóm kiến thức, ngành áp dụng và học phần</span></Link>
+      <Link className="admin-card" to="/admin/exams"><b>Quản lý đề thi</b><span>Học phần, nhóm kiến thức, loại đề và trạng thái xuất bản</span></Link>
       <Link className="admin-card" to="/admin/categories"><b>Loại đề (tùy chọn)</b><span>Phân loại mục đích: luyện tập, thi thử, kiểm tra…</span></Link>
       <Link className="admin-card" to="/admin/users"><b>Quản lý tài khoản</b><span>Vai trò và trạng thái học viên</span></Link>
       <Link className="admin-card" to="/admin/attempts"><b>Theo dõi lượt làm</b><span>Kết quả và thời gian làm bài</span></Link>
@@ -122,7 +122,7 @@ export function AdminExamsPage() {
   };
 
   return <AdminFrame title="Quản lý đề thi">
-    <p className="muted">Mỗi đề cần được gắn với một môn học thuộc cấp học/ngữ cảnh phù hợp trước khi quy tắc xuất bản mới được bật. Loại đề chỉ là thông tin phụ, không bắt buộc.</p>
+    <p className="muted">Mỗi đề được gắn với một học phần cụ thể. Nhóm kiến thức và ngành áp dụng được suy ra từ học phần; loại đề chỉ là thông tin phụ, không bắt buộc.</p>
     {error && <div className="alert" role="alert">{error}</div>}
     {loading ? <div className="loading-line"><span className="spinner" /> Đang tải…</div> :
       items.length ? <div className="version-list">{items.map((item) => {
