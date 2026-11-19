@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
+import { splitRecordIdentity } from '../lib/educationPayload.js';
 
 const emptyLevel = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
 const emptyNode = { id: '', education_level_id: '', parent_id: '', node_type: 'custom', code: '', name: '', description: '', display_order: 0, is_active: true };
@@ -91,12 +92,13 @@ export default function AdminEducationPage() {
   const saveLevel = async (event) => {
     event.preventDefault();
     setSaving(true); setError(''); setNotice('');
-    const payload = { ...levelForm, display_order: Number(levelForm.display_order) || 0 };
-    const result = levelForm.id
-      ? await supabase.from('education_levels').update(payload).eq('id', levelForm.id)
+    const { id: levelId, values: levelValues } = splitRecordIdentity(levelForm);
+    const payload = { ...levelValues, display_order: Number(levelForm.display_order) || 0 };
+    const result = levelId
+      ? await supabase.from('education_levels').update(payload).eq('id', levelId)
       : await supabase.from('education_levels').insert(payload);
     if (result.error) setError(result.error.message);
-    else { setNotice(levelForm.id ? 'Đã cập nhật cấp học.' : 'Đã tạo cấp học.'); setLevelForm(emptyLevel); await load(); }
+    else { setNotice(levelId ? 'Đã cập nhật cấp học.' : 'Đã tạo cấp học.'); setLevelForm(emptyLevel); await load(); }
     setSaving(false);
   };
 
@@ -104,17 +106,18 @@ export default function AdminEducationPage() {
     event.preventDefault();
     if (!selectedLevel) return setError('Hãy chọn cấp học trước khi tạo ngữ cảnh.');
     setSaving(true); setError(''); setNotice('');
+    const { id: nodeId, values: nodeValues } = splitRecordIdentity(nodeForm);
     const payload = {
-      ...nodeForm,
+      ...nodeValues,
       education_level_id: selectedLevel,
       parent_id: nodeForm.parent_id || null,
       display_order: Number(nodeForm.display_order) || 0,
     };
-    const result = nodeForm.id
-      ? await supabase.from('education_nodes').update(payload).eq('id', nodeForm.id)
+    const result = nodeId
+      ? await supabase.from('education_nodes').update(payload).eq('id', nodeId)
       : await supabase.from('education_nodes').insert(payload);
     if (result.error) setError(result.error.message);
-    else { setNotice(nodeForm.id ? 'Đã cập nhật ngữ cảnh.' : 'Đã tạo ngữ cảnh.'); setNodeForm({ ...emptyNode, education_level_id: selectedLevel }); await load(); }
+    else { setNotice(nodeId ? 'Đã cập nhật ngữ cảnh.' : 'Đã tạo ngữ cảnh.'); setNodeForm({ ...emptyNode, education_level_id: selectedLevel }); await load(); }
     setSaving(false);
   };
 
@@ -132,18 +135,19 @@ export default function AdminEducationPage() {
     event.preventDefault();
     if (!selectedLevel || !offeringForm.subject_id) return setError('Hãy chọn cấp học và môn học.');
     setSaving(true); setError(''); setNotice('');
+    const { id: offeringId, values: offeringValues } = splitRecordIdentity(offeringForm);
     const payload = {
-      ...offeringForm,
+      ...offeringValues,
       education_level_id: selectedLevel,
       education_node_id: offeringForm.education_node_id || null,
       local_code: offeringForm.local_code || null,
       display_order: Number(offeringForm.display_order) || 0,
     };
-    const result = offeringForm.id
-      ? await supabase.from('education_subjects').update(payload).eq('id', offeringForm.id)
+    const result = offeringId
+      ? await supabase.from('education_subjects').update(payload).eq('id', offeringId)
       : await supabase.from('education_subjects').insert(payload);
     if (result.error) setError(result.error.message);
-    else { setNotice(offeringForm.id ? 'Đã cập nhật môn học trong ngữ cảnh.' : 'Đã thêm môn học vào cấp học/ngữ cảnh.'); setOfferingForm({ ...emptyOffering, education_level_id: selectedLevel }); await load(); }
+    else { setNotice(offeringId ? 'Đã cập nhật môn học trong ngữ cảnh.' : 'Đã thêm môn học vào cấp học/ngữ cảnh.'); setOfferingForm({ ...emptyOffering, education_level_id: selectedLevel }); await load(); }
     setSaving(false);
   };
 
