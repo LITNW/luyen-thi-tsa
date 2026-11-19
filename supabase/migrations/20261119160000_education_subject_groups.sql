@@ -129,6 +129,8 @@ on public.education_subject_groups for select to authenticated
 using (
   (is_active and exists (
     select 1 from public.education_levels l where l.id=education_level_id and l.is_active
+  ) and exists (
+    select 1 from public.profiles p where p.id=(select auth.uid()) and p.status='active'
   )) or (select public.is_admin())
 );
 

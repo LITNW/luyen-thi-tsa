@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { splitRecordIdentity } from './educationPayload.js';
+import { buildEducationCoursePayload, splitRecordIdentity } from './educationPayload.js';
 
 test('new education records omit the empty UUID id from insert payloads', () => {
   const result = splitRecordIdentity({
@@ -33,6 +33,56 @@ test('existing education records keep their UUID for update targeting but omit i
     subject_id: 'subject-uuid',
   });
   assert.equal(Object.hasOwn(result.values, 'id'), false);
+});
+
+test('University course create payload includes the selected group and normalized local code', () => {
+  assert.deepEqual(buildEducationCoursePayload({
+    group_id: 'group-1',
+    local_code: ' MATH101 ',
+    display_name: 'Giải tích 1',
+    display_order: '2',
+    is_active: true,
+  }, 'university-level', true), {
+    group_id: 'group-1',
+    local_code: 'MATH101',
+    display_name: 'Giải tích 1',
+    display_order: 2,
+    is_active: true,
+    education_level_id: 'university-level',
+  });
+});
+
+test('THPT course create payload always keeps group_id null', () => {
+  assert.deepEqual(buildEducationCoursePayload({
+    group_id: 'stale-group',
+    local_code: ' THPT-MATH ',
+    display_name: 'Toán',
+    display_order: '0',
+    is_active: true,
+  }, 'thpt-level', false), {
+    group_id: null,
+    local_code: 'THPT-MATH',
+    display_name: 'Toán',
+    display_order: 0,
+    is_active: true,
+    education_level_id: 'thpt-level',
+  });
+});
+
+test('editing a course reassigns its group without putting the course UUID in the payload', () => {
+  const { id, values } = splitRecordIdentity({
+    id: 'course-1',
+    group_id: 'new-group',
+    local_code: 'CS101',
+    display_name: 'Cơ sở dữ liệu',
+    display_order: 3,
+    is_active: true,
+  });
+  const payload = buildEducationCoursePayload(values, 'university-level', true);
+
+  assert.equal(id, 'course-1');
+  assert.equal(payload.group_id, 'new-group');
+  assert.equal(Object.hasOwn(payload, 'id'), false);
 });
 
 test('all education create and update flows strip form identity before writing', () => {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
-import { splitRecordIdentity } from '../lib/educationPayload.js';
+import { buildEducationCoursePayload, splitRecordIdentity } from '../lib/educationPayload.js';
 
 const emptyGroup = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
 const emptyCourse = { id: '', group_id: '', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
@@ -70,7 +70,7 @@ export default function AdminEducationPage() {
     setSaving(true); setError(''); setNotice('');
     try {
       const { id, values } = splitRecordIdentity(courseForm);
-      const payload = { ...values, education_level_id: selectedLevel, group_id: university ? courseForm.group_id : null, local_code: courseForm.local_code.trim() || null, display_order: Number(courseForm.display_order) || 0 };
+      const payload = buildEducationCoursePayload(values, selectedLevel, university);
       const result = id ? await supabase.from('education_subjects').update(payload).eq('id', id) : await supabase.from('education_subjects').insert(payload);
       if (result.error) throw result.error;
       setNotice(id ? 'Đã cập nhật môn học.' : 'Đã tạo môn học.'); setCourseForm({ ...emptyCourse, group_id: selectedGroup }); await load();
