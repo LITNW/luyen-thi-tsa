@@ -114,7 +114,7 @@ export default function AdminEducationPage() {
 
   const saveNode = async (event) => {
     event.preventDefault();
-    if (!selectedLevel) return setError('Hãy chọn cấp học trước khi tạo ngữ cảnh.');
+    if (!selectedLevel) return setError('Hãy chọn cấp học trước khi tạo ngành.');
     setSaving(true); setError(''); setNotice('');
     const { id: nodeId, values: nodeValues } = splitRecordIdentity(nodeForm);
     const payload = {
@@ -127,7 +127,7 @@ export default function AdminEducationPage() {
       ? await supabase.from('education_nodes').update(payload).eq('id', nodeId)
       : await supabase.from('education_nodes').insert(payload);
     if (result.error) setError(result.error.message);
-    else { setNotice(nodeId ? 'Đã cập nhật ngữ cảnh.' : 'Đã tạo ngữ cảnh.'); setNodeForm({ ...emptyNode, education_level_id: selectedLevel }); await load(); }
+    else { setNotice(nodeId ? 'Đã cập nhật ngành.' : 'Đã tạo ngành.'); setNodeForm({ ...emptyNode, education_level_id: selectedLevel }); await load(); }
     setSaving(false);
   };
 
@@ -227,13 +227,10 @@ export default function AdminEducationPage() {
         <form className="category-form form-stack" onSubmit={saveNode}>
           <h3>{nodeForm.id ? 'Chỉnh sửa ngành' : 'Thêm ngành'}</h3>
           <div className="admin-form-grid">
-            <label>Loại phân loại<select value={nodeForm.node_type} onChange={(e) => setNodeForm({ ...nodeForm, node_type: e.target.value })}>
-              <option value="major">Ngành / chuyên ngành</option>
-            </select></label>
-          </div>
+                      </div>
           <div className="admin-form-grid">
-            <label>Mã ngữ cảnh<input required maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}" value={nodeForm.code} onChange={(e) => setNodeForm({ ...nodeForm, code: e.target.value })} placeholder="mechanical-engineering" /></label>
-            <label>Tên hiển thị<input required maxLength={160} value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} placeholder="Kỹ thuật cơ khí" /></label>
+            <label>Mã ngành<input required maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}" value={nodeForm.code} onChange={(e) => setNodeForm({ ...nodeForm, code: e.target.value })} placeholder="mechanical-engineering" /></label>
+            <label>Tên ngành<input required maxLength={160} value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} placeholder="Kỹ thuật cơ khí" /></label>
           </div>
           <label>Mô tả<textarea rows={2} value={nodeForm.description} onChange={(e) => setNodeForm({ ...nodeForm, description: e.target.value })} /></label>
           <label>Thứ tự hiển thị<input type="number" min="0" value={nodeForm.display_order} onChange={(e) => setNodeForm({ ...nodeForm, display_order: e.target.value })} /></label>

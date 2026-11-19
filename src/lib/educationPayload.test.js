@@ -42,3 +42,11 @@ test('all education create and update flows strip form identity before writing',
   assert.match(page, /splitRecordIdentity\(offeringForm\)/);
   assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:levelForm|nodeForm|offeringForm)/);
 });
+
+
+test('exam editor offers a searchable course picker with knowledge-group context', () => {
+  const editor = readFileSync(new URL('../../public/legacy/index.html', import.meta.url), 'utf8');
+  assert.match(editor, /f-education-search/);
+  assert.match(editor, /knowledge_group/);
+  assert.match(editor, /data-search=/);
+});
