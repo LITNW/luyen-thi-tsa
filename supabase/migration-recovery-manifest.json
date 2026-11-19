@@ -294,6 +294,15 @@
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "production_status": "not_applied",
       "verified_against_live_ledgers": "2026-11-19"
+    },
+    {
+      "version": "20261119130000",
+      "name": "allow_multiple_offerings_per_catalogue_subject",
+      "status": "pending_in_pr_41",
+      "source": "PR #41: permit multiple contextual course offerings to reference one canonical subject",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "production_status": "not_applied",
+      "staging_status": "not_applied"
     }
   ],
   "last_verified_against_live_ledgers": {
