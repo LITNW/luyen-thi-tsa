@@ -120,7 +120,7 @@ export default function AdminEducationPage() {
     const payload = {
       ...nodeValues,
       education_level_id: selectedLevel,
-      parent_id: nodeForm.parent_id || null,
+      parent_id: nodeId ? (nodeForm.parent_id || null) : null,
       display_order: Number(nodeForm.display_order) || 0,
     };
     const result = nodeId
@@ -227,17 +227,13 @@ export default function AdminEducationPage() {
         <form className="category-form form-stack" onSubmit={saveNode}>
           <h3>{nodeForm.id ? 'Chỉnh sửa ngành' : 'Thêm ngành'}</h3>
           <div className="admin-form-grid">
-            <label>Loại ngữ cảnh<select value={nodeForm.node_type} onChange={(e) => setNodeForm({ ...nodeForm, node_type: e.target.value })}>
+            <label>Loại phân loại<select value={nodeForm.node_type} onChange={(e) => setNodeForm({ ...nodeForm, node_type: e.target.value })}>
               <option value="major">Ngành / chuyên ngành</option>
-            </select></label>
-            <label>Ngữ cảnh cha<select value={nodeForm.parent_id} onChange={(e) => setNodeForm({ ...nodeForm, parent_id: e.target.value })}>
-              <option value="">Không có · nằm trực tiếp dưới cấp học</option>
-              {levelNodes.filter((node) => node.id !== nodeForm.id).map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
             </select></label>
           </div>
           <div className="admin-form-grid">
-            <label>Mã ngữ cảnh<input required maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}" value={nodeForm.code} onChange={(e) => setNodeForm({ ...nodeForm, code: e.target.value })} placeholder="grade-12" /></label>
-            <label>Tên hiển thị<input required maxLength={160} value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} placeholder="Lớp 12" /></label>
+            <label>Mã ngữ cảnh<input required maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}" value={nodeForm.code} onChange={(e) => setNodeForm({ ...nodeForm, code: e.target.value })} placeholder="mechanical-engineering" /></label>
+            <label>Tên hiển thị<input required maxLength={160} value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} placeholder="Kỹ thuật cơ khí" /></label>
           </div>
           <label>Mô tả<textarea rows={2} value={nodeForm.description} onChange={(e) => setNodeForm({ ...nodeForm, description: e.target.value })} /></label>
           <label>Thứ tự hiển thị<input type="number" min="0" value={nodeForm.display_order} onChange={(e) => setNodeForm({ ...nodeForm, display_order: e.target.value })} /></label>
