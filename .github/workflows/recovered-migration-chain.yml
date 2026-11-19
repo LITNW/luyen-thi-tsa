@@ -72,10 +72,6 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
       - name: Apply education hierarchy foundation
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
-      - name: Allow multiple offerings per canonical subject
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119130000_allow_multiple_offerings_per_catalogue_subject.sql
-      - name: Apply education knowledge-group classification
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119150000_add_education_knowledge_groups.sql
       - name: Apply education hierarchy active-profile read policies
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
       - name: Apply education hierarchy identity guards
@@ -100,6 +96,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261116033209_archive_exam_versions_without_physical_deletion.sql
       - name: Exclude archived exams from published payload and media access
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
+      - name: Apply editable education course groups
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_subject_groups.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -139,6 +137,9 @@ jobs:
 
       - name: Run education hierarchy foundation regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
+
+      - name: Run education course groups regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_subject_groups_regression.sql
 
       - name: Run education exam placement regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql

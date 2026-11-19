@@ -18,6 +18,7 @@ declare
   v_custom_root uuid := '65000000-0000-4000-8000-000000000008';
   v_custom_child uuid := '65000000-0000-4000-8000-000000000009';
   v_math uuid;
+  v_unclassified_group uuid;
   v_offer uuid := '65000000-0000-4000-8000-000000000005';
   v_university_offer uuid := '65000000-0000-4000-8000-000000000006';
   v_exam uuid := '65000000-0000-4000-8000-000000000007';
@@ -33,9 +34,10 @@ begin
   select id into v_thpt from public.education_levels where code='thpt';
   select id into v_uni from public.education_levels where code='university';
   select id into v_math from public.subjects where code='mathematics';
+  select id into v_unclassified_group from public.education_subject_groups where education_level_id=v_uni and code='unclassified';
   select id into v_science from public.subjects where code='science';
 
-  if v_thpt is null or v_uni is null or v_math is null or v_science is null then
+  if v_thpt is null or v_uni is null or v_math is null or v_science is null or v_unclassified_group is null then
     raise exception 'Expected education levels or canonical Mathematics subject were not seeded.';
   end if;
 
@@ -101,58 +103,10 @@ begin
     v_major,v_uni,v_program,'major','mechanical','Kỹ thuật cơ khí'
   );
   insert into public.education_subjects(
-    id,education_level_id,education_node_id,subject_id,local_code,display_name
+    id,education_level_id,education_node_id,group_id,subject_id,local_code,display_name
   ) values (
-    v_university_offer,v_uni,v_major,v_math,'ME-CALC-1','Giải tích 1'
+    v_university_offer,v_uni,v_major,v_unclassified_group,v_math,'ME-CALC-1','Giải tích 1'
   );
-
-  -- One canonical subject may have multiple distinct university course offerings
-  -- in the same context (e.g. Algebra, Calculus I, Calculus II).
-  insert into public.education_subjects(
-    education_level_id,education_node_id,subject_id,local_code,display_name
-  ) values
-    (v_uni,v_major,v_math,'ME-ALG-1','Đại số'),
-    (v_uni,v_major,v_math,'ME-CALC-2','Giải tích 2'),
-    (v_uni,v_major,v_math,'ME-CALC-3','Giải tích 3');
-
-  if (
-    select count(*)
-    from public.education_subjects
-    where education_level_id=v_uni
-      and education_node_id=v_major
-      and subject_id=v_math
-  ) <> 4 then
-    raise exception 'Multiple university course offerings for one canonical subject were not preserved.';
-  end if;
-
-  -- Independent knowledge groups do not require a major node.
-  update public.education_subjects
-  set knowledge_group='major_foundation'
-  where id=v_university_offer;
-  insert into public.education_subjects(
-    education_level_id,education_node_id,subject_id,local_code,display_name,knowledge_group
-  ) values (
-    v_uni,null,v_math,'UNI-MATH-GEN','Toán học cơ bản','general_sciences'
-  );
-  if not exists (
-    select 1 from public.education_subjects
-    where education_level_id=v_uni and local_code='UNI-MATH-GEN'
-      and knowledge_group='general_sciences' and education_node_id is null
-  ) then
-    raise exception 'General-science offering must be classifiable without a major.';
-  end if;
-
-  v_rejected := false;
-  begin
-    insert into public.education_subjects(
-      education_level_id,education_node_id,subject_id,local_code,display_name,knowledge_group
-    ) values (v_uni,null,v_math,'UNI-MATH-FOUND','Invalid foundation course','major_foundation');
-  exception when check_violation then
-    v_rejected := true;
-  end;
-  if not v_rejected then
-    raise exception 'Major-foundation offering without a major was unexpectedly accepted.';
-  end if;
 
   -- A node's stable hierarchy identity cannot be changed after an offering depends on it.
   v_rejected := false;

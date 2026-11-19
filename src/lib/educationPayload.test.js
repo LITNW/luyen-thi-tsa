@@ -37,23 +37,26 @@ test('existing education records keep their UUID for update targeting but omit i
 
 test('all education create and update flows strip form identity before writing', () => {
   const page = readFileSync(new URL('../pages/AdminEducationPage.jsx', import.meta.url), 'utf8');
-  assert.match(page, /splitRecordIdentity\(levelForm\)/);
-  assert.match(page, /splitRecordIdentity\(nodeForm\)/);
-  assert.match(page, /splitRecordIdentity\(offeringForm\)/);
-  assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:levelForm|nodeForm|offeringForm)/);
+  assert.match(page, /splitRecordIdentity\(groupForm\)/);
+  assert.match(page, /splitRecordIdentity\(courseForm\)/);
+  assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:groupForm|courseForm)/);
 });
 
 
-test('exam editor offers a searchable course picker with knowledge-group context', () => {
+test('exam editor offers searchable level and group course pickers', () => {
   const editor = readFileSync(new URL('../../public/legacy/index.html', import.meta.url), 'utf8');
   assert.match(editor, /f-education-search/);
-  assert.match(editor, /knowledge_group/);
+  assert.match(editor, /f-education-level/);
+  assert.match(editor, /f-education-group/);
+  assert.match(editor, /education_subject_groups/);
+  assert.doesNotMatch(editor, /knowledge_group|education_nodes/);
   assert.match(editor, /data-search=/);
 });
 
 
-test('student course browsing displays the same knowledge-group classification', () => {
+test('student course browsing uses editable groups and direct course links', () => {
   const browse = readFileSync(new URL('../pages/EducationBrowsePages.jsx', import.meta.url), 'utf8');
-  assert.match(browse, /knowledgeGroupLabels/);
-  assert.match(browse, /knowledge_group/);
+  assert.match(browse, /education_subject_groups/);
+  assert.match(browse, /EducationGroupPage/);
+  assert.doesNotMatch(browse, /knowledge_group|education_nodes/);
 });
