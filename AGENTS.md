@@ -10,22 +10,9 @@
 - Before committing, opening or updating a pull request, or reporting completion, run the relevant verification and inspect the final diff.
 - Keep production changes isolated on feature branches and submit pull requests. Do not bypass branch protection or deploy directly to production.
 
-## PostHog product analytics
+## PostHog preparation
 
-- Use the shared helper in `src/lib/analytics.js`; do not initialize PostHog elsewhere.
-- Add only meaningful, bounded product events. Extend `ALLOWED_ANALYTICS_EVENTS` and its tests when adding an event.
-- Event names use snake_case and describe completed outcomes where possible.
-- Never send email addresses, names, account IDs, learner IDs, IP addresses, exam IDs, question content, answers, scores, free-text inputs, private upload metadata, authentication tokens, or any other direct or indirect learner identifiers.
-- Do not call `identify`, `alias`, or attach Supabase profile/session objects to analytics events.
-- Do not enable autocapture, automatic pageview capture, persistent browser identity, or session replay without a separate privacy review and explicit approval.
-- Normalize route paths before tracking; never send query strings, path IDs, or user-generated path segments.
-- Keep React and legacy application instrumentation aligned. The legacy analytics entry is built separately and injected into the static legacy page by the build script.
-- If a feature changes user behavior, include its analytics event and a regression test in the same pull request, unless analytics is intentionally excluded and the reason is documented.
-
-## Privacy and student data
-
-- LIT serves learners, including users under 16. Apply data minimization by default.
-- Analytics is anonymous and in-memory by default. No person identification or session replay.
-- The operator-approved purpose scope currently excludes third-party analytics. Keep `VITE_POSTHOG_ENABLED=false` in every environment; enabling it requires a separate explicit change to the approved purpose scope.
-- IP anonymization (`anonymize_ips=true`) is necessary but not sufficient. Do not enable collection until the public privacy notice, applicable legal basis/consent flow, server-side consent evidence, provider disclosures/retention, and any required parental authorization for under-16 learners are implemented and reviewed.
+- This branch contains preparation and policy documentation only. No PostHog runtime integration or SDK is shipped.
+- The operator-approved purpose scope excludes third-party analytics. Keep `VITE_POSTHOG_ENABLED=false`; enabling analytics requires a separate explicit approval and implementation review.
+- LIT serves learners, including users under 16. Do not add analytics until the public privacy notice, applicable legal basis and consent controls, server-side consent evidence, provider disclosures and retention, and required parental/legal-representative authorization are implemented and reviewed.
 - Do not add tracking for educational performance or assessment answers without a separate approved data-purpose and privacy review.

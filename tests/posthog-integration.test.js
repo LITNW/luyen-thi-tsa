@@ -1,91 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('PostHog initializes only when an explicit project token and activation flag are configured', () => {
-  const analytics = read('../src/lib/analytics.js');
-  assert.match(analytics, /VITE_POSTHOG_PROJECT_TOKEN/);
-  assert.match(analytics, /VITE_POSTHOG_HOST/);
-  assert.match(analytics, /VITE_POSTHOG_ENABLED/);
-  assert.match(analytics, /posthog\.init/);
-  assert.match(analytics, /https:\/\/us\.i\.posthog\.com/);
-  assert.match(analytics, /if \(!projectToken \|\| !collectionEnabled\) return false/);
+ test('PostHog preparation does not ship an analytics runtime or SDK', () => {
+  const packageJson = JSON.parse(read('../package.json'));
+  assert.equal(packageJson.dependencies['posthog-js'], undefined);
+  assert.equal(existsSync(new URL('../src/lib/analytics.js', import.meta.url)), false);
+  assert.equal(existsSync(new URL('../src/legacy-analytics.js', import.meta.url)), false);
+  assert.doesNotMatch(read('../src/main.jsx'), /initializeAnalytics|posthog-js/);
+  assert.doesNotMatch(read('../src/App.jsx'), /trackPageView|trackEvent/);
+  assert.doesNotMatch(read('../src/context/AuthContext.jsx'), /trackEvent|analytics\.js/);
+  assert.doesNotMatch(read('../src/pages/DashboardPage.jsx'), /trackEvent|analytics\.js/);
+  assert.doesNotMatch(read('../vite.config.js'), /legacyAnalytics|legacy-analytics/);
+  assert.doesNotMatch(read('../scripts/generate-legacy-config.js'), /legacy-analytics|posthog/i);
+  assert.doesNotMatch(read('../public/legacy/index.html'), /posthog|legacy_exam_(start|submit)/i);
 });
 
-test('PostHog collection is privacy-minimized for a learning platform used by minors', () => {
-  const analytics = read('../src/lib/analytics.js');
-  assert.match(analytics, /autocapture:\s*false/);
-  assert.match(analytics, /capture_pageview:\s*false/);
-  assert.match(analytics, /disable_session_recording:\s*true/);
-  assert.match(analytics, /before_send/);
-  assert.match(analytics, /REDACTED_AUTOMATIC_PROPERTIES/);
-  assert.match(analytics, /persistence:\s*['"]memory['"]/);
-  assert.doesNotMatch(analytics, /identify\s*\(/);
-  assert.doesNotMatch(analytics, /ip:\s*false/);
+test('the sample environment keeps PostHog disabled without provider configuration', () => {
+  const example = read('../.env.example');
+  assert.match(example, /^VITE_POSTHOG_ENABLED=false$/m);
+  assert.doesNotMatch(example, /VITE_POSTHOG_(PROJECT_TOKEN|HOST|ENVIRONMENT)/);
 });
 
-test('analytics exposes a bounded event API and rejects arbitrary payload data', () => {
-  const analytics = read('../src/lib/analytics.js');
-  assert.match(analytics, /export function trackEvent/);
-  assert.match(analytics, /ALLOWED_ANALYTICS_EVENTS/);
-  assert.match(analytics, /properties/);
-  assert.match(analytics, /ALLOWED/);
-});
-
-test('React route changes emit normalized page views without query strings', () => {
-  const app = read('../src/App.jsx');
-  assert.match(app, /useLocation/);
-  assert.ok(app.includes('trackPageView(pathname)'));
-  assert.match(app, /pathname/);
-  assert.doesNotMatch(app, /searchParams.*trackEvent/);
-});
-
-test('authentication emits outcome events without sending account identifiers', () => {
-  const auth = read('../src/context/AuthContext.jsx');
-  assert.match(auth, /auth_login_succeeded/);
-  assert.match(auth, /auth_signup_succeeded/);
-  assert.match(auth, /auth_logout_succeeded/);
-  assert.doesNotMatch(auth, /trackEvent\([^)]*(email|user\.id|display_name)/i);
-});
-
-test('future engineering tasks inherit the LIT analytics and Superpowers rules', () => {
-  const agents = read('../AGENTS.md');
-  assert.match(agents, /Superpowers/);
-  assert.match(agents, /PostHog/);
-  assert.match(agents, /Test-Driven Development/);
-  assert.match(agents, /Never send/);
-});
-
-test('legacy exam analytics is bundled and injected into the static legacy application', () => {
-  const legacy = read('../src/legacy-analytics.js');
-  const vite = read('../vite.config.js');
-  const generator = read('../scripts/generate-legacy-config.js');
-  assert.match(legacy, /legacy_exam_start_clicked/);
-  assert.match(legacy, /legacy_exam_submit_confirmed/);
-  assert.match(vite, /legacyAnalytics/);
-  assert.ok(vite.includes('manifest: true'));
-  assert.ok(generator.includes('src/legacy-analytics.js'));
-  assert.ok(generator.includes('<script type="module"'));
-});
-
-test('analytics events include only deployment environment and bounded route metadata', () => {
-  const analytics = read('../src/lib/analytics.js');
-  assert.match(analytics, /VITE_POSTHOG_ENVIRONMENT/);
-  assert.ok(analytics.includes('safeProperties.environment'));
-  assert.ok(analytics.includes('normalizeRoute'));
-  assert.ok(analytics.includes('ALLOWED_ROUTES'));
-  assert.ok(!analytics.includes('window.location.search'));
-});
-
-
-test('analytics remains unauthorized until purpose scope and server-side consent evidence are approved', () => {
+test('PostHog preparation clearly states that runtime collection is absent and unauthorized', () => {
   const agents = read('../AGENTS.md');
   const docs = read('../docs/posthog-analytics.md');
-  assert.match(agents, /purpose scope currently excludes third-party analytics/i);
-  assert.match(agents, /server-side consent evidence/i);
-  assert.match(docs, /third-party analytics is not currently an approved LIT purpose/i);
+  assert.match(agents, /no PostHog runtime integration.*shipped/i);
+  assert.match(agents, /purpose scope excludes third-party analytics/i);
+  assert.match(docs, /does not ship the PostHog SDK.*or send analytics events/i);
   assert.match(docs, /server-side consent evidence/i);
   assert.match(docs, /VITE_POSTHOG_ENABLED=false/);
 });
+
+

@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase, supabaseConfigured } from '../lib/supabase.js';
-import { trackEvent } from '../lib/analytics.js';
 
 const AuthContext = createContext(null);
 const PROFILE_FIELDS = 'id,email,display_name,user_code,role,status,created_at';
@@ -104,7 +103,6 @@ export function AuthProvider({ children }) {
       if (!supabase) throw new Error('Supabase chưa được cấu hình.');
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      trackEvent('auth_login_succeeded');
       return data;
     },
     signUp: async ({ displayName, email, password }) => {
@@ -122,14 +120,12 @@ export function AuthProvider({ children }) {
         },
       });
       if (error) throw error;
-      trackEvent('auth_signup_succeeded');
       return data;
     },
     signOut: async () => {
       if (!supabase) return;
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      trackEvent('auth_logout_succeeded');
     },
   }), [auth]);
 

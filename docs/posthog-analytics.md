@@ -1,57 +1,25 @@
-# PostHog analytics for LIT
+# PostHog preparation for LIT
 
-## Purpose
+## Current status
 
-PostHog instrumentation and dashboards are prepared, but third-party analytics is not currently an approved LIT purpose and event collection remains disabled. The operator-approved purpose scope recorded in privacy PR #32 excludes third-party analytics. This integration must not be activated until that scope is explicitly amended and the privacy/consent controls described below are implemented and reviewed. PostHog is not a learner assessment database, an identity provider, or a source of truth for exam outcomes.
+This pull request contains policy and implementation-planning documentation only. It does not ship the PostHog SDK, initialize PostHog, or send analytics events. The sample setting remains `VITE_POSTHOG_ENABLED=false`. Third-party analytics is outside the operator-approved purpose scope, so no runtime integration is included.
 
-## Runtime configuration
+The operator-approved purpose scope recorded in privacy PR #32 excludes third-party analytics. PR #33 records that dismissing a notice is not consent and browser preferences are not server-side legal evidence. PostHog is not a learner assessment database, an identity provider, or a source of truth for exam outcomes.
 
-Set these Vite environment variables in Vercel and local development:
+## Conditions for a future, separate integration
 
-- `VITE_POSTHOG_ENABLED`: set to `true` only after the required privacy approval and IP-discard setting are confirmed; default is `false`.
-- `VITE_POSTHOG_PROJECT_TOKEN`: PostHog project token for the LIT project.
-- `VITE_POSTHOG_HOST`: `https://us.i.posthog.com` (optional; this is the application fallback).
+A future proposal must be reviewed and approved separately. Before any collection can be enabled, it must address all of the following:
 
-The project token is a public ingestion key and must be read from the environment, never hard-coded in application source. Keep the PostHog organization/project credentials separate from Supabase secrets.
+1. The operator explicitly amends the approved purpose scope and defines a necessary product question.
+2. A public privacy notice and provider disclosures are in place.
+3. The applicable legal basis and consent controls are reviewed.
+4. Server-side consent evidence is implemented.
+5. Required parental or legal-representative authorization for learners under 16 is addressed.
+6. Provider retention and project-level IP-discard settings are reviewed.
+7. The implementation, data minimization, and tests are reviewed in a separate change.
 
-## Privacy defaults
+The environment sample keeps `VITE_POSTHOG_ENABLED=false`. No PostHog project token or host is required by this branch. Existing deployment environment settings are operational configuration and are not changed by this documentation pull request.
 
-The shared SDK configuration deliberately:
-- disables autocapture and automatic pageview/pageleave capture;
-- disables session recording;
-- uses in-memory persistence rather than cookies or local storage;
-- removes automatically attached full URLs, pathnames, referrers, host, user-agent, and IP properties with a `before_send` redaction hook;
-- does not rely on the deprecated SDK `ip` option; collection remains disabled until the PostHog project-level IP-discard setting is approved and enabled;
-- avoids `identify` and person-profile creation;
-- sends only allowlisted event names and bounded route labels;
-- never sends query strings, dynamic route IDs, learner identities, exam content, answers, scores, or free text.
+## Deployment note
 
-These technical defaults reduce collected data; they do not replace the project's privacy notice, legal basis, or any required consent process. Project-level IP discarding is now enabled (`anonymize_ips=true`), but that does not authorize collection. Keep `VITE_POSTHOG_ENABLED=false` in all environments until (1) the operator explicitly amends the approved purpose scope to include third-party analytics, (2) a public privacy notice and provider disclosures are in place, (3) applicable legal basis and consent controls are reviewed, (4) server-side consent evidence is implemented, and (5) required parental/legal-representative authorization for under-16 learners is addressed. PR #32 records third-party analytics as disabled; PR #33 records that closing the notice is not consent and client preferences are not server-side legal evidence.
-
-## Current event contract
-
-| Event | Meaning | Allowed properties |
-| --- | --- | --- |
-| `page_view` | A React or legacy route was opened | normalized `route` only |
-| `auth_login_succeeded` | Supabase password sign-in returned successfully | none |
-| `auth_signup_succeeded` | Supabase sign-up request returned successfully | none |
-| `auth_logout_succeeded` | Supabase sign-out returned successfully | none |
-| `dashboard_viewed` | Authenticated dashboard rendered | none |
-| `legacy_exam_start_clicked` | Learner clicked the legacy exam start action | fixed `surface=legacy` |
-| `legacy_exam_submit_confirmed` | Learner confirmed legacy exam submission | fixed `surface=legacy` |
-
-The legacy exam events represent user actions, not confirmed server-side exam outcomes. They must not be interpreted as completed attempts or submissions.
-
-## Adding events in future tasks
-
-1. Decide whether the event is necessary to answer a defined product question.
-2. Prefer an aggregate action event over user-level event histories.
-3. Add the event to `ALLOWED_ANALYTICS_EVENTS` and add only fixed, non-identifying properties.
-4. Add a regression test to `tests/posthog-integration.test.js`.
-5. Instrument the React and legacy path when the feature exists in both.
-6. Verify that no PII, learner IDs, assessment data, free text, query strings, or dynamic IDs are sent.
-7. Run `npm test` and `npm run build`.
-
-## Dashboards and operations
-
-Use the PostHog project connected to this repository. Build insights from the event contract above and filter preview/development traffic separately from production when environment metadata is added. Do not create user-level cohorts or enable replay for minors by default.
+Keep `VITE_POSTHOG_ENABLED=false` in all environments. This branch has no code that consumes PostHog configuration. Dashboard creation, SDK integration, and any collection are outside its scope and require separate approval.

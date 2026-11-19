@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { supabase } from '../lib/supabase.js';
-import { trackEvent } from '../lib/analytics.js';
 
 export default function DashboardPage() {
   const { profile, isAdmin } = useAuth();
@@ -10,10 +9,6 @@ export default function DashboardPage() {
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    trackEvent('dashboard_viewed');
-  }, []);
 
   useEffect(() => {
     let active = true;

@@ -22,7 +22,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: resolve(process.cwd(), 'index.html'),
-        legacyAnalytics: resolve(process.cwd(), 'src/legacy-analytics.js'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

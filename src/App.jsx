@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import RouteGuard from './components/RouteGuard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
@@ -11,16 +11,6 @@ import ResultsPage from './pages/ResultsPage.jsx';
 import { AdminHomePage, AdminExamsPage, AdminCategoriesPage, AdminUsersPage, AdminAttemptsPage } from './pages/AdminPages.jsx';
 import AdminEducationPage from './pages/AdminEducationPage.jsx';
 import { EducationLevelPage, EducationNodePage, EducationSubjectPage } from './pages/EducationBrowsePages.jsx';
-import { trackPageView } from './lib/analytics.js';
-
-function RouteAnalytics() {
-  const { pathname } = useLocation();
-  useEffect(() => {
-    trackPageView(pathname);
-  }, [pathname]);
-  return null;
-}
-
 function LegacyRedirect() {
   useEffect(() => { window.location.replace('/legacy/index.html'); }, []);
   return <main className="center-state"><p>Đang mở giao diện hiện tại…</p><a href="/legacy/index.html">Nếu trang không tự chuyển, bấm vào đây.</a></main>;
@@ -43,7 +33,6 @@ function HomeRoute() {
 export default function App() {
   return (
     <>
-      <RouteAnalytics />
       <Routes>
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
