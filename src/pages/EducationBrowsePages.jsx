@@ -41,9 +41,11 @@ function ContextCard({ levelCode, node }) {
   </Link>;
 }
 
+const knowledgeGroupLabels = { general_sciences: 'Khoa học cơ bản', political_theory: 'Lý luận chính trị', major_foundation: 'Cơ sở ngành', specialization: 'Chuyên ngành', languages_skills: 'Ngoại ngữ và kỹ năng', unclassified: 'Chưa phân loại' };
+
 function SubjectCard({ levelCode, offering }) {
   return <Link className="education-card subject-card" to={`/education/${levelCode}/subject/${offering.id}`}>
-    <span className="education-card-kicker">MÔN HỌC / HỌC PHẦN</span>
+    <span className="education-card-kicker">{knowledgeGroupLabels[offering.knowledge_group] || 'MÔN HỌC / HỌC PHẦN'}</span>
     <b>{offering.display_name}</b>
     <span>{offering.description || offering.local_code || 'Xem các bài thi thuộc môn học này'}</span>
     <i aria-hidden="true">→</i>
@@ -69,7 +71,7 @@ export function EducationLevelPage() {
       const [nodeResult, offeringResult] = await Promise.all([
         supabase.from('education_nodes').select('id,education_level_id,parent_id,node_type,code,name,description,display_order')
           .eq('education_level_id', levelData.id).is('parent_id', null).order('display_order').order('name'),
-        supabase.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,description,display_order')
+        supabase.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,description,display_order,knowledge_group')
           .eq('education_level_id', levelData.id).is('education_node_id', null).order('display_order').order('display_name'),
       ]);
       if (!active) return;
@@ -190,7 +192,7 @@ export function EducationSubjectPage() {
     const load = async () => {
       setLoading(true); setError('');
       const { data: offeringData, error: offeringError } = await supabase
-        .from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,description')
+        .from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,description,knowledge_group')
         .eq('id', offeringId).single();
       if (!active) return;
       if (offeringError) { setError('Môn học không tồn tại hoặc đã được ẩn.'); setLoading(false); return; }
@@ -239,7 +241,7 @@ export function EducationSubjectPage() {
       <section className="education-hero">
         <p className="eyebrow">MÔN HỌC / HỌC PHẦN</p>
         <h1>{offering.display_name}</h1>
-        <p>{offering.description || offering.local_code || 'Danh sách bài thi đã xuất bản thuộc môn học này.'}</p>
+        <p>{knowledgeGroupLabels[offering.knowledge_group] || 'Chưa phân loại'} · {offering.description || offering.local_code || 'Danh sách bài thi đã xuất bản thuộc môn học này.'}</p>
       </section>
       <section className="education-section">
         <div className="section-heading"><div><p className="eyebrow">EXAM LIBRARY</p><h2>Bài thi</h2><p className="muted">Chỉ hiển thị đề thuộc đúng môn học và cấp học này.</p></div></div>
