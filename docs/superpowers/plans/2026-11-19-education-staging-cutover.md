@@ -34,9 +34,9 @@
 - Modify: `supabase/tests/education_subject_groups_regression.sql`
 
 - [x] Add role-based assertions for active student, suspended student, anon, and Admin (including Admin visibility of an inactive group and permitted group creation), plus a reversible University-only write-freeze policy test.
-- [ ] A local SQL RED run could not be executed because no PostgreSQL client is installed and Docker Desktop's Linux engine is not running; verify the regression in CI.
+- [x] A local SQL run was unavailable because no PostgreSQL client is installed and Docker Desktop's Linux engine is not running; the focused PostgreSQL regression passed in GitHub Actions.
 - [x] Add the same active-profile predicate as `education_levels` while retaining the existing Admin branch.
-- [ ] Verify focused SQL regression, full clean-install, and recovered-chain workflows.
+- [x] Focused SQL regression, full clean-install, and recovered-chain workflows passed in GitHub Actions.
 
 ### Task 2: Application selection contract coverage
 
@@ -61,6 +61,6 @@
 
 ### Task 4: Verification and review
 
-- [ ] Run `npm test`, migration-recovery integrity check, available local SQL checks, and production build.
-- [ ] Inspect the full diff and current PR checks.
-- [ ] Confirm the branch remains clean after commit/push, PR remains Draft, and no hosted mutation occurred.
+- [x] Run the full Node test suite (`node --test`, 55 passed), migration-recovery integrity check, available local SQL checks, and production Vite build. The direct Vite build passed; `pnpm run build` was blocked during dependency setup because local Node is 24 (project requires 26) and pnpm ignored the esbuild build script.
+- [x] Inspect the full diff and current PR checks; PostgreSQL regression, clean Supabase stack, recovered-chain application, SQL recovery verification, and repository verification passed on the pushed head.
+- [x] Confirm the branch remains clean after commit/push, PR remains Draft, and no hosted migration, settings change, merge, or Production deploy occurred.
