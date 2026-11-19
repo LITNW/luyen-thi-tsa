@@ -145,7 +145,7 @@ export default function AdminEducationPage() {
     event.preventDefault();
     if (!selectedLevel || !offeringForm.subject_id) return setError('Hãy chọn cấp học và môn học.');
     if (majorKnowledgeGroups.has(offeringForm.knowledge_group) && !offeringForm.education_node_id) return setError('Hãy chọn ngành áp dụng cho học phần cơ sở ngành hoặc chuyên ngành.');
-    if (!majorKnowledgeGroups.has(offeringForm.knowledge_group) && offeringForm.education_node_id) return setError('Các nhóm kiến thức độc lập không cần gắn với ngành. Hãy bỏ chọn ngành.');
+    if (['general_sciences', 'political_theory', 'languages_skills'].includes(offeringForm.knowledge_group) && offeringForm.education_node_id) return setError('Các nhóm kiến thức độc lập không cần gắn với ngành. Hãy bỏ chọn ngành.');
     setSaving(true); setError(''); setNotice('');
     const { id: offeringId, values: offeringValues } = splitRecordIdentity(offeringForm);
     const payload = {
@@ -225,10 +225,10 @@ export default function AdminEducationPage() {
       {selectedLevel && <section className="section-block admin-education-section">
         <div className="section-heading"><div><p className="eyebrow">OPTIONAL CONTEXT</p><h2>Ngành / chuyên ngành · {levelName}</h2><p className="muted">Chỉ cần tạo ngành khi phân loại học phần cơ sở ngành hoặc chuyên ngành. Khoa học cơ bản và lý luận chính trị được phân loại độc lập.</p></div></div>
         <form className="category-form form-stack" onSubmit={saveNode}>
-          <h3>{nodeForm.id ? 'Chỉnh sửa ngữ cảnh' : 'Thêm ngữ cảnh'}</h3>
+          <h3>{nodeForm.id ? 'Chỉnh sửa ngành' : 'Thêm ngành'}</h3>
           <div className="admin-form-grid">
             <label>Loại ngữ cảnh<select value={nodeForm.node_type} onChange={(e) => setNodeForm({ ...nodeForm, node_type: e.target.value })}>
-              <option value="grade">Lớp học</option><option value="institution">Trường / cơ sở</option><option value="program">Chương trình đào tạo</option><option value="major">Ngành học</option><option value="custom">Nhóm tùy chỉnh</option>
+              <option value="major">Ngành / chuyên ngành</option>
             </select></label>
             <label>Ngữ cảnh cha<select value={nodeForm.parent_id} onChange={(e) => setNodeForm({ ...nodeForm, parent_id: e.target.value })}>
               <option value="">Không có · nằm trực tiếp dưới cấp học</option>
@@ -244,10 +244,10 @@ export default function AdminEducationPage() {
           <div className="user-actions"><button className="button primary" disabled={saving}>{saving ? 'Đang lưu…' : nodeForm.id ? 'Lưu ngữ cảnh' : 'Thêm ngữ cảnh'}</button><button type="button" className="button secondary" onClick={() => setNodeForm({ ...emptyNode, education_level_id: selectedLevel })}>Làm mới</button></div>
         </form>
         <div className="version-list">
-          {levelNodes.length ? levelNodes.map((node) => <article className="version-row" key={node.id}>
+          {levelNodes.filter((node) => node.node_type === 'major').length ? levelNodes.filter((node) => node.node_type === 'major').map((node) => <article className="version-row" key={node.id}>
             <div><b>{nodePath(node)}</b><small>{node.node_type} · {node.code} · {node.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
             <div className="user-actions"><button type="button" className="button secondary" onClick={() => editNode(node)}>Sửa</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_nodes', node, !node.is_active)}>{node.is_active ? 'Ẩn' : 'Kích hoạt'}</button></div>
-          </article>) : <div className="empty-state">Chưa có ngữ cảnh. Có thể bỏ qua tầng này.</div>}
+          </article>) : <div className="empty-state">Chưa có ngành. Có thể bỏ qua nếu học phần không thuộc cơ sở ngành hoặc chuyên ngành.</div>}
         </div>
       </section>}
 
