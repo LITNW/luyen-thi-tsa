@@ -303,6 +303,15 @@
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "production_status": "not_applied",
       "staging_status": "not_applied"
+    },
+    {
+      "version": "20261119150000",
+      "name": "add_education_knowledge_groups",
+      "status": "pending_in_pr_41",
+      "source": "PR #41: simplify university course classification and exam authoring",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "production_status": "not_applied",
+      "staging_status": "not_applied"
     }
   ],
   "last_verified_against_live_ledgers": {

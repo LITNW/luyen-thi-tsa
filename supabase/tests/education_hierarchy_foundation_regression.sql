@@ -125,6 +125,35 @@ begin
     raise exception 'Multiple university course offerings for one canonical subject were not preserved.';
   end if;
 
+  -- Independent knowledge groups do not require a major node.
+  update public.education_subjects
+  set knowledge_group='major_foundation'
+  where id=v_university_offer;
+  insert into public.education_subjects(
+    education_level_id,education_node_id,subject_id,local_code,display_name,knowledge_group
+  ) values (
+    v_uni,null,v_math,'UNI-MATH-GEN','Toán học cơ bản','general_sciences'
+  );
+  if not exists (
+    select 1 from public.education_subjects
+    where education_level_id=v_uni and local_code='UNI-MATH-GEN'
+      and knowledge_group='general_sciences' and education_node_id is null
+  ) then
+    raise exception 'General-science offering must be classifiable without a major.';
+  end if;
+
+  v_rejected := false;
+  begin
+    insert into public.education_subjects(
+      education_level_id,education_node_id,subject_id,local_code,display_name,knowledge_group
+    ) values (v_uni,null,v_math,'UNI-MATH-FOUND','Invalid foundation course','major_foundation');
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then
+    raise exception 'Major-foundation offering without a major was unexpectedly accepted.';
+  end if;
+
   -- A node's stable hierarchy identity cannot be changed after an offering depends on it.
   v_rejected := false;
   begin

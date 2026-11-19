@@ -49,7 +49,7 @@ export function AdminExamsPage() {
       supabase.rpc('admin_list_exam_versions_with_categories'),
       supabase.rpc('admin_list_exam_categories'),
       supabase.from('exams').select('id,education_subject_id'),
-      supabase.from('education_subjects').select('id,education_level_id,education_node_id,display_name,is_active,local_code'),
+      supabase.from('education_subjects').select('id,education_level_id,education_node_id,display_name,is_active,local_code,knowledge_group'),
       supabase.from('education_levels').select('id,name,code,is_active'),
       supabase.from('education_nodes').select('id,name,parent_id,education_level_id,is_active'),
     ]);
@@ -117,7 +117,8 @@ export function AdminExamsPage() {
       node = node.parent_id ? nodeMap.get(node.parent_id) : null;
       guard += 1;
     }
-    return [level?.name, ...path, offering.display_name].filter(Boolean).join(' / ');
+    const groupLabels = { general_sciences: 'Khoa học cơ bản', political_theory: 'Lý luận chính trị', major_foundation: 'Cơ sở ngành', specialization: 'Chuyên ngành', languages_skills: 'Ngoại ngữ và kỹ năng', unclassified: 'Chưa phân loại' };
+    return [level?.name, groupLabels[offering.knowledge_group] || 'Chưa phân loại', ...path, offering.display_name].filter(Boolean).join(' / ');
   };
 
   return <AdminFrame title="Quản lý đề thi">

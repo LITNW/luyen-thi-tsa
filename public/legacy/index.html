@@ -498,7 +498,7 @@ if('serviceWorker' in navigator){
     }
     async function loadEditorEducationSubjects(){
       const [offerings,levels,nodes]=await Promise.all([
-        sb.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,is_active'),
+        sb.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,is_active,knowledge_group'),
         sb.from('education_levels').select('id,name,code,is_active'),
         sb.from('education_nodes').select('id,name,parent_id,education_level_id,is_active')
       ]);
@@ -512,7 +512,8 @@ if('serviceWorker' in navigator){
       const level=editorEducationLevels.find(x=>x.id===offering.education_level_id);
       const path=[];let node=offering.education_node_id?editorEducationNodes.find(x=>x.id===offering.education_node_id):null,guard=0;
       while(node&&guard<12){path.unshift(node.name);node=node.parent_id?editorEducationNodes.find(x=>x.id===node.parent_id):null;guard++}
-      return [level?.name,...path,offering.display_name].filter(Boolean).join(' / ');
+      const groups={general_sciences:'Khoa học cơ bản',political_theory:'Lý luận chính trị',major_foundation:'Cơ sở ngành',specialization:'Chuyên ngành',languages_skills:'Ngoại ngữ và kỹ năng',unclassified:'Chưa phân loại'};
+      return [level?.name,groups[offering.knowledge_group]||'Chưa phân loại',...path,offering.display_name].filter(Boolean).join(' / ');
     }
     async function openNewEditor(){
       try{

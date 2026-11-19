@@ -6,7 +6,17 @@ import { splitRecordIdentity } from '../lib/educationPayload.js';
 const emptyLevel = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
 const emptyNode = { id: '', education_level_id: '', parent_id: '', node_type: 'custom', code: '', name: '', description: '', display_order: 0, is_active: true };
 const emptySubject = { code: '', name: '', description: '', display_order: 0 };
-const emptyOffering = { id: '', education_level_id: '', education_node_id: '', subject_id: '', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
+const emptyOffering = { id: '', education_level_id: '', education_node_id: '', subject_id: '', knowledge_group: 'unclassified', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
+
+const knowledgeGroups = [
+  { value: 'general_sciences', label: 'Khoa học cơ bản' },
+  { value: 'political_theory', label: 'Lý luận chính trị' },
+  { value: 'major_foundation', label: 'Cơ sở ngành' },
+  { value: 'specialization', label: 'Chuyên ngành' },
+  { value: 'languages_skills', label: 'Ngoại ngữ và kỹ năng' },
+  { value: 'unclassified', label: 'Chưa phân loại' },
+];
+const majorKnowledgeGroups = new Set(['major_foundation', 'specialization']);
 
 function AdminEducationFrame({ children }) {
   return <div className="app-shell">
@@ -134,12 +144,15 @@ export default function AdminEducationPage() {
   const saveOffering = async (event) => {
     event.preventDefault();
     if (!selectedLevel || !offeringForm.subject_id) return setError('Hãy chọn cấp học và môn học.');
+    if (majorKnowledgeGroups.has(offeringForm.knowledge_group) && !offeringForm.education_node_id) return setError('Hãy chọn ngành áp dụng cho học phần cơ sở ngành hoặc chuyên ngành.');
+    if (!majorKnowledgeGroups.has(offeringForm.knowledge_group) && offeringForm.education_node_id) return setError('Các nhóm kiến thức độc lập không cần gắn với ngành. Hãy bỏ chọn ngành.');
     setSaving(true); setError(''); setNotice('');
     const { id: offeringId, values: offeringValues } = splitRecordIdentity(offeringForm);
     const payload = {
       ...offeringValues,
       education_level_id: selectedLevel,
       education_node_id: offeringForm.education_node_id || null,
+      knowledge_group: offeringForm.knowledge_group || 'unclassified',
       local_code: offeringForm.local_code || null,
       display_order: Number(offeringForm.display_order) || 0,
     };
@@ -174,7 +187,7 @@ export default function AdminEducationPage() {
 
   const editOffering = (item) => setOfferingForm({
     id: item.id, education_level_id: item.education_level_id, education_node_id: item.education_node_id || '',
-    subject_id: item.subject_id, local_code: item.local_code || '', display_name: item.display_name,
+    subject_id: item.subject_id, knowledge_group: item.knowledge_group || 'unclassified', local_code: item.local_code || '', display_name: item.display_name,
     description: item.description || '', display_order: item.display_order, is_active: item.is_active,
   });
 
@@ -210,7 +223,7 @@ export default function AdminEducationPage() {
       </section>
 
       {selectedLevel && <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">OPTIONAL CONTEXT</p><h2>Ngữ cảnh · {levelName}</h2><p className="muted">Không bắt buộc. Có thể để trống để đi thẳng từ cấp học đến môn học.</p></div></div>
+        <div className="section-heading"><div><p className="eyebrow">OPTIONAL CONTEXT</p><h2>Ngành / chuyên ngành · {levelName}</h2><p className="muted">Chỉ cần tạo ngành khi phân loại học phần cơ sở ngành hoặc chuyên ngành. Khoa học cơ bản và lý luận chính trị được phân loại độc lập.</p></div></div>
         <form className="category-form form-stack" onSubmit={saveNode}>
           <h3>{nodeForm.id ? 'Chỉnh sửa ngữ cảnh' : 'Thêm ngữ cảnh'}</h3>
           <div className="admin-form-grid">
@@ -259,17 +272,18 @@ export default function AdminEducationPage() {
       </section>
 
       {selectedLevel && <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">SUBJECT OFFERINGS</p><h2>Môn học thuộc {levelName}</h2><p className="muted">Mỗi dòng là một môn học được mở tại cấp học hoặc ngữ cảnh cụ thể.</p></div></div>
+        <div className="section-heading"><div><p className="eyebrow">SUBJECT OFFERINGS</p><h2>Học phần thuộc {levelName}</h2><p className="muted">Mỗi học phần thuộc một nhóm kiến thức; chỉ cơ sở ngành và chuyên ngành mới cần gắn ngành áp dụng.</p></div></div>
         <form className="category-form form-stack" onSubmit={saveOffering}>
-          <h3>{offeringForm.id ? 'Chỉnh sửa môn học trong ngữ cảnh' : 'Gán môn học vào cấp học/ngữ cảnh'}</h3>
+          <h3>{offeringForm.id ? 'Chỉnh sửa học phần' : 'Thêm học phần'}</h3>
           <div className="admin-form-grid">
             <label>Môn học<select required value={offeringForm.subject_id} onChange={(e) => setOfferingForm({ ...offeringForm, subject_id: e.target.value })}>
               <option value="">Chọn môn học trong danh mục</option>
               {subjects.filter((subject) => subject.is_active).map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}
             </select></label>
-            <label>Ngữ cảnh<select value={offeringForm.education_node_id} onChange={(e) => setOfferingForm({ ...offeringForm, education_node_id: e.target.value })}>
+            <label>Nhóm kiến thức<select required value={offeringForm.knowledge_group} onChange={(e) => setOfferingForm({ ...offeringForm, knowledge_group: e.target.value, education_node_id: majorKnowledgeGroups.has(e.target.value) ? offeringForm.education_node_id : '' })}>{knowledgeGroups.map((group) => <option key={group.value} value={group.value}>{group.label}</option>)}</select></label>
+            <label>Ngành áp dụng<select value={offeringForm.education_node_id} disabled={!majorKnowledgeGroups.has(offeringForm.knowledge_group)} onChange={(e) => setOfferingForm({ ...offeringForm, education_node_id: e.target.value })}>
               <option value="">Trực tiếp dưới cấp học</option>
-              {levelNodes.filter((node) => node.is_active).map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
+              {levelNodes.filter((node) => node.is_active && node.node_type === 'major').map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
             </select></label>
           </div>
           <div className="admin-form-grid">
@@ -282,7 +296,7 @@ export default function AdminEducationPage() {
         </form>
         <div className="version-list">
           {levelOfferings.length ? levelOfferings.map((item) => <article className="version-row" key={item.id}>
-            <div><b>{item.display_name}</b><small>{nodeMap.get(item.education_node_id)?.name ? nodePath(nodeMap.get(item.education_node_id)) + ' / ' : ''}{subjectMap.get(item.subject_id)?.code || '—'} · {item.local_code || 'Không có mã'} · {item.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
+            <div><b>{item.display_name}</b><small>{knowledgeGroups.find((group) => group.value === item.knowledge_group)?.label || 'Chưa phân loại'}{nodeMap.get(item.education_node_id)?.name ? ' · ' + nodePath(nodeMap.get(item.education_node_id)) : ''} · {subjectMap.get(item.subject_id)?.code || '—'} · {item.local_code || 'Không có mã'} · {item.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
             <div className="user-actions"><button type="button" className="button secondary" onClick={() => editOffering(item)}>Sửa</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_subjects', item, !item.is_active)}>{item.is_active ? 'Ẩn' : 'Kích hoạt'}</button></div>
           </article>) : <div className="empty-state">Chưa có môn học được gán cho cấp học này.</div>}
         </div>
