@@ -110,6 +110,7 @@ begin
   update public.education_subject_groups set is_active=true where id=v_group;
 
   -- Cover the editor RPC with a newly grouped University course, then edit its draft.
+  perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
   v_editor_result := public.admin_save_exam_content_with_education(
     null,'University group editor draft','Regression fixture',30,v_questions,v_course,null,false
   );
