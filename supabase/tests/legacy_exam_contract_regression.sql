@@ -201,11 +201,19 @@ BEGIN
     RAISE EXCEPTION 'Legacy exam-version clone did not preserve question content with a new mapping ID.';
   END IF;
 
-  -- Draft clone deletion must remove only the disposable clone.
+  -- Draft clone removal is archive-only: retain the version and mappings for audit/history.
   v_save_result := public.admin_delete_exam_version(v_clone_id);
-  IF v_save_result->>'deleted' IS DISTINCT FROM 'true'
-     OR EXISTS (SELECT 1 FROM public.exam_versions WHERE id=v_clone_id) THEN
-    RAISE EXCEPTION 'Draft clone was not safely deleted: %',v_save_result;
+  IF v_save_result->>'archived' IS DISTINCT FROM 'true'
+     OR v_save_result->>'deleted' IS DISTINCT FROM 'false'
+     OR NOT EXISTS (
+       SELECT 1 FROM public.exam_versions
+       WHERE id=v_clone_id AND archived_at IS NOT NULL
+     )
+     OR NOT EXISTS (
+       SELECT 1 FROM public.exam_version_questions
+       WHERE exam_version_id=v_clone_id AND id=v_clone_mapping
+     ) THEN
+    RAISE EXCEPTION 'Draft clone was not safely archived without physical deletion: %',v_save_result;
   END IF;
 
   -- Existing attempt flow must continue to use the retained mapping ID.
