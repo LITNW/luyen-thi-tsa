@@ -50,3 +50,10 @@ test('exam editor offers a searchable course picker with knowledge-group context
   assert.match(editor, /knowledge_group/);
   assert.match(editor, /data-search=/);
 });
+
+
+test('student course browsing displays the same knowledge-group classification', () => {
+  const browse = readFileSync(new URL('../pages/EducationBrowsePages.jsx', import.meta.url), 'utf8');
+  assert.match(browse, /knowledgeGroupLabels/);
+  assert.match(browse, /knowledge_group/);
+});
