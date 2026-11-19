@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { splitRecordIdentity } from '../lib/educationPayload.js';
 
 const emptyLevel = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
-const emptyNode = { id: '', education_level_id: '', parent_id: '', node_type: 'custom', code: '', name: '', description: '', display_order: 0, is_active: true };
+const emptyNode = { id: '', education_level_id: '', parent_id: '', node_type: 'major', code: '', name: '', description: '', display_order: 0, is_active: true };
 const emptySubject = { code: '', name: '', description: '', display_order: 0 };
 const emptyOffering = { id: '', education_level_id: '', education_node_id: '', subject_id: '', knowledge_group: 'unclassified', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
 

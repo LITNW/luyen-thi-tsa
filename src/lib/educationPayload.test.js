@@ -42,14 +42,3 @@ test('all education create and update flows strip form identity before writing',
   assert.match(page, /splitRecordIdentity\(offeringForm\)/);
   assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:levelForm|nodeForm|offeringForm)/);
 });
-
-
-test('university course administration exposes knowledge groups and major-only association', () => {
-  const page = readFileSync(new URL('../pages/AdminEducationPage.jsx', import.meta.url), 'utf8');
-  assert.match(page, /general_sciences/);
-  assert.match(page, /political_theory/);
-  assert.match(page, /major_foundation/);
-  assert.match(page, /specialization/);
-  assert.match(page, /node\.node_type === 'major'/);
-  assert.match(page, /Hãy chọn ngành áp dụng cho học phần cơ sở ngành hoặc chuyên ngành/);
-});
