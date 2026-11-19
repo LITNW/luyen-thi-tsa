@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { splitRecordIdentity } from './educationPayload.js';
 
 test('new education records omit the empty UUID id from insert payloads', () => {
@@ -32,4 +33,12 @@ test('existing education records keep their UUID for update targeting but omit i
     subject_id: 'subject-uuid',
   });
   assert.equal(Object.hasOwn(result.values, 'id'), false);
+});
+
+test('all education create and update flows strip form identity before writing', () => {
+  const page = readFileSync(new URL('../pages/AdminEducationPage.jsx', import.meta.url), 'utf8');
+  assert.match(page, /splitRecordIdentity\(levelForm\)/);
+  assert.match(page, /splitRecordIdentity\(nodeForm\)/);
+  assert.match(page, /splitRecordIdentity\(offeringForm\)/);
+  assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:levelForm|nodeForm|offeringForm)/);
 });
