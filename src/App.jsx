@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import RouteGuard from './components/RouteGuard.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import PrivacyConsentManager from './components/PrivacyConsentManager.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import PublicLandingPage from './pages/PublicLandingPage.jsx';
@@ -33,6 +34,7 @@ function HomeRoute() {
 
 export default function App() {
   return (
+    <>
     <Routes>
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
@@ -54,5 +56,7 @@ export default function App() {
       <Route path="/legacy" element={<Navigate to="/legacy/index.html" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <PrivacyConsentManager />
+    </>
   );
 }

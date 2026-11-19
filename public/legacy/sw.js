@@ -1,11 +1,13 @@
 const CACHE_NAME='tsa-legacy-shell-v1';
 const LEGACY_ENTRY='/legacy/index.html';
+const ATTEMPT_STORAGE_SCRIPT='/legacy/attempt-storage.js';
 const SUPABASE_SCRIPT='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0';
 
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE_NAME);
     try{await cache.add(LEGACY_ENTRY)}catch(_){}
+    try{await cache.add(ATTEMPT_STORAGE_SCRIPT)}catch(_){}
     try{
       const response=await fetch(SUPABASE_SCRIPT,{mode:'no-cors'});
       await cache.put(SUPABASE_SCRIPT,response);
@@ -37,6 +39,20 @@ self.addEventListener('fetch',event=>{
       }catch(_){
         return (await cache.match(LEGACY_ENTRY))||Response.error();
       }
+    })());
+    return;
+  }
+
+  if(url.origin===self.location.origin&&url.pathname===ATTEMPT_STORAGE_SCRIPT){
+    event.respondWith((async()=>{
+      const cache=await caches.open(CACHE_NAME);
+      const cached=await cache.match(ATTEMPT_STORAGE_SCRIPT);
+      if(cached)return cached;
+      try{
+        const response=await fetch(request);
+        if(response&&response.ok)await cache.put(ATTEMPT_STORAGE_SCRIPT,response.clone());
+        return response;
+      }catch(_){return Response.error()}
     })());
     return;
   }

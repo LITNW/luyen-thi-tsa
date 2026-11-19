@@ -27,3 +27,63 @@ test('concurrent answer edits cannot clear the dirty marker for a newer revision
   assert.match(html, /while\(true\)\{\s*const key=Object\.keys\(a\.dirtyAnswers\|\|\{\}\)\.filter\(k=>a\.dirtyAnswers\[k\]\)/);
   assert.match(html, /a\.dirtyAnswers\[i\]=\(Number\(a\.dirtyAnswers\[i\]\)\|\|0\)\+1/);
 });
+
+
+test('legacy exam persistence is account-scoped in IndexedDB and waits for migration before restoring', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(html, /src="\/legacy\/attempt-storage\.js"/);
+  assert.match(html, /await window\.LITAttemptStorage\.setAccount\(user\?\.id\|\|null\)/);
+  assert.match(storage, /indexedDB\.open/);
+  assert.match(storage, /accountId/);
+  assert.match(storage, /legacy migration verified/i);
+  assert.match(storage, /localStorage\.removeItem/);
+});
+
+test('legacy attempt drafts preserve old data until every IndexedDB record is read back and verified', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /verified/);
+  assert.match(storage, /JSON\.stringify/);
+  assert.match(storage, /transaction\.oncomplete/);
+  assert.match(storage, /migration/i);
+});
+
+test('IndexedDB writes are serialized and storage failures remain observable instead of being swallowed', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /writeQueue/);
+  assert.match(storage, /lit-attempt-storage-error/);
+  assert.match(storage, /flush/);
+});
+
+
+test('network restoration reconciles server state, retries dirty answers and time events, and preserves pending submission', () => {
+  assert.match(html, /window\.addEventListener\('online',[\s\S]*?a\.needsServerReconcile=true;[\s\S]*?await syncPending\(a\)/);
+  assert.match(html, /while\(true\)\{[\s\S]*?Object\.keys\(a\.dirtyAnswers/);
+  assert.match(html, /while\(\(a\.timeQueue\|\|\[\]\)\.length\)/);
+  assert.match(html, /a\.pendingSubmit=true/);
+  assert.match(html, /sb\.rpc\('submit_exam_attempt'/);
+});
+
+test('storage adapter is awaited before authenticated restore and account changes do not erase another account namespace', () => {
+  assert.match(html, /await window\.LITAttemptStorage\.setAccount\(user\?\.id\|\|null\);[\s\S]*?if\(!user\)/);
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /recordId\(accountId, logicalKey\)/);
+  assert.match(storage, /activeAccountId/);
+  assert.doesNotMatch(storage, /clearAccount\(/);
+});
+
+
+test('offline legacy shell also caches the IndexedDB adapter required to reopen a saved attempt', () => {
+  const serviceWorker = readFileSync(new URL('../public/legacy/sw.js', import.meta.url), 'utf8');
+  assert.match(serviceWorker, /ATTEMPT_STORAGE_SCRIPT='\/legacy\/attempt-storage\.js'/);
+  assert.match(serviceWorker, /cache\.add\(ATTEMPT_STORAGE_SCRIPT\)/);
+  assert.match(serviceWorker, /url\.pathname===ATTEMPT_STORAGE_SCRIPT/);
+  assert.match(serviceWorker, /cache\.match\(ATTEMPT_STORAGE_SCRIPT\)/);
+});
+
+
+test('quota failures switch to a visible localStorage fallback without dropping the in-memory draft', () => {
+  const storage = readFileSync(new URL('../public/legacy/attempt-storage.js', import.meta.url), 'utf8');
+  assert.match(storage, /mode = 'legacy-fallback'/);
+  assert.match(storage, /root\.localStorage\.setItem\(key, JSON\.stringify\(value\)\)/);
+  assert.match(storage, /emitError\(error, label\)/);
+});

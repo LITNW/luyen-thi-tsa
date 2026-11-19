@@ -231,3 +231,11 @@ The Staging migration ledger currently contains a reconstructed pre-005 baseline
 - A separate Cloudflare Worker build notification reported failures for the same commit. The account API shows a Worker named `luyen-thi-tsa` with a build trigger restricted to the `main` branch; the Worker has no attached routes in the inspected account snapshot. The failed notification is therefore not evidence that the Pages Preview failed or that the Worker serves the Pages application. Its relationship to the active Pages runtime remains unproven.
 - Vercel's PR deployment notification reports the Free-plan daily deployment limit. This does not block the verified Cloudflare Pages Preview or GitHub Actions build.
 - No Production schema, Auth settings, secrets, environment variables or deployment settings were changed during these checks.
+
+## 3I. PR #33 integration refresh (2026-11-19)
+
+- PR #40 was merged to `main` on 2026-11-19 as merge commit `dfb3edd432cd498b52411373cad45760da62eded`. This supersedes the earlier note to wait for PR #40. Its legacy media editor, archived-exam media guard, migration recovery records, and related regression tests are now part of `main` and must be preserved.
+- PR #33 head `6cbd7d7bbc36dff65874281f83523ae7966deba3` was merged locally with the updated `main`; the privacy documentation and legacy-script test had conflicts and were reconciled by retaining the PR #33 storage coverage and PR #40 media/archive coverage. No PR #40 commits were altered.
+- The existing local Node suite passed 51/51 tests after reconciliation on Node 24.22.3. The repository requires Node 26.x; this checkout has no npm executable or installed dependencies, so a production build could not be run locally. CI must verify the integration commit under the supported toolchain.
+- PR #33 remains Draft and is not a legal-consent implementation. The currently inspected registration flows still call Supabase Auth signup directly; no server-controlled registration intent, immutable consent-event gate, under-16 activation/representative workflow, public rights workflow, or approved retention schedule is implemented by this PR. Do not treat client preference storage as consent evidence.
+- No Production or Staging schema, Auth, secrets, provider configuration, or deployment settings were changed in this integration.

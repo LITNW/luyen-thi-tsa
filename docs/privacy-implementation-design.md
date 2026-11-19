@@ -207,3 +207,41 @@ Use browser storage to cache data and hold temporary work, not as the authoritat
 Expected benefits: fewer repeated static/media downloads, fewer repeated reads for recently viewed content, and fewer server writes for unsent interaction state. This does not reduce the database footprint of authoritative submitted attempts unless the product deliberately stops retaining them, which would affect learning-history functionality and requires a separate purpose/retention decision.
 
 Implementation should start with static assets and non-personal public content caching, then a small IndexedDB draft/cache layer. Do not move submitted answer/result records off the server as a cost-saving measure.
+
+
+## 12. Client-side storage and Cookie controls implementation status (2026-11-16)
+
+Implemented on feature branch `feat/privacy-cookie-controls`; not merged or deployed:
+
+- Added a versioned, fail-safe preference record in `localStorage`. Essential and security categories are fixed on; preferences and page-state choices are independently selectable; analytics is hard-disabled because no analytics provider is approved or configured.
+- Added a React consent/preferences panel mounted across React routes, with reject-optional, save-selection, accept-available-options, and persistent settings launcher.
+- Added a matching consent panel to the retained legacy exam client. Both interfaces share the same storage key and consent version.
+- Added a service worker that caches only same-origin public static assets under `/assets/` and `/brand/`, with bounded cache size and cache-version cleanup. It does not cache HTML, Supabase/API responses, authenticated requests, exam payloads, answers, or private media.
+- Added an IndexedDB helper for bounded temporary, per-account records with TTL, payload-size limit, and account-scoped cleanup. React AuthContext clears this temporary store when the authenticated account changes.
+- The retained legacy exam engine now routes active-attempt cache records through a separate IndexedDB database (`lit-attempt-storage`), keyed by account ID and logical record key. Its existing synchronous call sites use an in-memory account-scoped mirror hydrated before authenticated recovery begins; writes are serialized into IndexedDB transactions.
+- First-login migration reads only the signed-in account's legacy attempt pointers/cache records, writes them to IndexedDB, reads them back and compares serialized values, and only then removes the corresponding legacy `localStorage` records. Records for other accounts remain untouched. If IndexedDB initialization or migration fails, the old records are retained and the legacy localStorage path is used as a fallback; the UI receives a storage-error notification.
+- Offline restoration, dirty-answer revisions, pending question-time events, server reconciliation, retry-on-reconnect, pending submission and authoritative server result retrieval remain in the existing exam engine. IndexedDB is still best-effort local recovery, not the submitted-answer/result authority.
+- Supabase JS Auth currently uses its default browser storage for persisted sessions; no HttpOnly server-set session cookie was introduced. The notice explicitly discloses this current behavior.
+- The optional page-state and preferences categories are preference records only; no analytics is active. Any future feature consuming these categories must check the saved choice before writing optional data.
+- Consent choices are client-side preference records only, not legal consent evidence. The server-side registration intent and immutable consent-evidence architecture in Sections 3.1–3.2 remains unimplemented. No compliance claim is made.
+- Unit tests cover consent defaults, immutable required categories, analytics hard-disable, version mismatch/malformed data and storage failures; browser-storage tests cover account scoping and preflight size validation. Build and full browser integration verification remain pending CI/Preview evidence.
+
+
+## 12A. Legacy attempt cache migration implementation (2026-11-16)
+
+Implemented on `feat/privacy-cookie-controls`; PR #33 remains Draft and no Production deployment has occurred.
+
+- Added `public/legacy/attempt-storage.js`, a dedicated IndexedDB adapter with an account-scoped keyspace, a hydrated synchronous in-memory mirror for compatibility with the legacy exam engine, serialized writes, explicit flush support and observable write errors.
+- The adapter migrates each signed-in user's legacy pointer and draft records, verifies the IndexedDB read-back against the source values, and removes only that user's old localStorage records after verification. Legacy records belonging to other accounts are retained.
+- If IndexedDB is unavailable or migration cannot be verified, the old records are not deleted; the adapter enters a legacy-storage fallback and emits a visible error event. If a later IndexedDB write fails (including quota errors), the current record is also written to localStorage where possible and subsequent writes use that fallback. This is a compatibility/recovery fallback, not the normal storage path.
+- The engine's existing offline restoration and server reconciliation logic remains intact. Dirty answers, question-time queue events, navigation state, deadline/pending-submit state and exam snapshot continue to be stored together in the attempt cache. Submitted results continue to be fetched from the server.
+- Added behavioral adapter tests using a deterministic IndexedDB test double for per-account migration, read-back verification, account switching, page-reload recovery, quota fallback and retaining legacy data on migration failure. Source-contract tests cover reconnect synchronization and pending submission; syntax checks cover the IndexedDB adapter and service worker. The complete repository suite and production build must pass in CI before this migration is considered verified.
+- Updated the legacy service worker to cache the IndexedDB adapter itself. Without this, a cached legacy exam shell could load offline but fail to initialize because its newly added same-origin storage script was not cached.
+- IndexedDB records are not a substitute for server-side attempt records and may be cleared or evicted by the browser. The application must not claim that a draft is submitted until Supabase confirms submission.
+
+## 12B. PR #33 integration refresh (2026-11-19)
+
+- The feature branch has been reconciled locally with `main` after PR #40 merged as `dfb3edd432cd498b52411373cad45760da62eded`. The merged archived-exam media authorization guard and legacy media-editor behavior are retained.
+- Local `node --test` passed 51/51 tests on Node 24.22.3 after conflict resolution. This is not the repository's supported Node version (26.x); npm and the dependency set are unavailable in the checkout, so production build verification remains pending CI.
+- This change set addresses browser storage and client preference controls only. Server-side registration intents, immutable consent evidence, direct Auth signup enforcement, child representative authorization, rights workflows, and approved data-class retention remain OPEN and block a privacy-compliance claim or Production release.
+- Do not create a blanket retention cleanup job or publish legal text from the provisional engineering durations in this document. Resolve retention, legal basis, operator-identity wording, provider disclosures, and representative verification with the responsible operator and qualified counsel.

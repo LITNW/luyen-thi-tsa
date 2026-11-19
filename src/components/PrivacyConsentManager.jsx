@@ -1,0 +1,106 @@
+import { useEffect, useMemo, useState } from 'react';
+import {
+  CONSENT_VERSION,
+  DEFAULT_PRIVACY_PREFERENCES,
+  readPrivacyPreferences,
+  savePrivacyPreferences,
+} from '../lib/privacy-consent.js';
+import './privacy-consent.css';
+
+const CATEGORIES = [
+  { key: 'essential', title: 'Lưu trữ cần thiết', detail: 'Phục vụ phiên đăng nhập và chức năng cốt lõi. Bản nháp lượt thi, câu trả lời chờ đồng bộ, trạng thái câu hỏi và snapshot cần khôi phục được lưu tạm trên thiết bị bằng IndexedDB; localStorage chỉ được dùng làm cơ chế dự phòng khi IndexedDB không khả dụng. Luôn bật.' , locked: true },
+  { key: 'security', title: 'Bảo mật và chống gian lận', detail: 'Dành cho các kiểm soát bảo mật và chống lạm dụng ở mức cần thiết. LIT không bật fingerprinting, theo dõi quảng cáo hoặc dịch vụ chống gian lận bên thứ ba.', locked: true },
+  { key: 'preferences', title: 'Tùy chọn người dùng', detail: 'Dành cho tùy chọn giao diện không nhạy cảm. Các tính năng lưu tùy chọn giao diện chưa được tích hợp; bật mục này hiện chưa kích hoạt việc thu thập dữ liệu mới.' },
+  { key: 'pageState', title: 'Duy trì trạng thái trang', detail: 'Dành cho trạng thái điều hướng và thao tác tạm thời. Chức năng lưu trạng thái trang chưa được tích hợp; bật mục này hiện chưa kích hoạt việc lưu dữ liệu mới.' },
+  { key: 'analytics', title: 'Phân tích và đo lường hiệu suất', detail: 'Đo lường mức độ ổn định và hiệu suất. Hiện LIT chưa kích hoạt nhà cung cấp phân tích; mục này đang tắt.' , unavailable: true },
+];
+
+export default function PrivacyConsentManager() {
+  const initial = useMemo(() => readPrivacyPreferences(), []);
+  const [preferences, setPreferences] = useState(initial.categories);
+  const [hasDecision, setHasDecision] = useState(Boolean(initial.updatedAt));
+  const [open, setOpen] = useState(!initial.updatedAt);
+  const [details, setDetails] = useState(false);
+  const [savedMessage, setSavedMessage] = useState('');
+
+  useEffect(() => {
+    const openSettings = () => { setOpen(true); setDetails(true); };
+    window.addEventListener('lit:privacy-settings', openSettings);
+    return () => window.removeEventListener('lit:privacy-settings', openSettings);
+  }, []);
+
+  const save = (choices) => {
+    const result = savePrivacyPreferences(undefined, choices);
+    setPreferences(result.categories);
+    setHasDecision(true);
+    setOpen(false);
+    setDetails(false);
+    setSavedMessage(result.persisted ? 'Đã lưu lựa chọn quyền riêng tư trên thiết bị này.' : 'Trình duyệt không cho phép lưu lựa chọn. Các mục không thiết yếu vẫn được giữ tắt.');
+    window.setTimeout(() => setSavedMessage(''), 5000);
+    window.dispatchEvent(new CustomEvent('lit:privacy-preferences-changed', { detail: result.categories }));
+  };
+
+  const update = (key, value) => setPreferences((current) => ({ ...current, [key]: value }));
+  const optionalChoices = () => ({
+    preferences: preferences.preferences,
+    pageState: preferences.pageState,
+    analytics: false,
+  });
+
+  return (
+    <>
+      {!open && (
+        <div className="lit-privacy-launcher">
+          <button type="button" onClick={() => { setOpen(true); setDetails(true); }} aria-label="Mở cài đặt quyền riêng tư">Quyền riêng tư</button>
+        </div>
+      )}
+      {open && (
+        <div className="lit-privacy-backdrop" role="presentation">
+          <section className="lit-privacy-panel" role="dialog" aria-modal="true" aria-labelledby="lit-privacy-title">
+            <div className="lit-privacy-heading">
+              <div>
+                <p className="lit-privacy-eyebrow">LIT · QUYỀN RIÊNG TƯ</p>
+                <h2 id="lit-privacy-title">{hasDecision ? 'Cài đặt Cookie và lưu trữ' : 'LIT sử dụng Cookie và bộ nhớ trình duyệt'}</h2>
+              </div>
+              {hasDecision && <button className="lit-privacy-close" type="button" onClick={() => setOpen(false)} aria-label="Đóng cài đặt">×</button>}
+            </div>
+            <p className="lit-privacy-copy">LIT sử dụng một số công nghệ lưu trữ trên thiết bị để duy trì phiên, bảo vệ tài khoản và ghi nhớ trạng thái học tập. Bạn có thể chọn các mục không thiết yếu. Việc từ chối hoặc đóng thông báo không được xem là đồng ý.</p>
+            <div className="lit-privacy-list">
+              {CATEGORIES.map((category) => (
+                <div className="lit-privacy-category" key={category.key}>
+                  <div className="lit-privacy-category-copy">
+                    <strong>{category.title}</strong>
+                    <p>{category.detail}</p>
+                  </div>
+                  <label className="lit-privacy-toggle">
+                    <input
+                      type="checkbox"
+                      checked={category.locked ? true : Boolean(preferences[category.key])}
+                      disabled={category.locked || category.unavailable}
+                      onChange={(event) => update(category.key, event.target.checked)}
+                      aria-label={category.title}
+                    />
+                    <span>{category.locked ? 'Luôn bật' : category.unavailable ? 'Chưa khả dụng' : preferences[category.key] ? 'Bật' : 'Tắt'}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <details className="lit-privacy-details" open={details} onToggle={(event) => setDetails(event.currentTarget.open)}>
+              <summary>Thông tin về dữ liệu được lưu</summary>
+              <p>Supabase Auth hiện duy trì phiên đăng nhập bằng bộ nhớ trình duyệt của SDK; LIT chưa triển khai cookie phiên HttpOnly do máy chủ thiết lập. Phòng thi lưu tạm câu trả lời, trạng thái câu hỏi, dữ liệu chờ đồng bộ và snapshot của lượt thi trong IndexedDB theo phạm vi tài khoản để hỗ trợ khôi phục khi mất mạng hoặc tải lại trang; localStorage chỉ là cơ chế dự phòng khi IndexedDB không khả dụng. Đây là bản đệm trên thiết bị, không thay thế dữ liệu đã đồng bộ trên máy chủ. Các mục tùy chọn giao diện và trạng thái trang hiện mới lưu lựa chọn; chức năng tương ứng chưa được tích hợp. Dữ liệu bài thi đã nộp, kết quả, hồ sơ và bằng chứng đồng ý vẫn do máy chủ quản lý.</p>
+              <p>Lựa chọn này được lưu trên thiết bị bằng localStorage, có phiên bản và thời điểm cập nhật. Xóa dữ liệu trình duyệt có thể xóa lựa chọn này. Không lưu mật khẩu, token xác thực hoặc bằng chứng đồng ý trong localStorage.</p>
+              <p>Liên hệ quyền riêng tư: <a href="mailto:lit.privacy.vn@gmail.com">lit.privacy.vn@gmail.com</a>. Phiên bản lựa chọn: {CONSENT_VERSION}.</p>
+            </details>
+            <div className="lit-privacy-actions">
+              <button type="button" className="lit-privacy-secondary" onClick={() => save({ ...DEFAULT_PRIVACY_PREFERENCES.categories, preferences: false, pageState: false, analytics: false })}>Từ chối mục không thiết yếu</button>
+              <button type="button" className="lit-privacy-secondary" onClick={() => save(optionalChoices())}>Lưu lựa chọn</button>
+              <button type="button" className="lit-privacy-primary" onClick={() => save({ ...optionalChoices(), preferences: true, pageState: true })}>Chấp nhận tùy chọn</button>
+            </div>
+            <p className="lit-privacy-footnote">Các mục cần thiết và bảo mật luôn bật. Phân tích hiệu suất chưa được kích hoạt và không được bật qua bảng này.</p>
+          </section>
+        </div>
+      )}
+      {savedMessage && <div className="lit-privacy-toast" role="status">{savedMessage}</div>}
+    </>
+  );
+}
