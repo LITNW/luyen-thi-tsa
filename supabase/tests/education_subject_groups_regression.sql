@@ -264,15 +264,11 @@ drop policy staging_pause_university_course_update on public.education_subjects;
 set local role anon;
 select set_config('request.jwt.claim.sub','',true);
 do $anon_group_rls$
-declare v_rejected boolean := false;
+declare v_visible_groups integer;
 begin
-  begin
-    perform 1 from public.education_subject_groups limit 1;
-  exception when insufficient_privilege then
-    v_rejected := true;
-  end;
-  if not v_rejected then
-    raise exception 'Unauthenticated role unexpectedly read education groups.';
+  select count(*) into v_visible_groups from public.education_subject_groups;
+  if v_visible_groups <> 0 then
+    raise exception 'Unauthenticated role unexpectedly read % education groups.',v_visible_groups;
   end if;
 end;
 $anon_group_rls$;
