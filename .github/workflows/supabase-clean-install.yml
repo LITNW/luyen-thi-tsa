@@ -161,6 +161,16 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
+
+      - name: Seed legacy education rows for upgrade-preservation regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/education_subject_groups_upgrade_fixture.sql
+
+      - name: Apply editable education course groups
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_subject_groups.sql
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
@@ -214,6 +224,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
+
+      - name: Run education course groups regression
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_subject_groups_regression.sql
 
       - name: Run education exam placement regression
         env:

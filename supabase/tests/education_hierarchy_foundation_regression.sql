@@ -18,6 +18,7 @@ declare
   v_custom_root uuid := '65000000-0000-4000-8000-000000000008';
   v_custom_child uuid := '65000000-0000-4000-8000-000000000009';
   v_math uuid;
+  v_unclassified_group uuid;
   v_offer uuid := '65000000-0000-4000-8000-000000000005';
   v_university_offer uuid := '65000000-0000-4000-8000-000000000006';
   v_exam uuid := '65000000-0000-4000-8000-000000000007';
@@ -33,9 +34,10 @@ begin
   select id into v_thpt from public.education_levels where code='thpt';
   select id into v_uni from public.education_levels where code='university';
   select id into v_math from public.subjects where code='mathematics';
+  select id into v_unclassified_group from public.education_subject_groups where education_level_id=v_uni and code='unclassified';
   select id into v_science from public.subjects where code='science';
 
-  if v_thpt is null or v_uni is null or v_math is null or v_science is null then
+  if v_thpt is null or v_uni is null or v_math is null or v_science is null or v_unclassified_group is null then
     raise exception 'Expected education levels or canonical Mathematics subject were not seeded.';
   end if;
 
@@ -101,9 +103,9 @@ begin
     v_major,v_uni,v_program,'major','mechanical','Kỹ thuật cơ khí'
   );
   insert into public.education_subjects(
-    id,education_level_id,education_node_id,subject_id,local_code,display_name
+    id,education_level_id,education_node_id,group_id,subject_id,local_code,display_name
   ) values (
-    v_university_offer,v_uni,v_major,v_math,'ME-CALC-1','Giải tích 1'
+    v_university_offer,v_uni,v_major,v_unclassified_group,v_math,'ME-CALC-1','Giải tích 1'
   );
 
   -- A node's stable hierarchy identity cannot be changed after an offering depends on it.
@@ -187,7 +189,7 @@ begin
   end if;
 
   -- Subject offering cannot be reactivated under an inactive node.
-  update public.education_subjects set is_active=false where id=v_university_offer;
+  update public.education_subjects set is_active=false where education_node_id=v_major;
   update public.education_nodes set is_active=false where id=v_major;
   v_rejected := false;
   begin
