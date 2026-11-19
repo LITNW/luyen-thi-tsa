@@ -97,7 +97,46 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql
-
+      - name: Apply M2 exam category migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
+      - name: Apply M2 follow-up for archived category preservation
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
+      - name: Apply M2 follow-up for archived version listing
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
+      - name: Apply education hierarchy foundation
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
+      - name: Apply education hierarchy active-profile read policies
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
+      - name: Apply education hierarchy identity guards
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
+      - name: Apply education exam placement and scoped catalogue
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160130_education_exam_placement_and_scoped_catalogue.sql
+      - name: Apply education exam placement history guard
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
+      - name: Apply atomic education-aware editor save
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
+      - name: Enforce education placement for every publication path
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
       - name: Apply question media and shared stimulus migration
         env:
           PGPASSWORD: postgres
@@ -111,39 +150,17 @@ jobs:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115150559_question_media_validator_grants.sql
       - name: Apply multiple independent stimulus groups migration
-
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115154958_multiple_stimulus_groups.sql
+      - name: Apply archive-only exam version RPC migration
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261116033209_archive_exam_versions_without_physical_deletion.sql
       - name: Exclude archived exams from published payload and media access
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
-        env:
-          PGPASSWORD: postgres
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261115154958_multiple_stimulus_groups.sql
-
-      - name: Apply M2 exam category migration
-        env:
-          PGPASSWORD: postgres
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113120000_exam_categories_admin.sql
-      - name: Apply M2 follow-up for archived category preservation
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql
-      - name: Apply M2 follow-up for archived version listing
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113150000_exam_category_admin_list_archived_version_filter.sql
-
-      - name: Apply education hierarchy foundation
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155228_education_hierarchy_foundation.sql
-      - name: Apply education hierarchy active-profile read policies
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155356_education_hierarchy_active_profile_read_policies.sql
-      - name: Apply education hierarchy identity guards
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113155742_education_hierarchy_identity_guards.sql
-      - name: Apply education exam placement and scoped catalogue
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160130_education_exam_placement_and_scoped_catalogue.sql
-      - name: Apply education exam placement history guard
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113160231_education_exam_placement_identity_guard.sql
-      - name: Apply atomic education-aware editor save
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261113161654_education_atomic_editor_save.sql
-      - name: Enforce education placement for every publication path
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261114024035_education_exam_version_publish_guard.sql
-
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres
@@ -177,6 +194,11 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/legacy_exam_contract_regression.sql
+
+      - name: Run archive-only exam version regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/archive_exam_versions_without_physical_deletion_regression.sql
 
       - name: Run M1 subject/taxonomy/stimulus regression
         env:
