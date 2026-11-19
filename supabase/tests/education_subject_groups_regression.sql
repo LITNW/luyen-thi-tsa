@@ -23,6 +23,18 @@ begin
   if exists (select 1 from public.education_subjects es join public.education_levels l on l.id=es.education_level_id where l.code='thpt' and es.group_id is not null) then
     raise exception 'THPT courses must remain ungrouped.';
   end if;
+  if not exists (
+    select 1 from public.education_subjects es join public.education_levels l on l.id=es.education_level_id
+    where es.id='69000000-0000-4000-8000-000000000010' and l.code='university' and es.group_id is not null
+      and es.group_id=(select id from public.education_subject_groups where education_level_id=v_university and code='unclassified')
+  ) then raise exception 'Pre-migration university course was not preserved and backfilled to unclassified.'; end if;
+  if not exists (
+    select 1 from public.education_subjects es join public.education_levels l on l.id=es.education_level_id
+    where es.id='69000000-0000-4000-8000-000000000011' and l.code='thpt' and es.group_id is null
+  ) then raise exception 'Pre-migration THPT course was not preserved as a direct course.'; end if;
+  if (select education_subject_id from public.exams where id='69000000-0000-4000-8000-000000000012') is distinct from '69000000-0000-4000-8000-000000000010'::uuid then
+    raise exception 'Pre-migration exam-to-course reference changed during backfill.';
+  end if;
   select id into v_group from public.education_subject_groups where education_level_id=v_university and code='unclassified';
   select id into v_wrong_group from public.education_subject_groups where education_level_id=v_university and code='general_sciences';
   insert into public.education_subjects(education_level_id,display_name,local_code)

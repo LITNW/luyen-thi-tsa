@@ -96,6 +96,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261116033209_archive_exam_versions_without_physical_deletion.sql
       - name: Exclude archived exams from published payload and media access
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
+      - name: Seed legacy education rows for upgrade-preservation regression
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/education_subject_groups_upgrade_fixture.sql
       - name: Apply editable education course groups
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_subject_groups.sql
       - name: Seed a test-only Admin identity
