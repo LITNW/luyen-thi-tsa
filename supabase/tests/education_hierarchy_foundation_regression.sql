@@ -235,7 +235,7 @@ begin
   end if;
 
   -- Subject offering cannot be reactivated under an inactive node.
-  update public.education_subjects set is_active=false where id=v_university_offer;
+  update public.education_subjects set is_active=false where education_node_id=v_major;
   update public.education_nodes set is_active=false where id=v_major;
   v_rejected := false;
   begin
