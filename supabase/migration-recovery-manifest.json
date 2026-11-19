@@ -274,16 +274,6 @@
       "verified_against_live_ledgers": "2026-11-19"
     },
     {
-      "version": "20261118032350",
-      "name": "exclude_archived_exam_media",
-      "status": "applied_in_staging_verified_2026-11-19_production_pending",
-      "staging_status": "applied",
-      "source": "Forward-only function replacement: reject archived exam versions in get_published_exam and private question-media authorization.",
-      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
-      "production_status": "not_applied",
-      "verified_against_live_ledgers": "2026-11-19"
-    },
-    {
       "version": "20261116033209",
       "name": "archive_exam_versions_without_physical_deletion",
       "status": "applied_in_staging_verified_2026-11-19_production_pending",
@@ -293,6 +283,16 @@
       "source": "Staging migration ledger; replaces admin_delete_exam_version with archive-only behavior and atomic audit logging.",
       "acl_behavior": "No GRANT/REVOKE; CREATE OR REPLACE preserves each environment's existing ACL.",
       "fingerprint_scope": "Staging ledger statement fingerprint; not part of the original Production recovery manifest.",
+      "verified_against_live_ledgers": "2026-11-19"
+    },
+    {
+      "version": "20261118032350",
+      "name": "exclude_archived_exam_media",
+      "status": "applied_in_staging_verified_2026-11-19_production_pending",
+      "staging_status": "applied",
+      "source": "Forward-only function replacement: reject archived exam versions in get_published_exam and private question-media authorization.",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "production_status": "not_applied",
       "verified_against_live_ledgers": "2026-11-19"
     }
   ],
