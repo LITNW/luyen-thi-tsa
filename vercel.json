@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/ai/respond.js": {
+      "maxDuration": 45
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
