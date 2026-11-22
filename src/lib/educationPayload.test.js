@@ -87,9 +87,9 @@ test('editing a course reassigns its category without putting the course UUID in
 
 test('all education create and update flows strip form identity before writing', () => {
   const page = readFileSync(new URL('../pages/AdminEducationPage.jsx', import.meta.url), 'utf8');
-  assert.match(page, /splitRecordIdentity\(groupForm\)/);
+  assert.match(page, /splitRecordIdentity\(categoryForm\)/);
   assert.match(page, /splitRecordIdentity\(courseForm\)/);
-  assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:groupForm|courseForm)/);
+  assert.doesNotMatch(page, /\.insert\(\{\s*\.\.\.(?:categoryForm|courseForm)/);
 });
 
 
@@ -98,15 +98,15 @@ test('exam editor offers searchable level and category course pickers', () => {
   assert.match(editor, /f-education-search/);
   assert.match(editor, /f-education-level/);
   assert.match(editor, /f-education-category/);
-  assert.match(editor, /education_subject_groups/);
-  assert.doesNotMatch(editor, /knowledge_group|education_nodes/);
+  assert.match(editor, /education_course_categories/);
+  assert.doesNotMatch(editor, /knowledge_category|education_nodes/);
   assert.match(editor, /data-search=/);
 });
 
 
 test('student course browsing uses editable categories and direct course links', () => {
   const browse = readFileSync(new URL('../pages/EducationBrowsePages.jsx', import.meta.url), 'utf8');
-  assert.match(browse, /education_subject_groups/);
-  assert.match(browse, /EducationGroupPage/);
-  assert.doesNotMatch(browse, /knowledge_group|education_nodes/);
+  assert.match(browse, /education_course_categories/);
+  assert.match(browse, /EducationCategoryPage/);
+  assert.doesNotMatch(browse, /knowledge_category|education_nodes/);
 });
