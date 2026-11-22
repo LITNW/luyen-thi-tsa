@@ -132,7 +132,8 @@ test('Staging cutover runbook has backup, migration-history reconciliation, depl
   assert.match(runbook, /select policyname from pg_policies/);
   
   assert.match(runbook, /Current blocker is now mapped, not repaired/i);
-  assert.match(runbook, /Do not use `migration repair`/i);
+  assert.match(runbook, /migration repair/i);
+  assert.match(runbook, /--include-all/);
   assert.match(runbook, /ops\/staging-history\/preflight\.sql/);
   assert.match(runbook, /supabase --workdir ops\/staging-history db push/);
   assert.match(runbook, /pending set must contain exactly/);
