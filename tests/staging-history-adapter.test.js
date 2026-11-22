@@ -4,7 +4,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
-const adapterRoot = new URL('../ops/staging-history/', import.meta.url);
 const migrationsDir = fileURLToPath(new URL('../ops/staging-history/supabase/migrations/', import.meta.url));
 
 test('Staging history adapter is scoped to the existing Staging project', () => {
@@ -42,6 +41,6 @@ test('Staging preflight covers every remote version and its SQL fingerprint', ()
   for (const row of manifest.applied_migrations) {
     assert.ok(preflight.includes("('" + row.version + "','" + row.name + "','" + row.statement_md5 + "')"));
   }
-  assert.match(preflight, /full outer join actual a using\\(version\\)/i);
+  assert.match(preflight, /full outer join actual a using\(version\)/i);
   assert.match(preflight, /row_count_matches/i);
 });
