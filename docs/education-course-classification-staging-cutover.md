@@ -88,7 +88,7 @@ from public.exams e
 left join public.education_subjects es on es.id=e.education_subject_id
 where e.education_subject_id is not null and es.id is null;
 
-select version from supabase_migrations.schema_migrations order by version;
+select version, name from supabase_migrations.schema_migrations order by version;
 ```
 
 Read-only baseline captured on 2026-11-19: **2 courses** (THPT 1, University 1), **3 linked exams**, **0 broken exam references**. Re-capture immediately before cutover; the old snapshot is not a substitute for a fresh baseline. Do not run `migration repair` to reconcile ledger versions.
@@ -97,29 +97,25 @@ Read-only baseline captured on 2026-11-19: **2 courses** (THPT 1, University 1),
 
 The target migration enforces the new University category relationship. Deploy the category-aware frontend in the same release window; the legacy editor is not compatible with the new schema. Do not recreate the obsolete `staging_pause_university_course_insert` or `staging_pause_university_course_update` policies. Keep the release window short (target under five minutes) and verify the deployed frontend points to the Staging project.
 
-## 4. Dry-run and apply the migration exactly once
+## 4. Reconcile the Staging migration history before applying anything
 
-From the approved clean checkout, with CLI `3.0.0` logged in and Staging password available through its secure prompt/credential store:
+**Current blocker: Staging migration history does not match the repository migration filenames.** The remote ledger includes reconstructed and Staging-only versions. A normal `supabase db push` dry-run has already failed because remote migration versions are not present locally. This is not permission to force the migration through.
 
-```sh
-supabase db push --remote=cppalwtdkditlhojpeyc --dry-run
-```
+Required sequence:
 
-Review the target printed by the CLI and the complete pending set. The known Staging ledger contains remote-only/reconstructed migration versions that do not map one-to-one to the repository filenames. Do not run `db push`, `--include-all`, or `migration repair` until every mismatch has been reconciled against SQL fingerprints and the live schema in a separately reviewed change. If the mapping is ambiguous, stop.
+1. Export the complete Staging migration ledger and obtain SQL fingerprints/content for every remote-only version.
+2. Map each remote version to its exact local migration or classify it as a Staging-only/reconstructed baseline entry. Verify each mapping against the live Staging schema and object definitions; names alone are insufficient.
+3. Review the mapping and any proposed ledger reconciliation as a separate change. Do not use `migration repair`, `--include-all`, timestamp renaming, or manual ledger edits as a shortcut.
+4. Only after the mapping is unambiguous, run the CLI dry-run against `cppalwtdkditlhojpeyc`. The pending set must contain exactly `20261119160000_education_course_categories.sql` and no other migration. If the CLI still reports remote-only versions, stop.
+5. Before applying, reconfirm the backup/restore evidence and the baseline course UUIDs and exam references. Apply the one reviewed Staging migration exactly once, with interactive confirmation. If any schema object exists without the expected ledger entry, stop and prepare a reviewed forward-recovery migration instead of rerunning.
 
-After the Staging owner’s explicit approval, run once and interactively confirm the target and migration:
-
-```sh
-supabase db push --remote=cppalwtdkditlhojpeyc
-```
-
-Do not pass `--yes`. Keep the command output in the change record. The migration contains its own transaction. If the command fails, check both the migration ledger and schema before retrying; do not assume a failed CLI exit means the ledger and schema are both untouched.
+No migration-history reconciliation or migration application is authorized for Production. The Production ledger is reference-only.
 
 ## 5. Deploy and verify the compatible frontend
 
 1. Deploy the approved PR #41 frontend artifact to the Staging frontend using the release owner’s normal Staging deployment mechanism. This is a manual release action; no Production deployment is authorized.
 2. Verify the deployed artifact commit matches the migration-tested PR head. Inspect its runtime configuration and confirm its Supabase API URL/project ref resolves to `cppalwtdkditlhojpeyc`. Do not infer this from the hostname or from a Preview deployment.
-3. With an active Admin account, verify categories load, create/edit/reorder a temporary category, create a categoryed University course, edit and move it to another category, and create/edit an exam draft assigned to that course. Verify a THPT course can be created with no category and used by the exam selector. With an active student account, verify level → category → course browsing and the course exam page work.
+3. With an active Admin account, verify categories load, create/edit/reorder a temporary category, create a University course assigned to a category, edit and move it to another category, and create/edit an exam draft assigned to that course. Verify a THPT course can be created with no category and used by the exam selector. With an active student account, verify level → category → course browsing and the course exam page work.
 4. Compare the baseline and post-migration course ID set and exam `(id, education_subject_id)` pairs. Expected data checks: original course IDs and exam refs are unchanged; baseline University course is now in `unclassified`; all THPT courses have `category_id IS NULL`; no University course has a null or cross-level category; broken exam references remain zero. Account explicitly for any disposable smoke-test records before comparing counts.
 5. Archive the smoke-test exam and deactivate the smoke-test course before deactivating any test-only category. Do not delete existing course rows or rewrite existing IDs/references.
 6. If all checks pass and the release owner confirms the new frontend is operational against Staging, verify no obsolete temporary policies exist:
