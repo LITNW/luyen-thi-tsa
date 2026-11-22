@@ -59,3 +59,28 @@ An evidence copy is stored at `supabase/ops/staging/20261113090912_staging_auth_
 This reconciliation changes repository files and CI only. It does not run `supabase db push`, `migration repair`, SQL migrations, DDL, or DML against either hosted project. Production and Staging remain read-only.
 
 Do not merge PR #40 or deploy Production as part of this work. After repository CI passes, a separate rollout plan must sequence the pending shared migrations against a fresh backup and the verified local restore. Supabase Storage object bytes require a separate backup plan; the PostgreSQL dump alone does not contain those object payloads.
+
+
+## 2026-11-22 SQL fingerprint verification
+
+A read-only comparison of all 38 Staging rows was performed using `md5(statements[1])`, statement length, the remote `name`, and the corresponding repository/evidence file.
+
+- 30 rows exactly match their mapped local SQL statement.
+- The reconstructed baseline row `20261113082626` exactly matches `supabase/tests/fixtures/pre_005_supabase_schema.sql`; it is a Staging baseline marker, not a shared migration.
+- `20261113082639` differs only because Staging's verified-admin bootstrap contains the Staging email literal while the repository uses `SET_ADMIN_EMAIL_BEFORE_APPLY`.
+- `20261113082830` contains the archived-category preservation logic in its base SQL; the canonical chain has that behavior in the later `20261113140000_exam_category_archived_assignment_preservation` follow-up. The live Staging `admin_save_exam_content_with_category` function was read and confirmed to preserve an already-assigned inactive category during edit.
+- `20261113090912` is the Staging-only signup display-name fallback; its evidence file is `supabase/ops/staging/20261113090912_staging_auth_profile_display_name_fallback.sql`. The live Production function does not have this fallback. Do not promote it as part of PR #41.
+- Four later statements are serialization-only differences: equivalent `IN` versus equality/OR syntax, a trailing newline, `SET search_path TO ''` versus `=`, and omitted leading comments. Their executable behavior was compared.
+- The Production-only `20261116033119` authenticated EXECUTE revocation is not in the Staging ledger and remains outside this work.
+
+## Staging-only CLI adapter
+
+To avoid rewriting either hosted migration ledger, PR #41 now contains a fail-closed adapter under `ops/staging-history`:
+
+- 38 marker migrations match the existing Staging version set. Each marker raises an exception if it is ever treated as pending.
+- `staging-history-manifest.json` records the remote version, name, statement MD5, length, source mapping, and classification.
+- `preflight.sql` verifies the exact version/name/statement-MD5 set and confirms the category schema has not been partially applied.
+- The adapter contains the real category migration as the sole pending version.
+- The canonical `supabase/migrations` directory is unchanged for clean installs and Production.
+
+Use the adapter only against the existing Staging project and only after `preflight.sql` returns no mismatches. A CLI dry-run must list exactly `20261119160000_education_course_categories.sql`; if any fail-closed marker is pending, stop. This adapter does not modify the remote ledger and must never be used for Production or a fresh database.

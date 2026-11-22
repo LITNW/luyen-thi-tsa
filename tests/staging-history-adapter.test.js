@@ -42,6 +42,6 @@ test('Staging preflight covers every remote version and its SQL fingerprint', ()
   for (const row of manifest.applied_migrations) {
     assert.ok(preflight.includes("('" + row.version + "','" + row.name + "','" + row.statement_md5 + "')"));
   }
-  assert.match(preflight, /full outer join actual using\(version\)/i);
+  assert.match(preflight, /full outer join actual a using\\(version\\)/i);
   assert.match(preflight, /row_count_matches/i);
 });

@@ -31,7 +31,7 @@ The release operator records and verifies:
 1. `git rev-parse HEAD` equals the approved PR head; `git status --porcelain` is empty.
 2. PR #41 is still open and Draft, and required CI checks pass.
 3. The Staging deployment artifact was built from that exact commit, not from an unsynchronized Preview database.
-4. `supabase --version` is `3.0.0`, the version used by the migration workflows, or the operator has checked the current CLI help and updated these commands. CLI v3 is local-by-default and deprecates the old `--linked` / `--project-ref` aliases; every remote command below names the Staging ref explicitly.
+4. `supabase --version` is `3.2.0`, the version used for the Staging operator workflow, or the operator has checked the current CLI help and updated these commands. CLI v3 is local-by-default and deprecates the old `--linked` / `--project-ref` aliases; every remote command below names the Staging ref explicitly.
 5. The operator opens the Staging project and verifies its ref is `cppalwtdkditlhojpeyc` before entering any credential or starting any write step.
 
 Stop if the target ref, commit, artifact, ledger, or required CI state differs.
@@ -68,7 +68,7 @@ Run these read-only queries against the explicitly verified Staging project. Sav
 select l.code as level_code, count(*) as course_count
 from public.education_subjects es
 join public.education_levels l on l.id=es.education_level_id
-category by l.code
+group by l.code
 order by l.code;
 
 select l.code as level_code, es.id, es.local_code, es.display_name,
@@ -96,19 +96,31 @@ Read-only baseline captured on 2026-11-19: **2 courses** (THPT 1, University 1),
 
 The target migration enforces the new University category relationship. Deploy the category-aware frontend in the same release window; the legacy editor is not compatible with the new schema. Do not recreate the obsolete `staging_pause_university_course_insert` or `staging_pause_university_course_update` policies. Keep the release window short (target under five minutes) and verify the deployed frontend points to the Staging project.
 
-## 4. Reconcile the Staging migration history before applying anything
+## 4. Reconcile the Staging migration history with the fail-closed adapter
 
-**Current blocker: Staging migration history does not match the repository migration filenames.** The remote ledger includes reconstructed and Staging-only versions. A normal `supabase db push` dry-run has already failed because remote migration versions are not present locally. This is not permission to force the migration through.
+**Current blocker is now mapped, not repaired.** Staging has 38 ledger rows. The remote SQL statement fingerprints were compared with the repository and environment-specific SQL evidence. The complete mapping is in `ops/staging-history/staging-history-manifest.json`; the read-only SQL check is `ops/staging-history/preflight.sql`.
+
+The adapter under `ops/staging-history/supabase/migrations` contains one marker file for each version already applied on Staging. Every marker intentionally raises an exception if executed. The canonical migration chain under `supabase/migrations` is unchanged and remains the source for clean installs and Production. Never use the adapter for a fresh database, local reset, Preview branch, or Production.
 
 Required sequence:
 
-1. Export the complete Staging migration ledger and obtain SQL fingerprints/content for every remote-only version.
-2. Map each remote version to its exact local migration or classify it as a Staging-only/reconstructed baseline entry. Verify each mapping against the live Staging schema and object definitions; names alone are insufficient.
-3. Review the mapping and any proposed ledger reconciliation as a separate change. Do not use `migration repair`, `--include-all`, timestamp renaming, or manual ledger edits as a shortcut.
-4. Only after the mapping is unambiguous, run the CLI dry-run against `cppalwtdkditlhojpeyc`. The pending set must contain exactly `20261119160000_education_course_categories.sql` and no other migration. If the CLI still reports remote-only versions, stop.
-5. Before applying, reconfirm the backup/restore evidence and the baseline course UUIDs and exam references. Apply the one reviewed Staging migration exactly once, with interactive confirmation. If any schema object exists without the expected ledger entry, stop and prepare a reviewed forward-recovery migration instead of rerunning.
+1. Open `ops/staging-history/preflight.sql` and run it read-only against Staging project `cppalwtdkditlhojpeyc`. The first query must return zero rows; the ledger count must be 38; `education_course_categories` and `education_subjects.category_id` must be absent; obsolete temporary write-freeze policies must be absent. If any check differs, stop.
+2. Use Supabase CLI `3.2.0` and the adapter workdir, not the root migration folder:
 
-No migration-history reconciliation or migration application is authorized for Production. The Production ledger is reference-only.
+   ```powershell
+   supabase --workdir ops/staging-history db push --remote=cppalwtdkditlhojpeyc --dry-run
+   ```
+
+3. The dry-run must list exactly one pending migration: `20261119160000_education_course_categories.sql`. No marker file, historical migration, or other SQL may be pending. If any marker appears, stop; do not run the non-dry-run command.
+4. Reconfirm the backup/restore evidence and fresh course UUID/exam-reference baseline. Only then apply the one category migration:
+
+   ```powershell
+   supabase --workdir ops/staging-history db push --remote=cppalwtdkditlhojpeyc
+   ```
+
+5. If the migration is partially present without its ledger row, stop and prepare a reviewed forward-recovery migration. Do not rerun the migration or mutate the ledger.
+
+Do not use `--include-all`, `migration repair`, manual ledger edits, or the root canonical migration directory against Staging. No migration-history reconciliation or migration application is authorized for Production. The Production ledger is reference-only.
 
 ## 5. Deploy and verify the compatible frontend
 
