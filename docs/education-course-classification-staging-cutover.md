@@ -132,16 +132,16 @@ No migration-history reconciliation or migration application is authorized for P
 
 ### Before the migration commits
 
-- Keep the University write freeze active while investigating.
+- Keep the cutover paused while investigating; do not recreate the obsolete write-freeze policies.
 - Inspect the ledger, `education_course_categories`, `education_subjects.category_id`, triggers, and constraints read-only.
-- If the migration rolled back fully and schema/ledger match the captured preflight state, the release owner may cancel the cutover and remove only the temporary freeze policies.
+- If the migration rolled back fully and schema/ledger match the captured preflight state, the release owner may cancel the cutover and verify that no obsolete temporary freeze policies exist.
 - If schema objects exist without the ledger entry, stop. Do not rerun or repair the ledger automatically; have the database owner inspect the exact state and prepare a reviewed forward-recovery migration.
 
 ### After the migration commits
 
-- Keep the University write freeze active if the frontend is not confirmed healthy.
+- Pause the release and stop further Staging writes through operational coordination if the frontend is not confirmed healthy; do not recreate the obsolete RLS freeze policies.
 - Prefer a roll-forward frontend fix/redeploy against the migrated schema. Do not try to run the old University course editor during this interval.
-- If the frontend cannot be recovered and Staging must be restored, the owner first approves the exact restore point, expected lost-write window, and downtime. Take a new backup of the failed post-migration state, restore the pre-cutover backup to a separate project, and validate it. Only then may the owner separately approve an in-place Staging restore. Re-run baseline checks after restore and keep the write freeze until the old app/schema pair is confirmed operational.
+- If the frontend cannot be recovered and Staging must be restored, the owner first approves the exact restore point, expected lost-write window, and downtime. Take a new backup of the failed post-migration state, restore the pre-cutover backup to a separate project, and validate it. Only then may the owner separately approve an in-place Staging restore. Re-run baseline checks after restore and keep the release paused until the restored app/schema pair is confirmed operational.
 - Never restore Production as part of this procedure. Never use a Staging restore as a rollback shortcut without the separate destructive restore approval.
 
 ## 7. Completion record

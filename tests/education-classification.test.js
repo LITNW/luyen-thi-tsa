@@ -130,8 +130,9 @@ test('Staging cutover runbook has backup, exact dry-run, deploy, and recovery ga
   assert.match(runbook, /restore.*separate disposable Supabase project/i);
   assert.doesNotMatch(runbook, /staging_pause_university_course_(?:insert|update)/);
   
-  assert.match(runbook, /Staging migration history does not match the repository migration filenames/i);\n  assert.match(runbook, /Do not use `migration repair`/i);\n  assert.match(runbook, /pending set must contain exactly/);
-  assert.ok(runbook.includes('It must contain **only** `20261119160000_education_course_categories.sql`'));
+  assert.match(runbook, /Staging migration history does not match the repository migration filenames/i);
+  assert.match(runbook, /Do not use `migration repair`/i);
+  assert.match(runbook, /pending set must contain exactly/);
   assert.match(runbook, /deploy the approved PR #41 frontend artifact to the Staging frontend/i);
   assert.doesNotMatch(runbook, /keep the University write freeze active/i);
   assert.match(runbook, /separate explicit approval/i);

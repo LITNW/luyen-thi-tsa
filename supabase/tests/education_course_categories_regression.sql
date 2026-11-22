@@ -39,7 +39,7 @@ begin
     raise exception 'Existing university courses must be assigned to a valid category.';
   end if;
   if exists (select 1 from public.education_subjects es join public.education_levels l on l.id=es.education_level_id where l.code='thpt' and es.category_id is not null) then
-    raise exception 'THPT courses must remain uncategoryed.';
+    raise exception 'THPT courses must remain without a category.';
   end if;
   if not exists (
     select 1 from public.education_subjects es join public.education_levels l on l.id=es.education_level_id
@@ -110,7 +110,7 @@ begin
   update public.education_course_categories set is_active=true where id=v_category;
   update public.education_subjects set is_active=true where id=v_course;
 
-  -- Cover the editor RPC with a newly categoryed University course, then edit its draft.
+  -- Cover the editor RPC with a newly assigned to a category University course, then edit its draft.
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
   v_editor_result := public.admin_save_exam_content_with_education(
     null,'University category editor draft','Regression fixture',30,v_questions,v_course,null,false
