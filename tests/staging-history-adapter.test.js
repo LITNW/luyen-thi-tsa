@@ -43,4 +43,6 @@ test('Staging preflight covers every remote version and its SQL fingerprint', ()
   }
   assert.match(preflight, /full outer join actual a using\(version\)/i);
   assert.match(preflight, /row_count_matches/i);
+  assert.match(preflight, /archived_category_preservation_present/i);
+  assert.match(preflight, /staging_signup_fallback_present/i);
 });

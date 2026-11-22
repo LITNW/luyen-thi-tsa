@@ -69,12 +69,19 @@ from supabase_migrations.schema_migrations;
 -- Confirm the category migration has not already been partially applied.
 select
   to_regclass('public.education_course_categories') as category_table,
+  to_regclass('public.education_subject_groups') as superseded_group_table,
   exists (
     select 1 from information_schema.columns
     where table_schema='public' and table_name='education_subjects' and column_name='category_id'
   ) as category_id_column,
   exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='education_subjects' and column_name='group_id'
+  ) as superseded_group_id_column,
+  exists (
     select 1 from pg_policies
     where schemaname='public' and tablename='education_subjects'
       and policyname in ('staging_pause_university_course_insert','staging_pause_university_course_update')
-  ) as obsolete_write_freeze_exists;
+  ) as obsolete_write_freeze_exists,
+  position('v_existing_category_id' in pg_get_functiondef('public.admin_save_exam_content_with_category(uuid,text,text,integer,jsonb,uuid,boolean)'::regprocedure)) > 0 as archived_category_preservation_present,
+  position('split_part(new.email' in pg_get_functiondef('public.handle_new_auth_user()'::regprocedure)) > 0 as staging_signup_fallback_present;
