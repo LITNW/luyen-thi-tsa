@@ -13,6 +13,12 @@ Before using the adapter:
 2. Verify the category table and `education_subjects.category_id` are absent and the obsolete temporary write-freeze policies are absent.
 3. Use Supabase CLI 3.2.0 and explicitly target the Staging project ref.
 
+Validate the adapter config before the database preflight; this command is local-only and does not contact Supabase:
+
+```powershell
+supabase config validate --workdir ops/staging-history
+```
+
 PowerShell example:
 
 ```powershell

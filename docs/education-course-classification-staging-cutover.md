@@ -105,7 +105,13 @@ The adapter under `ops/staging-history/supabase/migrations` contains one marker 
 Required sequence:
 
 1. Open `ops/staging-history/preflight.sql` and run it read-only against Staging project `cppalwtdkditlhojpeyc`. The first query must return zero rows; the ledger count must be 38; `education_course_categories` and `education_subjects.category_id` must be absent; obsolete temporary write-freeze policies must be absent. If any check differs, stop.
-2. Use Supabase CLI `3.2.0` and the adapter workdir, not the root migration folder:
+2. Use Supabase CLI `3.2.0` and validate the adapter config locally, then use the adapter workdir, not the root migration folder:
+
+   ```powershell
+   supabase config validate --workdir ops/staging-history
+   ```
+
+   This config validation is local-only; it does not contact the hosted project.
 
    ```powershell
    supabase --workdir ops/staging-history db push --remote=cppalwtdkditlhojpeyc --dry-run
