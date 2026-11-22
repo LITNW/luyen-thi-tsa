@@ -71,11 +71,11 @@ test('legacy exam selector filters active University courses by the selected cat
   assert.deepEqual(filterCourses(courses, 'uni', 'university', 'g1').map((course) => course.id), ['uni-in-category']);
 });
 
-test('legacy exam selector keeps THPT direct and excludes grouped or inactive courses', () => {
+test('legacy exam selector keeps THPT direct and excludes categorized or inactive courses', () => {
   const { filterCourses } = legacyClassification();
   const courses = [
     { id: 'thpt-direct', education_level_id: 'thpt', category_id: null, is_active: true },
-    { id: 'thpt-grouped', education_level_id: 'thpt', category_id: 'g1', is_active: true },
+    { id: 'thpt-categorized', education_level_id: 'thpt', category_id: 'g1', is_active: true },
     { id: 'thpt-inactive', education_level_id: 'thpt', category_id: null, is_active: false },
   ];
 
@@ -92,11 +92,11 @@ test('level and category changes clear downstream exam selector values', () => {
   assert.equal(afterLevelChange.education_subject_id, null);
   assert.equal(afterLevelChange.title, 'draft');
 
-  const afterGroupChange = resetForCategoryChange(current, 'g2');
-  assert.equal(afterGroupChange.education_level_id, 'uni');
-  assert.equal(afterGroupChange.education_category_id, 'g2');
-  assert.equal(afterGroupChange.education_subject_id, null);
-  assert.equal(afterGroupChange.title, 'draft');
+  const afterCategoryChange = resetForCategoryChange(current, 'g2');
+  assert.equal(afterCategoryChange.education_level_id, 'uni');
+  assert.equal(afterCategoryChange.education_category_id, 'g2');
+  assert.equal(afterCategoryChange.education_subject_id, null);
+  assert.equal(afterCategoryChange.title, 'draft');
 });
 
 test('exam create and edit accept only courses matching level and category', () => {

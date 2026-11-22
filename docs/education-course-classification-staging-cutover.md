@@ -6,11 +6,11 @@ Status: **prepared, not executed**. This document does not authorize a Staging o
 
 - Repository: `LITNW/luyen-thi-tsa`
 - Branch: `fix/education-empty-uuid-payload`
-- Migration: `20261119160000_education_subject_groups.sql`
+- Migration: `20261119160000_education_course_categories.sql`
 - Staging Supabase project ref: `cppalwtdkditlhojpeyc`
 - Production Supabase project ref: `hwqtsopvpucadgpkigqz` — **not a target in this runbook**
 
-The branch migration adds University groups and a group guard. The Staging application and migration must be cut over together: deploying the new UI before the schema makes its group queries fail; applying the schema while the old UI is writable blocks old-style University course inserts. The runbook freezes University course writes across that interval.
+The branch migration adds University categories and a category guard. The Staging application and migration must be cut over together: deploying the new UI before the schema makes its category queries fail; applying the schema while the old UI is writable blocks old-style University course inserts. The release is coordinated within a five-minute window; no temporary write-freeze policy is part of the target design.
 
 ## Approval and credential gates
 
@@ -47,7 +47,7 @@ Stop if the target ref, commit, artifact, ledger, or required CI state differs.
    export PGSERVICEFILE=/secure/operator/staging-pg-service.conf
    export PGPASSFILE=/secure/operator/staging-pgpass
    BACKUP_DIR=/secure/backups/lit-staging-education-cutover
-   BACKUP_FILE="$BACKUP_DIR/staging-pre-education-groups.dump"
+   BACKUP_FILE="$BACKUP_DIR/staging-pre-education-categories.dump"
    mkdir -p "$BACKUP_DIR"
    pg_dump "service=education_staging_backup" \
      --format=custom --no-owner --no-acl \
@@ -69,7 +69,7 @@ Run these read-only queries against the explicitly verified Staging project. Sav
 select l.code as level_code, count(*) as course_count
 from public.education_subjects es
 join public.education_levels l on l.id=es.education_level_id
-group by l.code
+category by l.code
 order by l.code;
 
 select l.code as level_code, es.id, es.local_code, es.display_name,
@@ -93,35 +93,9 @@ select version from supabase_migrations.schema_migrations order by version;
 
 Read-only baseline captured on 2026-11-19: **2 courses** (THPT 1, University 1), **3 linked exams**, **0 broken exam references**. Re-capture immediately before cutover; the old snapshot is not a substitute for a fresh baseline. Do not run `migration repair` to reconcile ledger versions.
 
-## 3. Pause University course writes
+## 3. Coordinate the schema and frontend cutover
 
-The database operator applies the following temporary **restrictive** policies in one transaction before the migration. RLS remains enabled. The policies block authenticated University INSERT and UPDATE operations while allowing THPT course writes and preserving the ordinary Admin policies for other operations.
-
-```sql
-begin;
-
-create policy staging_pause_university_course_insert
-on public.education_subjects as restrictive for insert to authenticated
-with check (not exists (
-  select 1 from public.education_levels l
-  where l.id=education_subjects.education_level_id and l.code='university'
-));
-
-create policy staging_pause_university_course_update
-on public.education_subjects as restrictive for update to authenticated
-using (not exists (
-  select 1 from public.education_levels l
-  where l.id=education_subjects.education_level_id and l.code='university'
-))
-with check (not exists (
-  select 1 from public.education_levels l
-  where l.id=education_subjects.education_level_id and l.code='university'
-));
-
-commit;
-```
-
-Verify both policies exist in `pg_policies`. Using an authenticated Admin session, confirm a University insert is denied and a University update affects zero rows; confirm a THPT insert/update remains permitted, then roll those test writes back. The SQL regression script exercises this exact policy shape in a transaction. Stop if the University write freeze cannot be proven. Also pause any trusted service-role or direct-database job that writes education courses: service-role/database-owner operations can bypass RLS.
+The target migration enforces the new University category relationship. Deploy the category-aware frontend in the same release window; the legacy editor is not compatible with the new schema. Do not recreate the obsolete `staging_pause_university_course_insert` or `staging_pause_university_course_update` policies. Keep the release window short (target under five minutes) and verify the deployed frontend points to the Staging project.
 
 ## 4. Dry-run and apply the migration exactly once
 
@@ -131,7 +105,7 @@ From the approved clean checkout, with CLI `3.0.0` logged in and Staging passwor
 supabase db push --remote=cppalwtdkditlhojpeyc --dry-run
 ```
 
-Review the target printed by the CLI and the complete pending set. It must contain **only** `20261119160000_education_subject_groups.sql`. If any migration is missing, extra, remote-only, out of order, or unexpected, stop; do not use `--include-all`, `migration repair`, or a different ref to force it through.
+Review the target printed by the CLI and the complete pending set. The known Staging ledger contains remote-only/reconstructed migration versions that do not map one-to-one to the repository filenames. Do not run `db push`, `--include-all`, or `migration repair` until every mismatch has been reconciled against SQL fingerprints and the live schema in a separately reviewed change. If the mapping is ambiguous, stop.
 
 After the Staging owner’s explicit approval, run once and interactively confirm the target and migration:
 
@@ -145,26 +119,25 @@ Do not pass `--yes`. Keep the command output in the change record. The migration
 
 1. Deploy the approved PR #41 frontend artifact to the Staging frontend using the release owner’s normal Staging deployment mechanism. This is a manual release action; no Production deployment is authorized.
 2. Verify the deployed artifact commit matches the migration-tested PR head. Inspect its runtime configuration and confirm its Supabase API URL/project ref resolves to `cppalwtdkditlhojpeyc`. Do not infer this from the hostname or from a Preview deployment.
-3. With an active Admin account, verify groups load, create/edit/reorder a temporary group, create a grouped University course, edit and move it to another group, and create/edit an exam draft assigned to that course. Verify a THPT course can be created with no group and used by the exam selector. With an active student account, verify level → group → course browsing and the course exam page work.
-4. Compare the baseline and post-migration course ID set and exam `(id, education_subject_id)` pairs. Expected data checks: original course IDs and exam refs are unchanged; baseline University course is now in `unclassified`; all THPT courses have `group_id IS NULL`; no University course has a null or cross-level group; broken exam references remain zero. Account explicitly for any disposable smoke-test records before comparing counts.
-5. Archive the smoke-test exam and deactivate the smoke-test course before deactivating any test-only group. Do not delete existing course rows or rewrite existing IDs/references.
-6. If all checks pass and the release owner confirms the new frontend is operational against Staging, remove the temporary policies:
+3. With an active Admin account, verify categories load, create/edit/reorder a temporary category, create a categoryed University course, edit and move it to another category, and create/edit an exam draft assigned to that course. Verify a THPT course can be created with no category and used by the exam selector. With an active student account, verify level → category → course browsing and the course exam page work.
+4. Compare the baseline and post-migration course ID set and exam `(id, education_subject_id)` pairs. Expected data checks: original course IDs and exam refs are unchanged; baseline University course is now in `unclassified`; all THPT courses have `category_id IS NULL`; no University course has a null or cross-level category; broken exam references remain zero. Account explicitly for any disposable smoke-test records before comparing counts.
+5. Archive the smoke-test exam and deactivate the smoke-test course before deactivating any test-only category. Do not delete existing course rows or rewrite existing IDs/references.
+6. If all checks pass and the release owner confirms the new frontend is operational against Staging, verify no obsolete temporary policies exist:
 
    ```sql
    begin;
-   drop policy staging_pause_university_course_insert on public.education_subjects;
-   drop policy staging_pause_university_course_update on public.education_subjects;
+   -- No temporary write-freeze policies are part of the target design.
    commit;
    ```
 
-   Verify University create/edit now succeeds only through the group-aware application path. Leave the permanent migration guards and RLS enabled.
+   Verify University create/edit now succeeds only through the category-aware application path. Leave the permanent migration guards and RLS enabled.
 
 ## 6. Failure handling
 
 ### Before the migration commits
 
 - Keep the University write freeze active while investigating.
-- Inspect the ledger, `education_subject_groups`, `education_subjects.group_id`, triggers, and constraints read-only.
+- Inspect the ledger, `education_course_categories`, `education_subjects.category_id`, triggers, and constraints read-only.
 - If the migration rolled back fully and schema/ledger match the captured preflight state, the release owner may cancel the cutover and remove only the temporary freeze policies.
 - If schema objects exist without the ledger entry, stop. Do not rerun or repair the ledger automatically; have the database owner inspect the exact state and prepare a reviewed forward-recovery migration.
 

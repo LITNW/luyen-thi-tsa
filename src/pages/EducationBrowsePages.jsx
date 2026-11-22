@@ -11,7 +11,7 @@ function CourseCard({ levelCode, course, category }) { return <Link className="e
 function CategoryCard({ levelCode, category }) { return <Link className="education-card" to={`/education/${levelCode}/category/${category.id}`}><span className="education-card-kicker">DANH MỤC MÔN HỌC</span><b>{category.name}</b><span>{category.description || 'Xem các môn học trong danh mục này'}</span><i aria-hidden="true">→</i></Link>; }
 
 export function EducationLevelPage() {
-  const { levelCode } = useParams(); const [level, setLevel] = useState(null); const [categories, setCategorys] = useState([]); const [courses, setCourses] = useState([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true);
+  const { levelCode } = useParams(); const [level, setLevel] = useState(null); const [categories, setCategories] = useState([]); const [courses, setCourses] = useState([]); const [error, setError] = useState(''); const [loading, setLoading] = useState(true);
   useEffect(() => { let alive = true; (async () => {
     setLoading(true); setError('');
     const { data: levelData, error: levelError } = await supabase.from('education_levels').select('id,code,name,description').eq('code', levelCode).single();
@@ -21,7 +21,7 @@ export function EducationLevelPage() {
       supabase.from('education_subjects').select('id,education_level_id,category_id,local_code,display_name,description,display_order').eq('education_level_id', levelData.id).eq('is_active', true).order('display_order').order('display_name'),
     ]);
     if (!alive) return; if (categoryResult.error || courseResult.error) setError(categoryResult.error?.message || courseResult.error?.message || 'Không tải được môn học.');
-    else { setLevel(levelData); setCategorys(categoryResult.data || []); setCourses(courseResult.data || []); } setLoading(false);
+    else { setLevel(levelData); setCategories(categoryResult.data || []); setCourses(courseResult.data || []); } setLoading(false);
   })(); return () => { alive = false; }; }, [levelCode]);
   const university = level?.code === 'university';
   return <EducationFrame><Breadcrumbs items={[{ label: 'Trang chủ', to: '/' }, { label: level?.name || 'Cấp học' }]} />{loading ? <div className="loading-line"><span className="spinner" /> Đang tải dữ liệu học tập…</div> : error ? <State message={error} /> : <>

@@ -61,7 +61,7 @@ begin
     raise exception 'THPT course creation must leave category_id NULL.';
   end if;
   insert into public.education_subjects(education_level_id,category_id,local_code,display_name)
-    values(v_university,v_category,'TEST-GROUP-1','Category regression course') returning id into v_course;
+    values(v_university,v_category,'TEST-CATEGORY-1','Category regression course') returning id into v_course;
   insert into public.exams(id,title,description,duration_minutes,created_by,education_subject_id)
     values(v_exam,'Course category regression','Disposable fixture',30,'00000000-0000-4000-8000-000000000001',v_course);
   update public.education_subjects set category_id=v_custom_category where id=v_course;

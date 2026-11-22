@@ -1,9 +1,9 @@
 (function attachEducationClassification(root) {
-  function filterCourses(courses, levelId, levelCode, groupId) {
+  function filterCourses(courses, levelId, levelCode, categoryId) {
     return (courses || []).filter((course) => course.is_active
       && course.education_level_id === levelId
       && (levelCode === 'university'
-        ? course.category_id === groupId
+        ? course.category_id === categoryId
         : course.category_id == null));
   }
 
@@ -16,17 +16,17 @@
     };
   }
 
-  function resetForGroupChange(selection, groupId) {
+  function resetForCategoryChange(selection, categoryId) {
     return {
       ...selection,
-      education_category_id: groupId || '',
+      education_category_id: categoryId || '',
       education_subject_id: null,
     };
   }
 
-  function isValidCourseSelection(course, levelId, levelCode, groupId, currentCourseId) {
+  function isValidCourseSelection(course, levelId, levelCode, categoryId, currentCourseId) {
     if (!course || course.education_level_id !== levelId) return false;
-    if (levelCode === 'university' && course.category_id !== groupId) return false;
+    if (levelCode === 'university' && course.category_id !== categoryId) return false;
     if (levelCode !== 'university' && course.category_id != null) return false;
     return course.is_active || course.id === currentCourseId;
   }
@@ -34,7 +34,7 @@
   root.LITEducationClassification = Object.freeze({
     filterCourses,
     resetForLevelChange,
-    resetForGroupChange,
+    resetForCategoryChange,
     isValidCourseSelection,
   });
 })(globalThis);
