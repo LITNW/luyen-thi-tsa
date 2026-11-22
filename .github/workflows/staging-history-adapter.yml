@@ -24,8 +24,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 26
-          cache: npm
-      - run: npm ci
       - name: Test fail-closed Staging history adapter
         run: node --test tests/staging-history-adapter.test.js
       - name: Install Supabase CLI 3.2.0
