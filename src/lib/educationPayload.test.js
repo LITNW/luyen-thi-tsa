@@ -35,15 +35,15 @@ test('existing education records keep their UUID for update targeting but omit i
   assert.equal(Object.hasOwn(result.values, 'id'), false);
 });
 
-test('University course create payload includes the selected group and normalized local code', () => {
+test('University course create payload includes the selected category and normalized local code', () => {
   assert.deepEqual(buildEducationCoursePayload({
-    group_id: 'group-1',
+    category_id: 'category-1',
     local_code: ' MATH101 ',
     display_name: 'Giải tích 1',
     display_order: '2',
     is_active: true,
   }, 'university-level', true), {
-    group_id: 'group-1',
+    category_id: 'category-1',
     local_code: 'MATH101',
     display_name: 'Giải tích 1',
     display_order: 2,
@@ -52,15 +52,15 @@ test('University course create payload includes the selected group and normalize
   });
 });
 
-test('THPT course create payload always keeps group_id null', () => {
+test('THPT course create payload always keeps category_id null', () => {
   assert.deepEqual(buildEducationCoursePayload({
-    group_id: 'stale-group',
+    category_id: 'stale-category',
     local_code: ' THPT-MATH ',
     display_name: 'Toán',
     display_order: '0',
     is_active: true,
   }, 'thpt-level', false), {
-    group_id: null,
+    category_id: null,
     local_code: 'THPT-MATH',
     display_name: 'Toán',
     display_order: 0,
@@ -69,10 +69,10 @@ test('THPT course create payload always keeps group_id null', () => {
   });
 });
 
-test('editing a course reassigns its group without putting the course UUID in the payload', () => {
+test('editing a course reassigns its category without putting the course UUID in the payload', () => {
   const { id, values } = splitRecordIdentity({
     id: 'course-1',
-    group_id: 'new-group',
+    category_id: 'new-category',
     local_code: 'CS101',
     display_name: 'Cơ sở dữ liệu',
     display_order: 3,
@@ -81,7 +81,7 @@ test('editing a course reassigns its group without putting the course UUID in th
   const payload = buildEducationCoursePayload(values, 'university-level', true);
 
   assert.equal(id, 'course-1');
-  assert.equal(payload.group_id, 'new-group');
+  assert.equal(payload.category_id, 'new-category');
   assert.equal(Object.hasOwn(payload, 'id'), false);
 });
 
@@ -93,18 +93,18 @@ test('all education create and update flows strip form identity before writing',
 });
 
 
-test('exam editor offers searchable level and group course pickers', () => {
+test('exam editor offers searchable level and category course pickers', () => {
   const editor = readFileSync(new URL('../../public/legacy/index.html', import.meta.url), 'utf8');
   assert.match(editor, /f-education-search/);
   assert.match(editor, /f-education-level/);
-  assert.match(editor, /f-education-group/);
+  assert.match(editor, /f-education-category/);
   assert.match(editor, /education_subject_groups/);
   assert.doesNotMatch(editor, /knowledge_group|education_nodes/);
   assert.match(editor, /data-search=/);
 });
 
 
-test('student course browsing uses editable groups and direct course links', () => {
+test('student course browsing uses editable categories and direct course links', () => {
   const browse = readFileSync(new URL('../pages/EducationBrowsePages.jsx', import.meta.url), 'utf8');
   assert.match(browse, /education_subject_groups/);
   assert.match(browse, /EducationGroupPage/);

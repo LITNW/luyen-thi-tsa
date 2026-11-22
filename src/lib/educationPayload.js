@@ -7,7 +7,7 @@ export function buildEducationCoursePayload(values, educationLevelId, university
   return {
     ...values,
     education_level_id: educationLevelId,
-    group_id: university ? values.group_id || null : null,
+    category_id: university ? values.category_id || null : null,
     local_code: values.local_code.trim() || null,
     display_order: Number(values.display_order) || 0,
   };

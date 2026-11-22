@@ -38,7 +38,7 @@ export function AdminExamsPage() {
   const [categories, setCategories] = useState([]);
   const [offerings, setOfferings] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [groups, setGroups] = useState([]);
+  const [categories, setGroups] = useState([]);
   const [placementDrafts, setPlacementDrafts] = useState({});
   const [loading, setLoading] = useState(true);
   const [busyExamId, setBusyExamId] = useState('');
@@ -50,9 +50,9 @@ export function AdminExamsPage() {
       supabase.rpc('admin_list_exam_versions_with_categories'),
       supabase.rpc('admin_list_exam_categories'),
       supabase.from('exams').select('id,education_subject_id'),
-      supabase.from('education_subjects').select('id,education_level_id,group_id,display_name,is_active,local_code'),
+      supabase.from('education_subjects').select('id,education_level_id,category_id,display_name,is_active,local_code'),
       supabase.from('education_levels').select('id,name,code,is_active'),
-      supabase.from('education_subject_groups').select('id,name,education_level_id,is_active,display_order'),
+      supabase.from('education_course_categories').select('id,name,education_level_id,is_active,display_order'),
     ]);
     const failed = [examResult, categoryResult, examMetaResult, offeringResult, levelResult, groupResult].find((result) => result.error);
     if (failed) setError(failed.error.message);
@@ -106,11 +106,11 @@ export function AdminExamsPage() {
   const activeCategories = categories.filter((category) => category.is_active);
   const activeOfferings = offerings.filter((offering) => offering.is_active);
   const levelMap = new Map(levels.map((level) => [level.id, level]));
-  const groupMap = new Map(groups.map((group) => [group.id, group]));
+  const groupMap = new Map(categories.map((category) => [category.id, category]));
   const offeringLabel = (offering) => {
     if (!offering) return '';
     const level = levelMap.get(offering.education_level_id);
-    return [level?.name, groupMap.get(offering.group_id)?.name, offering.display_name].filter(Boolean).join(' / ');
+    return [level?.name, groupMap.get(offering.category_id)?.name, offering.display_name].filter(Boolean).join(' / ');
   };
 
   return <AdminFrame title="Quản lý đề thi">
@@ -124,9 +124,9 @@ export function AdminExamsPage() {
         const draft = placementDrafts[item.exam_id] || {};
         const selectedLevelId = draft.levelId ?? currentOffering?.education_level_id ?? '';
         const selectedLevel = levels.find((level) => level.id === selectedLevelId);
-        const selectedGroupId = selectedLevel?.code === 'university' ? (draft.groupId ?? currentOffering?.group_id ?? '') : '';
-        const levelGroups = groups.filter((group) => group.education_level_id === selectedLevelId && group.is_active);
-        const levelOfferings = activeOfferings.filter((offering) => offering.education_level_id === selectedLevelId && (selectedLevel?.code !== 'university' || offering.group_id === selectedGroupId));
+        const selectedGroupId = selectedLevel?.code === 'university' ? (draft.groupId ?? currentOffering?.category_id ?? '') : '';
+        const levelGroups = categories.filter((category) => category.education_level_id === selectedLevelId && category.is_active);
+        const levelOfferings = activeOfferings.filter((offering) => offering.education_level_id === selectedLevelId && (selectedLevel?.code !== 'university' || offering.category_id === selectedGroupId));
         const examAttemptCount = items.filter((row) => row.exam_id === item.exam_id).reduce((sum, row) => sum + Number(row.attempt_count || 0), 0);
         const placementLocked = Boolean(item.education_subject_id && examAttemptCount > 0);
         return <article className="version-row category-exam-row" key={item.exam_version_id}>
@@ -143,7 +143,7 @@ export function AdminExamsPage() {
               <select className="category-select" aria-label="Cấp học" value={selectedLevelId} disabled={busyExamId === item.exam_id || placementLocked} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { levelId: event.target.value, groupId: '', courseId: '' } }))}>
                 <option value="">Chọn cấp học</option>{levels.filter((level) => level.is_active).map((level) => <option value={level.id} key={level.id}>{level.name}</option>)}
               </select>
-              {selectedLevel?.code === 'university' && <select className="category-select" aria-label="Nhóm môn học" value={selectedGroupId} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, groupId: event.target.value, courseId: '' } }))}><option value="">Chọn nhóm môn học</option>{levelGroups.map((group) => <option value={group.id} key={group.id}>{group.name}</option>)}</select>}
+              {selectedLevel?.code === 'university' && <select className="category-select" aria-label="Danh mục môn học" value={selectedGroupId} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, groupId: event.target.value, courseId: '' } }))}><option value="">Chọn danh mục môn học</option>{levelGroups.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>}
               <select className="category-select" aria-label="Môn học" value={draft.courseId ?? item.education_subject_id ?? ''} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId || (selectedLevel?.code === 'university' && !selectedGroupId)} onChange={(event) => { void assignEducation(item.exam_id, event.target.value); setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, groupId: selectedGroupId, courseId: event.target.value } })); }}>
                 <option value="">Chọn môn học</option>
                 {archivedOffering && <option value={item.education_subject_id} disabled>{currentOffering ? offeringLabel(currentOffering) : 'Môn học đã ẩn'} (giữ nguyên)</option>}
