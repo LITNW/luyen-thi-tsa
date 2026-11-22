@@ -136,7 +136,7 @@ test('Staging cutover runbook has backup, migration-history reconciliation, depl
   assert.match(runbook, /--include-all/);
   assert.match(runbook, /ops\/staging-history\/preflight\.sql/);
   assert.match(runbook, /supabase --workdir ops\/staging-history db push/);
-  assert.match(runbook, /pending set must contain exactly/);
+  assert.match(runbook, /dry-run must list exactly one pending migration/);
   assert.match(runbook, /deploy the approved PR #41 frontend artifact to the Staging frontend/i);
   assert.doesNotMatch(runbook, /keep the University write freeze active/i);
   assert.match(runbook, /separate explicit approval/i);
