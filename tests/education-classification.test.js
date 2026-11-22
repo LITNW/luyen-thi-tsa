@@ -124,7 +124,7 @@ test('legacy exam editor applies the tested selector model before both create an
   assert.match(editor, /p_education_subject_id:educationSubjectId\|\|null/);
 });
 
-test('Staging cutover runbook has backup, exact dry-run, deploy, and recovery gates', () => {
+test('Staging cutover runbook has backup, migration-history reconciliation, deploy, and recovery gates', () => {
   const runbook = read('../docs/education-course-classification-staging-cutover.md');
   assert.match(runbook, /cppalwtdkditlhojpeyc/);
   assert.match(runbook, /restore.*separate disposable Supabase project/i);

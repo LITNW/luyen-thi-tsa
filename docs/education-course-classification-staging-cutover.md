@@ -18,7 +18,6 @@ The branch migration adds University categories and a category guard. The Stagin
 |---|---|---|
 | Inspect/download or create a database backup | Staging project owner / authorized database operator; database password or Dashboard access | Staging owner confirms backup window and retention |
 | Restore a backup to a disposable project and inspect it | Supabase organization/project creation and database credentials | Project owner approves any temporary project or cost |
-| Add/remove temporary write-freeze policies | Staging database owner / SQL Editor or database credentials | Staging owner approves the write pause |
 | Apply the migration | Supabase CLI login plus Staging database password/credentials | Explicit approval to apply this one Staging migration after the dry-run gate |
 | Deploy the compatible frontend | Staging deployment credentials | Release owner approves the exact commit and Staging target |
 | Restore Staging in place | Supabase project owner and restore permissions | Separate explicit approval after loss window, downtime, and snapshot are reviewed |
@@ -121,9 +120,9 @@ No migration-history reconciliation or migration application is authorized for P
 6. If all checks pass and the release owner confirms the new frontend is operational against Staging, verify no obsolete temporary policies exist:
 
    ```sql
-   begin;
-   -- No temporary write-freeze policies are part of the target design.
-   commit;
+   select policyname from pg_policies
+   where schemaname='public' and tablename='education_subjects'
+     and policyname in ('staging_pause_university_course_insert','staging_pause_university_course_update');
    ```
 
    Verify University create/edit now succeeds only through the category-aware application path. Leave the permanent migration guards and RLS enabled.
