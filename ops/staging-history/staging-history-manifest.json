@@ -23,7 +23,7 @@
       "statement_count": 1,
       "statement_length": 6008,
       "statement_md5": "fa53a74371b39dc54b823f34b6f11017",
-      "marker_file": "20261113082636_published_exam_read_access_and_admin_rls.sql",
+      "marker_file": "20261113082636_20261111145710_published_exam_read_access_and_admin_rls.sql",
       "local_source": "supabase/migrations/20261111145710_published_exam_read_access_and_admin_rls.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -34,7 +34,7 @@
       "statement_count": 1,
       "statement_length": 1860,
       "statement_md5": "e98618c8534c8a3820d6c751e5c8f8dd",
-      "marker_file": "20261113082639_first_admin_verified_email_bootstrap.sql",
+      "marker_file": "20261113082639_20261111145753_first_admin_verified_email_bootstrap.sql",
       "local_source": "supabase/migrations/20261111145753_first_admin_verified_email_bootstrap.sql",
       "classification": "environment_specific_email_redaction",
       "comparison_note": "Remote SQL substitutes staging-admin@example.test; repository file uses SET_ADMIN_EMAIL_BEFORE_APPLY placeholder."
@@ -45,7 +45,7 @@
       "statement_count": 1,
       "statement_length": 7641,
       "statement_md5": "739f560fa09fd011ae1cda72433586a5",
-      "marker_file": "20261113082643_admin_exam_version_workflows.sql",
+      "marker_file": "20261113082643_20261111145830_admin_exam_version_workflows.sql",
       "local_source": "supabase/migrations/20261111145830_admin_exam_version_workflows.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -56,7 +56,7 @@
       "statement_count": 1,
       "statement_length": 2992,
       "statement_md5": "98f03d2f5ca8ab6adc9fe87cd1b8f530",
-      "marker_file": "20261113082646_student_published_exam_read_rpcs.sql",
+      "marker_file": "20261113082646_20261111145854_student_published_exam_read_rpcs.sql",
       "local_source": "supabase/migrations/20261111145854_student_published_exam_read_rpcs.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -67,7 +67,7 @@
       "statement_count": 1,
       "statement_length": 508,
       "statement_md5": "8f19a67c4ba1cb76500d6bb23138d437",
-      "marker_file": "20261113082650_consolidate_profile_update_policy.sql",
+      "marker_file": "20261113082650_20261111145919_consolidate_profile_update_policy.sql",
       "local_source": "supabase/migrations/20261111145919_consolidate_profile_update_policy.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -78,7 +78,7 @@
       "statement_count": 1,
       "statement_length": 1899,
       "statement_md5": "ae9de7d4fe246ab3062b4eb770393744",
-      "marker_file": "20261113082708_lock_profile_role_status_updates.sql",
+      "marker_file": "20261113082708_20261111150635_lock_profile_role_status_updates.sql",
       "local_source": "supabase/migrations/20261111150635_lock_profile_role_status_updates.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -89,7 +89,7 @@
       "statement_count": 1,
       "statement_length": 18587,
       "statement_md5": "f0356c358fba9ce5cc6430f1e187cb7b",
-      "marker_file": "20261113082711_admin_authoring_and_reporting.sql",
+      "marker_file": "20261113082711_20261111151348_admin_authoring_and_reporting.sql",
       "local_source": "supabase/migrations/20261111151348_admin_authoring_and_reporting.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -100,7 +100,7 @@
       "statement_count": 1,
       "statement_length": 5202,
       "statement_md5": "b1bc147d1cbde86b6f0e2dc46731cc54",
-      "marker_file": "20261113082716_draft_question_management.sql",
+      "marker_file": "20261113082716_20261111151520_draft_question_management.sql",
       "local_source": "supabase/migrations/20261111151520_draft_question_management.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -111,7 +111,7 @@
       "statement_count": 1,
       "statement_length": 5553,
       "statement_md5": "0cff5c04918c0010d988cee40c59a2e4",
-      "marker_file": "20261113082722_attempt_resume_and_history_rpcs.sql",
+      "marker_file": "20261113082722_20261111151651_attempt_resume_and_history_rpcs.sql",
       "local_source": "supabase/migrations/20261111151651_attempt_resume_and_history_rpcs.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -122,7 +122,7 @@
       "statement_count": 1,
       "statement_length": 4514,
       "statement_md5": "9d046c27786ffac565a37fd85145e851",
-      "marker_file": "20261113082728_atomic_exam_authoring.sql",
+      "marker_file": "20261113082728_20261111151737_atomic_exam_authoring.sql",
       "local_source": "supabase/migrations/20261111151737_atomic_exam_authoring.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -133,7 +133,7 @@
       "statement_count": 1,
       "statement_length": 4334,
       "statement_md5": "47d906af8e7f99f19751f4f4dd6fdfc4",
-      "marker_file": "20261113082738_fix_atomic_exam_authoring_mapping_retention.sql",
+      "marker_file": "20261113082738_20261111151747_fix_atomic_exam_authoring_mapping_retention.sql",
       "local_source": "supabase/migrations/20261111151747_fix_atomic_exam_authoring_mapping_retention.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -144,7 +144,7 @@
       "statement_count": 1,
       "statement_length": 2732,
       "statement_md5": "8751535c337cc71f6f5c0622200fd4c5",
-      "marker_file": "20261113082742_enforce_active_attempt_owner.sql",
+      "marker_file": "20261113082742_20261111152621_enforce_active_attempt_owner.sql",
       "local_source": "supabase/migrations/20261111152621_enforce_active_attempt_owner.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -155,7 +155,7 @@
       "statement_count": 1,
       "statement_length": 5312,
       "statement_md5": "e63fb05e007c1c1a4b4ba1e225124f58",
-      "marker_file": "20261113082746_avoid_duplicate_question_versions_on_save.sql",
+      "marker_file": "20261113082746_20261111152717_avoid_duplicate_question_versions_on_save.sql",
       "local_source": "supabase/migrations/20261111152717_avoid_duplicate_question_versions_on_save.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -166,7 +166,7 @@
       "statement_count": 1,
       "statement_length": 9253,
       "statement_md5": "1917837dea4486aef95819bdbb31759c",
-      "marker_file": "20261113082751_exam_room_offline_sync_and_server_timing.sql",
+      "marker_file": "20261113082751_20261112023553_exam_room_offline_sync_and_server_timing.sql",
       "local_source": "supabase/migrations/20261112023553_exam_room_offline_sync_and_server_timing.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -177,7 +177,7 @@
       "statement_count": 1,
       "statement_length": 4126,
       "statement_md5": "09a37eea4291a7e1ae86ab5d5b8fcd3b",
-      "marker_file": "20261113082755_admin_delete_exam_version_safely.sql",
+      "marker_file": "20261113082755_20261112023833_admin_delete_exam_version_safely.sql",
       "local_source": "supabase/migrations/20261112023833_admin_delete_exam_version_safely.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -188,7 +188,7 @@
       "statement_count": 1,
       "statement_length": 6380,
       "statement_md5": "184bcd2eff24f194ebe1edf787c10413",
-      "marker_file": "20261113082805_archive_exam_versions_with_attempts.sql",
+      "marker_file": "20261113082805_20261112024205_archive_exam_versions_with_attempts.sql",
       "local_source": "supabase/migrations/20261112024205_archive_exam_versions_with_attempts.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -199,7 +199,7 @@
       "statement_count": 1,
       "statement_length": 6432,
       "statement_md5": "282c5ddb62e435cd3a58011084ee1326",
-      "marker_file": "20261113082809_normalize_dnd_slot_key_validation.sql",
+      "marker_file": "20261113082809_20261112041845_normalize_dnd_slot_key_validation.sql",
       "local_source": "supabase/migrations/20261112041845_normalize_dnd_slot_key_validation.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -210,7 +210,7 @@
       "statement_count": 1,
       "statement_length": 6401,
       "statement_md5": "53435802a6c75d710dc8a269924b8d39",
-      "marker_file": "20261113082812_ai_exam_import_staging.sql",
+      "marker_file": "20261113082812_20261112050000_ai_exam_import_staging.sql",
       "local_source": "supabase/migrations/20261112050000_ai_exam_import_staging.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -221,7 +221,7 @@
       "statement_count": 1,
       "statement_length": 14740,
       "statement_md5": "ead927df45920c9e9b4d54363ae8edf1",
-      "marker_file": "20261113082816_centralize_exam_answer_validation.sql",
+      "marker_file": "20261113082816_20261112170000_centralize_exam_answer_validation.sql",
       "local_source": "supabase/migrations/20261112170000_centralize_exam_answer_validation.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -232,7 +232,7 @@
       "statement_count": 1,
       "statement_length": 13338,
       "statement_md5": "426db8103b54d9da96ce5a42602e8694",
-      "marker_file": "20261113082827_m1_subject_taxonomy_stimuli.sql",
+      "marker_file": "20261113082827_20261113100000_m1_subject_taxonomy_stimuli.sql",
       "local_source": "supabase/migrations/20261113100000_m1_subject_taxonomy_stimuli.sql",
       "classification": "exact_statement_match",
       "comparison_note": "Remote statement text exactly matches the mapped local migration file."
@@ -243,7 +243,7 @@
       "statement_count": 1,
       "statement_length": 13541,
       "statement_md5": "ceb823b7f9f88787dfd4e50d6f848acf",
-      "marker_file": "20261113082830_exam_categories_admin.sql",
+      "marker_file": "20261113082830_20261113120000_exam_categories_admin.sql",
       "local_source": "supabase/migrations/20261113120000_exam_categories_admin.sql + supabase/migrations/20261113140000_exam_category_archived_assignment_preservation.sql",
       "classification": "base_migration_contains_followup_behavior",
       "comparison_note": "Remote base migration includes inactive-category preservation logic also represented by the separately applied follow-up; current Staging function was verified to contain that behavior."
