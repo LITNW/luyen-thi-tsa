@@ -97,9 +97,9 @@ jobs:
       - name: Exclude archived exams from published payload and media access
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118032350_exclude_archived_exam_media.sql
       - name: Seed legacy education rows for upgrade-preservation regression
-        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/education_subject_groups_upgrade_fixture.sql
-      - name: Apply editable education course groups
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_subject_groups.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/education_course_categories_upgrade_fixture.sql
+      - name: Apply editable Admin-managed course categories
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_course_categories.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -140,8 +140,8 @@ jobs:
       - name: Run education hierarchy foundation regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
 
-      - name: Run education course groups regression suite
-        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_subject_groups_regression.sql
+      - name: Run education course categories regression suite
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_course_categories_regression.sql
 
       - name: Run education exam placement regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql

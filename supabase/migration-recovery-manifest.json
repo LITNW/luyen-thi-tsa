@@ -297,9 +297,9 @@
     },
     {
       "version": "20261119160000",
-      "name": "education_subject_groups",
+      "name": "education_course_categories",
       "status": "pending_in_pr_41",
-      "source": "PR #41: replace active course classification with editable level-scoped university groups",
+      "source": "PR #41: replace active course classification with Admin-managed level-scoped University categories",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "production_status": "not_applied",
       "staging_status": "not_applied"
@@ -307,7 +307,7 @@
   ],
   "superseded_migrations": [
     { "version": "20261119130000", "name": "allow_multiple_offerings_per_catalogue_subject", "status": "removed_before_application", "reason": "New education admin creates one concrete course row per course; global catalogue sharing is not part of the active workflow." },
-    { "version": "20261119150000", "name": "add_education_knowledge_groups", "status": "removed_before_application", "reason": "Replaced by education_subject_groups and group_id." }
+    { "version": "20261119150000", "name": "add_education_knowledge_groups", "status": "removed_before_application", "reason": "Superseded by education_course_categories and category_id; categories are ordinary Admin-managed records, not a fixed taxonomy." }
   ],
   "last_verified_against_live_ledgers": {
     "date": "2026-11-19",
