@@ -23,7 +23,7 @@ export function AdminHomePage() {
   return <AdminFrame title="Quản trị hệ thống">
     <p className="muted">Quản lý cấu trúc giáo dục, nội dung thi và tài khoản. Loại đề chỉ là metadata tùy chọn, không phải tầng điều hướng.</p>
     <div className="admin-grid">
-      <Link className="admin-card featured" to="/admin/education"><b>Cấu trúc học tập</b><span>Cấp học, nhóm môn đại học và các môn học cụ thể</span></Link>
+      <Link className="admin-card featured" to="/admin/education"><b>Cấu trúc học tập</b><span>Cấp học, danh mục môn đại học và các môn học cụ thể</span></Link>
       <Link className="admin-card" to="/admin/exams"><b>Quản lý đề thi</b><span>Môn học, loại đề và trạng thái xuất bản</span></Link>
       <Link className="admin-card" to="/admin/categories"><b>Loại đề (tùy chọn)</b><span>Phân loại mục đích: luyện tập, thi thử, kiểm tra…</span></Link>
       <Link className="admin-card" to="/admin/users"><b>Quản lý tài khoản</b><span>Vai trò và trạng thái học viên</span></Link>
@@ -38,7 +38,7 @@ export function AdminExamsPage() {
   const [categories, setCategories] = useState([]);
   const [offerings, setOfferings] = useState([]);
   const [levels, setLevels] = useState([]);
-  const [categories, setGroups] = useState([]);
+  const [categories, setCategorys] = useState([]);
   const [placementDrafts, setPlacementDrafts] = useState({});
   const [loading, setLoading] = useState(true);
   const [busyExamId, setBusyExamId] = useState('');
@@ -46,7 +46,7 @@ export function AdminExamsPage() {
 
   const load = async () => {
     setLoading(true);
-    const [examResult, categoryResult, examMetaResult, offeringResult, levelResult, groupResult] = await Promise.all([
+    const [examResult, categoryResult, examMetaResult, offeringResult, levelResult, categoryResult] = await Promise.all([
       supabase.rpc('admin_list_exam_versions_with_categories'),
       supabase.rpc('admin_list_exam_categories'),
       supabase.from('exams').select('id,education_subject_id'),
@@ -54,7 +54,7 @@ export function AdminExamsPage() {
       supabase.from('education_levels').select('id,name,code,is_active'),
       supabase.from('education_course_categories').select('id,name,education_level_id,is_active,display_order'),
     ]);
-    const failed = [examResult, categoryResult, examMetaResult, offeringResult, levelResult, groupResult].find((result) => result.error);
+    const failed = [examResult, categoryResult, examMetaResult, offeringResult, levelResult, categoryResult].find((result) => result.error);
     if (failed) setError(failed.error.message);
     else {
       const examMeta = new Map((examMetaResult.data || []).map((exam) => [exam.id, exam]));
@@ -65,7 +65,7 @@ export function AdminExamsPage() {
       setCategories(categoryResult.data || []);
       setOfferings(offeringResult.data || []);
       setLevels(levelResult.data || []);
-      setGroups(groupResult.data || []);
+      setCategorys(categoryResult.data || []);
       setError('');
     }
     setLoading(false);
@@ -106,15 +106,15 @@ export function AdminExamsPage() {
   const activeCategories = categories.filter((category) => category.is_active);
   const activeOfferings = offerings.filter((offering) => offering.is_active);
   const levelMap = new Map(levels.map((level) => [level.id, level]));
-  const groupMap = new Map(categories.map((category) => [category.id, category]));
+  const categoryMap = new Map(categories.map((category) => [category.id, category]));
   const offeringLabel = (offering) => {
     if (!offering) return '';
     const level = levelMap.get(offering.education_level_id);
-    return [level?.name, groupMap.get(offering.category_id)?.name, offering.display_name].filter(Boolean).join(' / ');
+    return [level?.name, categoryMap.get(offering.category_id)?.name, offering.display_name].filter(Boolean).join(' / ');
   };
 
   return <AdminFrame title="Quản lý đề thi">
-    <p className="muted">Mỗi đề được gắn trực tiếp với một môn học cụ thể. Đại học chọn cấp học, nhóm môn rồi đến môn học; THPT chọn trực tiếp môn học. Loại đề chỉ là thông tin phụ, không bắt buộc.</p>
+    <p className="muted">Mỗi đề được gắn trực tiếp với một môn học cụ thể. Đại học chọn cấp học, danh mục môn rồi đến môn học; THPT chọn trực tiếp môn học. Loại đề chỉ là thông tin phụ, không bắt buộc.</p>
     {error && <div className="alert" role="alert">{error}</div>}
     {loading ? <div className="loading-line"><span className="spinner" /> Đang tải…</div> :
       items.length ? <div className="version-list">{items.map((item) => {
@@ -124,9 +124,9 @@ export function AdminExamsPage() {
         const draft = placementDrafts[item.exam_id] || {};
         const selectedLevelId = draft.levelId ?? currentOffering?.education_level_id ?? '';
         const selectedLevel = levels.find((level) => level.id === selectedLevelId);
-        const selectedGroupId = selectedLevel?.code === 'university' ? (draft.groupId ?? currentOffering?.category_id ?? '') : '';
-        const levelGroups = categories.filter((category) => category.education_level_id === selectedLevelId && category.is_active);
-        const levelOfferings = activeOfferings.filter((offering) => offering.education_level_id === selectedLevelId && (selectedLevel?.code !== 'university' || offering.category_id === selectedGroupId));
+        const selectedCategoryId = selectedLevel?.code === 'university' ? (draft.categoryId ?? currentOffering?.category_id ?? '') : '';
+        const levelCategorys = categories.filter((category) => category.education_level_id === selectedLevelId && category.is_active);
+        const levelOfferings = activeOfferings.filter((offering) => offering.education_level_id === selectedLevelId && (selectedLevel?.code !== 'university' || offering.category_id === selectedCategoryId));
         const examAttemptCount = items.filter((row) => row.exam_id === item.exam_id).reduce((sum, row) => sum + Number(row.attempt_count || 0), 0);
         const placementLocked = Boolean(item.education_subject_id && examAttemptCount > 0);
         return <article className="version-row category-exam-row" key={item.exam_version_id}>
@@ -140,11 +140,11 @@ export function AdminExamsPage() {
             <span className={'status ' + (item.status === 'published' ? 'published' : 'draft')}>{item.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
             <label className="category-inline-label">
               <span>Vị trí học tập</span>
-              <select className="category-select" aria-label="Cấp học" value={selectedLevelId} disabled={busyExamId === item.exam_id || placementLocked} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { levelId: event.target.value, groupId: '', courseId: '' } }))}>
+              <select className="category-select" aria-label="Cấp học" value={selectedLevelId} disabled={busyExamId === item.exam_id || placementLocked} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { levelId: event.target.value, categoryId: '', courseId: '' } }))}>
                 <option value="">Chọn cấp học</option>{levels.filter((level) => level.is_active).map((level) => <option value={level.id} key={level.id}>{level.name}</option>)}
               </select>
-              {selectedLevel?.code === 'university' && <select className="category-select" aria-label="Danh mục môn học" value={selectedGroupId} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, groupId: event.target.value, courseId: '' } }))}><option value="">Chọn danh mục môn học</option>{levelGroups.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>}
-              <select className="category-select" aria-label="Môn học" value={draft.courseId ?? item.education_subject_id ?? ''} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId || (selectedLevel?.code === 'university' && !selectedGroupId)} onChange={(event) => { void assignEducation(item.exam_id, event.target.value); setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, groupId: selectedGroupId, courseId: event.target.value } })); }}>
+              {selectedLevel?.code === 'university' && <select className="category-select" aria-label="Danh mục môn học" value={selectedCategoryId} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId} onChange={(event) => setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, categoryId: event.target.value, courseId: '' } }))}><option value="">Chọn danh mục môn học</option>{levelCategorys.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>}
+              <select className="category-select" aria-label="Môn học" value={draft.courseId ?? item.education_subject_id ?? ''} disabled={busyExamId === item.exam_id || placementLocked || !selectedLevelId || (selectedLevel?.code === 'university' && !selectedCategoryId)} onChange={(event) => { void assignEducation(item.exam_id, event.target.value); setPlacementDrafts((current) => ({ ...current, [item.exam_id]: { ...draft, levelId: selectedLevelId, categoryId: selectedCategoryId, courseId: event.target.value } })); }}>
                 <option value="">Chọn môn học</option>
                 {archivedOffering && <option value={item.education_subject_id} disabled>{currentOffering ? offeringLabel(currentOffering) : 'Môn học đã ẩn'} (giữ nguyên)</option>}
                 {levelOfferings.map((offering) => <option value={offering.id} key={offering.id}>{offering.display_name}{offering.local_code ? ` · ${offering.local_code}` : ''}</option>)}

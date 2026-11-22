@@ -31,7 +31,7 @@ alter table public.education_subjects
   references public.education_course_categories(education_level_id,id)
   on delete restrict;
 
-create index education_subjects_level_group_active_idx
+create index education_subjects_level_category_active_idx
   on public.education_subjects(education_level_id,category_id,is_active,display_order,id);
 
 -- Only the neutral category is seeded; Admin manages all other categories as ordinary records.
@@ -55,7 +55,7 @@ set search_path = ''
 as $function$
 declare
   v_level_code text;
-  v_group_active boolean;
+  v_category_active boolean;
 begin
   select l.code into v_level_code
   from public.education_levels l where l.id=new.education_level_id;
@@ -72,13 +72,13 @@ begin
   end if;
 
   if new.category_id is not null then
-    select g.is_active into v_group_active
+    select g.is_active into v_category_active
     from public.education_course_categories g
     where g.id=new.category_id and g.education_level_id=new.education_level_id;
     if not found then
-      raise exception using errcode='23503', message='Course group does not belong to the selected education level.';
+      raise exception using errcode='23503', message='Course category does not belong to the selected education level.';
     end if;
-    if new.is_active and not v_group_active then
+    if new.is_active and not v_category_active then
       raise exception using errcode='23514', message='An active course must belong to an active course category.';
     end if;
   end if;
@@ -100,7 +100,7 @@ begin
   if old.is_active and not new.is_active and exists (
     select 1 from public.education_subjects es where es.category_id=old.id and es.is_active
   ) then
-    raise exception using errcode='23514', message='Deactivate or move active courses before deactivating this group.';
+    raise exception using errcode='23514', message='Deactivate or move active courses before deactivating this category.';
   end if;
   return new;
 end;
