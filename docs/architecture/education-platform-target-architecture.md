@@ -1,6 +1,6 @@
 # Education Platform — Target Architecture
 
-> **Superseded for active course classification (2026-11-19).** Use [the course-group cutover audit](education-course-classification-cutover.md) and [the replacement design](../superpowers/specs/2026-11-19-education-course-classification-design.md). The node hierarchy and shared catalogue described below are retained only as database compatibility dependencies until separately retired.
+> **Superseded for active course classification (2026-11-19).** Use [the course-category cutover audit](education-course-classification-cutover.md) and [the replacement design](../superpowers/specs/2026-11-19-education-course-classification-design.md). The node hierarchy and shared catalogue described below are retained only as database compatibility dependencies until separately retired.
 
 Status: Historical proposal; replaced for active education browsing and course administration, 2026-11-19
 Scope: Student navigation, Admin authoring, education data model, exam placement, compatibility with existing TSA exam engine.

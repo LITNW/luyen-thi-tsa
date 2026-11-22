@@ -1,29 +1,38 @@
-# Education course classification redesign
+# Education course-category design
 
 ## Intent
 
-Replace the active education hierarchy for LIT course setup, exam authoring, and student browsing. THPT courses are direct children of a level. University courses belong to editable, level-scoped groups. Exams continue to reference concrete `education_subjects` rows by their existing IDs.
+Implement the current PR #41 owner-approved model for LIT course setup, exam authoring, and student browsing:
+
+- THPT: `Education level → Course` (flat).
+- University: `Education level → Course category → Course`.
+
+Exams continue to reference concrete `education_subjects` rows by their existing IDs.
 
 ## Goals and constraints
 
+- Course categories are ordinary records managed by Admin. They are not a fixed enum, not tied to a major, and not a shared subject catalogue.
+- Seed exactly one neutral default University category: `Chưa phân loại`. Do not seed example taxonomy values. Do not guess existing course classifications.
 - Preserve `education_subjects.id`, `exams.education_subject_id`, course details, and unrelated subject/taxonomy features.
-- Seed default university groups idempotently and place existing university courses in the neutral group without inferring from names.
-- Require a valid same-level group for university courses and keep THPT courses ungrouped.
-- Replace active React and legacy UI classification paths; retain old hierarchy storage until code, SQL RPCs, policies, and tests have been proven independent.
-- Do not write to Staging or Production, merge, or deploy.
-
-## Approaches
-
-1. Add groups in parallel while leaving old UI active: low migration risk, but fails the single-authoritative-workflow requirement.
-2. Replace the active workflow with level-scoped groups and keep legacy database structures as compatibility storage until a later verified retirement: preserves IDs and protects older SQL consumers while switching all active UI. **Selected** because existing SQL guards/RPCs and old tests still directly require node and catalogue fields.
-3. Drop nodes, `subject_id`, and `knowledge_group` immediately: cleanest schema, but would break current migrations, RPCs, tests, and exam placement before their dependency chain is replaced.
+- University courses must have one active category from the same education level. THPT courses must have `category_id IS NULL`.
+- New concrete courses do not require a shared `subjects` catalogue row; make the legacy `subject_id` nullable while retaining existing values.
+- Replace the active React and legacy UI classification paths; retain old hierarchy/catalogue storage until code, SQL RPCs, policies, and tests have been proven independent.
+- Do not maintain the superseded `education_subject_groups` / `group_id` workflow alongside the category workflow.
 
 ## Design
 
-Add `education_subject_groups` with UUID identity, level-scoped code, name, optional description, order, status, and timestamps. Add nullable `education_subjects.group_id` with a composite same-level foreign key. Make the legacy `subject_id` link nullable so new concrete courses are independent records; preserve all existing values. A trigger requires a group for university courses, prohibits groups for THPT courses, and checks active level/group membership. Existing university rows are backfilled to `unclassified`; THPT rows get NULL. Existing node and shared-subject columns remain compatibility fields and are no longer read or written by the active education UI.
+Create `education_course_categories` with UUID identity, level-scoped code, name, optional description, display order, active status, and timestamps. The code is editable text with uniqueness scoped to an education level; it is not an enum.
 
-Admin education management will edit groups and direct courses. Exam authoring and assignment will present the level → group → course path only for university and level → course for THPT. Student browse pages will show groups for university and courses directly for THPT. Old `/context/:nodeId` URLs get an intentional redirect to the corresponding level page; existing `/subject/:offeringId` URLs remain valid.
+Add nullable `education_subjects.category_id` with a composite same-level foreign key. Seed only the neutral `unclassified` category for University. Backfill every existing University course into that category, leaving THPT courses unassigned. Never alter course UUIDs or exam references.
+
+A trigger requires a category for University courses, prohibits categories for THPT courses, and checks that the category belongs to the same level and is active when the course is active. RLS permits active profiles to read active education records and preserves the existing Admin bypass for category management. Category deletion is restricted by dependent courses; deactivation requires active courses to be moved or deactivated first.
+
+Admin education management creates and edits categories and concrete courses. Exam authoring and assignment present level → category → course only for University and level → course for THPT. Student browse pages show categories for University and courses directly for THPT. The exam RPC receives only the concrete course UUID and continues to persist it as `exams.education_subject_id`.
+
+Existing node and shared-subject columns remain compatibility fields until their individual SQL/RPC dependencies are replaced and covered by follow-up migrations. They are no longer read or written by the active education UI.
 
 ## Recovery and verification
 
-The migration is transactional where supported by PostgreSQL and is forward-only after data has been written: recover from a bad rollout by restoring the pre-migration snapshot and reapplying a corrected migration, or by a new forward migration. The recovery manifest and clean-install CI must include the new migration. SQL tests assert ID/reference preservation and assignment rules. Existing node/catalogue SQL contracts are retained and documented until their independent retirement is safe.
+The migration is additive and transactional. It preserves the existing course primary keys and exam foreign keys. Once new categories/courses have been written, recovery should prefer a reviewed forward migration or a separately approved Staging restore; do not drop category data or rewrite IDs as an automatic rollback.
+
+The recovery manifest and clean-install/recovered-chain CI include the category migration. SQL tests assert exactly one default category, freeform Admin-created categories, same-level assignment, THPT flat behavior, RLS, and identity preservation. Hosted Staging application is blocked until the reconstructed migration history has been reconciled from SQL fingerprints and live schema evidence. Production remains out of scope.

@@ -1,66 +1,15 @@
-# Education Staging Cutover Implementation Plan
+# Superseded: Education Staging cutover plan (2026-11-19)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+<badge>SUPERSEDED — DO NOT EXECUTE</badge>
 
-**Goal:** Close the group-table RLS gap, strengthen regression checks, and document a safe operator-run Staging cutover without applying it.
+This plan was written for the earlier `education_subject_groups` / temporary-write-freeze implementation. PR #41's owner later replaced that design with Admin-managed course categories. The old migration and its six seeded category values are not approved for deployment.
 
-**Architecture:** Keep authorization inside PostgreSQL RLS by matching the existing `education_levels` active-profile predicate and retaining its admin bypass. Extend the disposable SQL regression suite to exercise active, suspended, anonymous, and Admin roles. Document the schema/app cutover as a gated operation with a temporary restrictive RLS write freeze and exact recovery gates.
+Use these current documents instead:
 
-**Tech Stack:** PostgreSQL/Supabase migrations, SQL regression scripts, Node.js `node:test`, Markdown runbook, GitHub Actions.
+- [Current course-category design](../specs/2026-11-19-education-course-classification-design.md)
+- [Current Staging cutover runbook](../../education-course-classification-staging-cutover.md)
+- [Current architecture and migration audit](../../architecture/education-course-classification-cutover.md)
 
-**Spec:** User request in the active Codex thread, “Resolve PR #41 Audit Findings and Prepare Staging Cutover”.
+The old plan's group-table names, fixed taxonomy, and temporary University write-freeze steps are historical only. Do not recreate those policies or apply the superseded migration.
 
-## Global Constraints
-
-- Do not run a migration against Staging or Production.
-- Do not modify hosted data or settings, merge PR #41, or deploy Production.
-- Do not disable RLS, delete legacy columns/tables, or rewrite course IDs or exam references.
-- Keep PR #41 open and Draft.
-
-## Review Focus
-
-- Suspended authenticated profiles must not read groups; active profiles and active Admins retain intended read/write access.
-- `anon` must remain unable to read groups through grants or policy.
-- The group policy must not recurse through `education_levels` or `profiles` RLS.
-- Existing University course creation, THPT direct creation, group reassignment, and exam references must remain covered by SQL regressions.
-- The runbook must distinguish manual approval/credentials from commands and stop if backup, ledger, or dry-run gates fail.
-
----
-
-### Task 1: RLS policy and SQL regression
-
-**Files:**
-- Modify: `supabase/migrations/20261119160000_education_subject_groups.sql`
-- Modify: `supabase/tests/education_subject_groups_regression.sql`
-
-- [x] Add role-based assertions for active student, suspended student, anon, and Admin (including Admin visibility of an inactive group and permitted group creation), plus a reversible University-only write-freeze policy test.
-- [x] A local SQL run was unavailable because no PostgreSQL client is installed and Docker Desktop's Linux engine is not running; the focused PostgreSQL regression passed in GitHub Actions.
-- [x] Add the same active-profile predicate as `education_levels` while retaining the existing Admin branch.
-- [x] Focused SQL regression, full clean-install, and recovered-chain workflows passed in GitHub Actions.
-
-### Task 2: Application selection contract coverage
-
-**Files:**
-- Modify: `tests/education-classification.test.js`
-- Add or modify pure selector logic only if existing component contracts cannot be tested directly.
-
-- [x] Add assertions for valid University group/course, direct THPT course, downstream selector reset, edit/reassignment, and exam save/update payloads; SQL coverage includes University exam draft creation/edit and direct THPT creation.
-- [ ] Run full `npm test` suite.
-
-### Task 3: Staging runbook
-
-**Files:**
-- Add: `docs/education-course-classification-staging-cutover.md`
-
-- [x] Document manual backup, checksum, and restore-drill requirements.
-- [x] Document baseline SQL and migration-ledger capture.
-- [x] Include restrictive RLS policies that freeze University INSERT/UPDATE only; explicitly keep RLS enabled and exclude service-role writes from the freeze assumption.
-- [x] Specify target-ref verification, dry-run exact-pending-set gate, single migration execution, compatible frontend release, post-release checks, and removal of the temporary policies.
-- [x] Specify roll-forward and separately approved restore-to-new-project / restore-in-place procedures.
-- [x] Label approval and credential boundaries explicitly.
-
-### Task 4: Verification and review
-
-- [x] Run the full Node test suite (`node --test`, 55 passed), migration-recovery integrity check, available local SQL checks, and production Vite build. The direct Vite build passed; `pnpm run build` was blocked during dependency setup because local Node is 24 (project requires 26) and pnpm ignored the esbuild build script.
-- [x] Inspect the full diff and current PR checks; PostgreSQL regression, clean Supabase stack, recovered-chain application, SQL recovery verification, and repository verification passed on the pushed head.
-- [x] Confirm the branch remains clean after commit/push, PR remains Draft, and no hosted migration, settings change, merge, or Production deploy occurred.
+Current release boundaries: Staging only after migration-history reconciliation and verified backup; PR #41 remains Draft/open; no Production schema/data changes, merge, or Production deployment.

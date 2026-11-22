@@ -1,8 +1,8 @@
 # Education Platform — Database Model and API Contract
 
-> **Historical contract for legacy schema consumers.** The active course model is described in [the course-group cutover audit](education-course-classification-cutover.md). Existing `education_nodes` and `subject_id` fields remain only for compatibility while dependent functions and regression fixtures are retired.
+> **Historical contract for legacy schema consumers.** The active course model is described in [the course-category cutover audit](education-course-classification-cutover.md). Existing `education_nodes` and `subject_id` fields remain only for compatibility while dependent functions and regression fixtures are retired.
 
-Status: Implemented additively on Staging; not applied to Production.
+Status: Foundational education hierarchy is on Staging; the new course-category migration is pending PR #41 and is not applied to Staging or Production.
 Staging migrations: 20261113155228, 20261113155356, 20261113155742, 20261113160130, 20261113160231, 20261113161654, 20261114024035.
 
 ## 1. Entity relationship

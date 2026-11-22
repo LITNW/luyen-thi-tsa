@@ -1,28 +1,47 @@
-# Education course classification cutover audit
+# Education course-category cutover audit
 
-Date: 2026-11-19. Repository: PR #41, branch `fix/education-empty-uuid-payload`.
+Updated: 2026-11-22. Repository: PR #41, branch `fix/education-empty-uuid-payload`.
 
-## Active consumers moved to groups
+## Authoritative product decision
 
-- `src/pages/AdminEducationPage.jsx`: direct THPT course management and level → group → course management for University.
-- `src/pages/AdminPages.jsx`: exam assignment selector and placement summary now resolve concrete courses through groups.
-- `public/legacy/index.html`: legacy React-independent exam editor now loads levels, groups and courses; validates level/group/course consistency on save.
-- `src/pages/EducationBrowsePages.jsx` and `src/App.jsx`: student routes show direct THPT courses and University groups/courses. The former `/education/:levelCode/context/:nodeId` route redirects to the level page; existing `/subject/:offeringId` links remain valid.
+The PR owner updated PR #41's description at 2026-11-19 16:43:16Z, after the last implementation commit at that time. That description is the latest confirmed product decision; no newer migration or review has superseded it.
 
-## Legacy schema dependency map
+- THPT: `Education level → Course`; no category.
+- University: `Education level → Course category → Course`.
+- Categories are ordinary, level-scoped records created and managed by Admin. They are not a fixed enum, a major taxonomy, or a shared subject catalogue.
+- Seed only one neutral University category: `Chưa phân loại`. Existing University courses are assigned there without guessing their classification. Admin may later create, edit, reorder, deactivate, and reassign categories.
+- A course is one concrete selectable record. Exams continue to reference it through `exams.education_subject_id`.
 
-`education_nodes`, `education_subjects.education_node_id`, and the old `subjects` relation remain in the database for now. The repository still has education hierarchy triggers and identity guards, education placement and publication guards, the atomic editor RPC, multiple regression SQL fixtures, and taxonomy/stimulus features that depend on these fields or tables. Their historical behavior cannot be removed safely in this cutover migration. `education_subjects.subject_id` is made nullable for newly created direct courses; existing values and global taxonomy data remain intact.
+## Active consumers
 
-The global `subjects` and `taxonomy_nodes` tables remain necessary for the separate M1 taxonomy/stimulus features. They are no longer selected or written by education course administration or exam authoring. Legacy columns and SQL dependencies are deliberately retained as compatibility storage until those individual consumers are replaced and covered by follow-up migrations.
+- `src/pages/AdminEducationPage.jsx`: Admin manages University categories and concrete courses; THPT courses remain direct.
+- `src/pages/AdminPages.jsx`: exam placement uses level → category → course for University and level → course for THPT.
+- `public/legacy/index.html` and `public/legacy/education-classification.js`: legacy exam editor uses the same selector contract.
+- `src/pages/EducationBrowsePages.jsx` and `src/App.jsx`: student browsing uses the same hierarchy and direct course links.
 
-## Migration disposition
+## Schema contract
 
-The branch-only `20261119130000_allow_multiple_offerings_per_catalogue_subject.sql` and `20261119150000_add_education_knowledge_groups.sql` migrations were not applied to either hosted database and have been removed from the active chain. They are recorded as superseded in `supabase/migration-recovery-manifest.json`. The new `20261119160000_education_subject_groups.sql` is an additive, transactional migration and is pending PR #41 only.
+The target migration is `20261119160000_education_course_categories.sql`.
 
-The replacement migration preserves course primary keys and exam foreign keys by adding a nullable `group_id`, backfilling existing University rows to the neutral group, and never deleting/recreating a course or updating `exams.education_subject_id`. The same-level composite foreign key prevents cross-level group assignment; a trigger enforces University group membership and THPT null groups; `ON DELETE RESTRICT` and guards prevent silent group/course loss.
+- Create `education_course_categories` with UUID identity, `education_level_id`, editable text `code`, name, description, display order, active status, and timestamps.
+- Add nullable `education_subjects.category_id` with a composite same-level foreign key.
+- Make legacy `education_subjects.subject_id` nullable for self-contained course records; do not rewrite existing values.
+- Enforce University category membership and THPT `category_id IS NULL` with a trigger.
+- Preserve all `education_subjects.id` values and every `exams.education_subject_id` reference.
+- Use RLS: active profiles can read active levels/categories/courses; Admin retains management access. No temporary write-freeze policy is part of the target design.
 
-## Hosted baseline and limits
+## Compatibility boundary
 
-Read-only Supabase queries on 2026-11-19 confirmed neither superseded nor replacement PR #41 education migration is present in either migration ledger. Before this migration is applied, Staging had 2 courses (1 THPT, 1 University), 3 exams linked to a course, and 0 broken exam-course references. Production had 1 THPT course, 4 exams linked to a course, and 0 broken exam-course references. The pre-migration IDs and row contents are in the live database and were not modified during this task.
+`education_nodes`, `education_subjects.education_node_id`, `subject_id`, and the global `subjects` / `taxonomy_nodes` structures remain for legacy SQL/RPC and the separate M1 taxonomy/stimulus feature until their dependencies are individually retired. The new education workflow must not query or write the shared subject catalogue. Do not drop compatibility fields in this migration.
 
-The post-migration row counts, ID preservation counts, group distribution, and student runtime behavior have not yet been verified because the migration was intentionally not applied to Staging or Production. The local machine had no PostgreSQL client or running Docker daemon, so SQL regression and clean-install execution remain CI checks. The existing Preview is documented in PR #41 as frontend/database schema out of sync, so it is not valid runtime evidence.
+## Hosted environment status
+
+- The old `education_subject_groups` migration was never applied and is superseded. Do not deploy it.
+- The new category migration is pending PR #41; it has not been applied to Staging or Production.
+- The Staging migration ledger has reconstructed and Staging-only versions that do not map one-to-one to local filenames. A normal `db push` dry-run failed on remote-only versions. Reconcile this history with SQL fingerprints and live schema evidence before any Staging migration. Do not use `migration repair`, `--include-all`, or manual ledger edits as a shortcut.
+- Staging's obsolete temporary University write-freeze policies are absent. Do not recreate them.
+- Production is reference-only and remains untouched. PR #41 must remain open and Draft until review and Staging verification are complete.
+
+## Required verification
+
+The disposable SQL regression and clean-install/recovered-chain CI must prove the one-default-category seed, freeform category creation, same-level membership, THPT flat behavior, RLS, and preservation of course/exam identities. After the history blocker is resolved, Staging verification must compare the pre/post course UUID set and exam references, then smoke-test Admin, exam editor, and student browse against the Staging Supabase ref.
