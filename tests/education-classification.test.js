@@ -128,7 +128,8 @@ test('Staging cutover runbook has backup, migration-history reconciliation, depl
   const runbook = read('../docs/education-course-classification-staging-cutover.md');
   assert.match(runbook, /cppalwtdkditlhojpeyc/);
   assert.match(runbook, /restore.*separate disposable Supabase project/i);
-  assert.doesNotMatch(runbook, /staging_pause_university_course_(?:insert|update)/);
+  assert.match(runbook, /Do not recreate the obsolete `staging_pause_university_course_insert`/);
+  assert.match(runbook, /select policyname from pg_policies/);
   
   assert.match(runbook, /Staging migration history does not match the repository migration filenames/i);
   assert.match(runbook, /Do not use `migration repair`/i);
