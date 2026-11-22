@@ -131,8 +131,10 @@ test('Staging cutover runbook has backup, migration-history reconciliation, depl
   assert.match(runbook, /Do not recreate the obsolete `staging_pause_university_course_insert`/);
   assert.match(runbook, /select policyname from pg_policies/);
   
-  assert.match(runbook, /Staging migration history does not match the repository migration filenames/i);
+  assert.match(runbook, /Current blocker is now mapped, not repaired/i);
   assert.match(runbook, /Do not use `migration repair`/i);
+  assert.match(runbook, /ops\/staging-history\/preflight\.sql/);
+  assert.match(runbook, /supabase --workdir ops\/staging-history db push/);
   assert.match(runbook, /pending set must contain exactly/);
   assert.match(runbook, /deploy the approved PR #41 frontend artifact to the Staging frontend/i);
   assert.doesNotMatch(runbook, /keep the University write freeze active/i);
