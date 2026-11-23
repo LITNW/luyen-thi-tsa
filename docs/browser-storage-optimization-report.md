@@ -65,7 +65,8 @@ Supabase advisor findings remain open and were not changed:
 ## Verification and limits
 
 - Added three Node built-in tests for the worker's allowed content types, per-asset size cap, 8 MiB byte-budget eviction, 80-entry eviction, and exclusion of media/private/unknown-size/authenticated/range responses.
-- The new tests pass on Node 24.22.3. The repository declares Node 26.x and this checkout has no npm executable or installed dependencies; the Vite production build cannot be run locally here.
+- Full suite: 54/54 passed on Node 26.13.0. Vite production build passed: 102 modules; emitted app bundles were each below the 512 KiB per-asset cache limit.
+- Cloudflare Pages created a Preview deployment for commit `486aef7d5ea1511d31de0e59e9b44c5a823316a2`, but its status remained `queued` with only “Starting build…” in the deployment log during this run. The Staging Preview was therefore not available for final deployed-browser verification.
 - A prior preview page loaded, but browser-side storage estimates and repeat-load transfer/CPU/RAM timings were not available from the approved browser interface. Its in-app browser profile also was not the user's own browser profile. Collect those values against the same Staging account, route, and browser profile before saying local load decreased.
 - No real learner account, exam submission, or user attempt data was used for browser checks.
 
