@@ -232,7 +232,7 @@ jobs:
       - name: Run education course categories regression
         env:
           PGPASSWORD: postgres
-        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_course_categories_regression.sql
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/education_structure_delete_guards_regression.sql
 
       - name: Run education exam placement regression
         env:

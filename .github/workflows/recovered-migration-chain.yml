@@ -142,8 +142,8 @@ jobs:
       - name: Run education hierarchy foundation regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_hierarchy_foundation_regression.sql
 
-      - name: Run education course categories regression suite
-        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_course_categories_regression.sql
+      - name: Run education structure delete guards SQL regression
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_structure_delete_guards_regression.sql
 
       - name: Run education exam placement regression suite
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/education_exam_placement_regression.sql
