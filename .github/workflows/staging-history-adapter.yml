@@ -1,0 +1,36 @@
+name: Staging migration adapter validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ops/staging-history/**'
+      - 'supabase/migrations/20261119160000_education_course_categories.sql'
+      - 'supabase/migrations/20261124100000_education_structure_delete_guards.sql'
+      - 'supabase/migration-recovery-manifest.json'
+      - 'tests/staging-history-adapter.test.js'
+      - '.github/workflows/staging-history-adapter.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/staging-history/**'
+      - 'supabase/migrations/20261119160000_education_course_categories.sql'
+      - 'supabase/migrations/20261124100000_education_structure_delete_guards.sql'
+      - 'supabase/migration-recovery-manifest.json'
+      - 'tests/staging-history-adapter.test.js'
+      - '.github/workflows/staging-history-adapter.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - name: Test fail-closed Staging history adapter
+        run: node --test tests/staging-history-adapter.test.js
+      - name: Install Supabase CLI 3.2.0
+        run: npm install --global supabase@3.2.0
+      - name: Validate adapter config without contacting Supabase
+        run: supabase config validate --workdir ops/staging-history

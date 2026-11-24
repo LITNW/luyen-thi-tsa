@@ -1,287 +1,172 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
+import { buildEducationCoursePayload, splitRecordIdentity } from '../lib/educationPayload.js';
+import { EDUCATION_CATEGORY_CODE_HELP, EDUCATION_CATEGORY_CODE_PATTERN, isValidEducationCategoryCode } from '../lib/educationCategoryCode.js';
 
-const emptyLevel = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
-const emptyNode = { id: '', education_level_id: '', parent_id: '', node_type: 'custom', code: '', name: '', description: '', display_order: 0, is_active: true };
-const emptySubject = { code: '', name: '', description: '', display_order: 0 };
-const emptyOffering = { id: '', education_level_id: '', education_node_id: '', subject_id: '', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
+const emptyCategory = { id: '', code: '', name: '', description: '', display_order: 0, is_active: true };
+const emptyCourse = { id: '', category_id: '', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
 
 function AdminEducationFrame({ children }) {
   return <div className="app-shell">
     <header className="topbar">
       <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Khu vực quản trị" /></Link>
-      <nav className="top-links">
-        <Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link>
-        <Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link>
-        <Link to="/admin/users">Tài khoản</Link><Link to="/">Trang chủ</Link>
-      </nav>
+      <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link><Link to="/admin/users">Tài khoản</Link><Link to="/">Trang chủ</Link></nav>
     </header>
-    <main className="narrow-page admin-education-page">
-      <p className="eyebrow">EDUCATION STRUCTURE</p><h1>Quản lý cấu trúc học tập</h1>
-      <p className="muted">Tạo cấp học, các tầng ngữ cảnh tùy chọn và môn học được mở tại từng ngữ cảnh. Không cần tạo lớp/trường/ngành nếu mô hình hiện tại không sử dụng chúng.</p>
-      {children}
-    </main>
+    <main className="narrow-page admin-education-page"><p className="eyebrow">EDUCATION STRUCTURE</p><h1>Quản lý môn học</h1><p className="muted">THPT quản lý môn học trực tiếp. Đại học quản lý danh mục môn học và các học phần trong từng danh mục.</p>{children}</main>
     <footer className="footer">LIT · EDUCATION ADMIN</footer>
   </div>;
 }
 
 export default function AdminEducationPage() {
   const [levels, setLevels] = useState([]);
-  const [nodes, setNodes] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [offerings, setOfferings] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState('');
-  const [levelForm, setLevelForm] = useState(emptyLevel);
-  const [nodeForm, setNodeForm] = useState(emptyNode);
-  const [subjectForm, setSubjectForm] = useState(emptySubject);
-  const [offeringForm, setOfferingForm] = useState(emptyOffering);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [categoryForm, setCategoryForm] = useState(emptyCategory);
+  const [courseForm, setCourseForm] = useState(emptyCourse);
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
   const load = async () => {
-    setLoading(true);
-    setError('');
-    const [levelResult, nodeResult, subjectResult, offeringResult] = await Promise.all([
-      supabase.from('education_levels').select('*').order('display_order').order('name'),
-      supabase.from('education_nodes').select('*').order('display_order').order('name'),
-      supabase.from('subjects').select('*').order('display_order').order('name'),
-      supabase.from('education_subjects').select('*').order('display_order').order('display_name'),
+    setLoading(true); setError('');
+    const [levelsResult, categoriesResult, coursesResult] = await Promise.all([
+      supabase.from('education_levels').select('id,code,name,is_active,display_order').order('display_order').order('name'),
+      supabase.from('education_course_categories').select('*').order('display_order').order('name'),
+      supabase.from('education_subjects').select('id,education_level_id,category_id,local_code,display_name,description,display_order,is_active').order('display_order').order('display_name'),
     ]);
-    const failed = [levelResult, nodeResult, subjectResult, offeringResult].find((result) => result.error);
+    const failed = [levelsResult, categoriesResult, coursesResult].find((result) => result.error);
     if (failed) setError(failed.error.message);
     else {
-      setLevels(levelResult.data || []);
-      setNodes(nodeResult.data || []);
-      setSubjects(subjectResult.data || []);
-      setOfferings(offeringResult.data || []);
-      if (!selectedLevel && levelResult.data?.length) setSelectedLevel(levelResult.data[0].id);
+      setLevels(levelsResult.data || []); setCategories(categoriesResult.data || []); setCourses(coursesResult.data || []);
+      if (!selectedLevel && levelsResult.data?.length) setSelectedLevel(levelsResult.data[0].id);
     }
     setLoading(false);
   };
-
   useEffect(() => { void load(); }, []);
 
-  const levelNodes = useMemo(() => nodes.filter((node) => node.education_level_id === selectedLevel), [nodes, selectedLevel]);
-  const levelOfferings = useMemo(() => offerings.filter((item) => item.education_level_id === selectedLevel), [offerings, selectedLevel]);
-  const nodeMap = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes]);
-  const subjectMap = useMemo(() => new Map(subjects.map((subject) => [subject.id, subject])), [subjects]);
+  const level = levels.find((item) => item.id === selectedLevel);
+  const university = level?.code === 'university';
+  const levelCategories = useMemo(() => categories.filter((item) => item.education_level_id === selectedLevel), [categories, selectedLevel]);
+  const levelCourses = useMemo(() => courses.filter((item) => item.education_level_id === selectedLevel && (!university || item.category_id === selectedCategory)), [courses, selectedLevel, selectedCategory, university]);
+  const visibleCourses = levelCourses.filter((item) => !query.trim() || `${item.display_name} ${item.local_code || ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
 
-  const nodePath = (node) => {
-    const names = [];
-    let current = node;
-    let guard = 0;
-    while (current && guard < 12) {
-      names.unshift(current.name);
-      current = current.parent_id ? nodeMap.get(current.parent_id) : null;
-      guard += 1;
+  const saveCategory = async (event) => {
+    event.preventDefault(); setError(''); setNotice('');
+    if (!isValidEducationCategoryCode(categoryForm.code)) {
+      setError(`Mã danh mục không hợp lệ. ${EDUCATION_CATEGORY_CODE_HELP}`);
+      return;
     }
-    return names.join(' / ');
+    setSaving(true);
+    const { id, values } = splitRecordIdentity(categoryForm);
+    const payload = { ...values, education_level_id: selectedLevel, display_order: Number(categoryForm.display_order) || 0 };
+    const result = id ? await supabase.from('education_course_categories').update(payload).eq('id', id) : await supabase.from('education_course_categories').insert(payload);
+    if (result.error) {
+      setError(result.error.code === '23514' && result.error.message.includes('education_course_categories_code_check')
+        ? `Mã danh mục không hợp lệ. ${EDUCATION_CATEGORY_CODE_HELP}`
+        : result.error.message);
+    }
+    else { setNotice(id ? 'Đã cập nhật danh mục môn học.' : 'Đã tạo danh mục môn học.'); setCategoryForm(emptyCategory); await load(); }
+    setSaving(false);
   };
 
-  const resetForms = () => {
-    setLevelForm(emptyLevel);
-    setNodeForm({ ...emptyNode, education_level_id: selectedLevel });
-    setSubjectForm(emptySubject);
-    setOfferingForm({ ...emptyOffering, education_level_id: selectedLevel });
-  };
-
-  const saveLevel = async (event) => {
+  const saveCourse = async (event) => {
     event.preventDefault();
+    if (university && !courseForm.category_id) return setError('Hãy chọn danh mục môn học cho học phần đại học.');
     setSaving(true); setError(''); setNotice('');
-    const payload = { ...levelForm, display_order: Number(levelForm.display_order) || 0 };
-    const result = levelForm.id
-      ? await supabase.from('education_levels').update(payload).eq('id', levelForm.id)
-      : await supabase.from('education_levels').insert(payload);
-    if (result.error) setError(result.error.message);
-    else { setNotice(levelForm.id ? 'Đã cập nhật cấp học.' : 'Đã tạo cấp học.'); setLevelForm(emptyLevel); await load(); }
+    try {
+      const { id, values } = splitRecordIdentity(courseForm);
+      const payload = buildEducationCoursePayload(values, selectedLevel, university);
+      const result = id ? await supabase.from('education_subjects').update(payload).eq('id', id) : await supabase.from('education_subjects').insert(payload);
+      if (result.error) throw result.error;
+      setNotice(id ? 'Đã cập nhật môn học.' : 'Đã tạo môn học.'); setCourseForm({ ...emptyCourse, category_id: selectedCategory }); await load();
+    } catch (saveError) { setError(saveError.message); }
     setSaving(false);
   };
 
-  const saveNode = async (event) => {
-    event.preventDefault();
-    if (!selectedLevel) return setError('Hãy chọn cấp học trước khi tạo ngữ cảnh.');
+  const toggle = async (table, item, active, label) => {
+    if (!active && table === 'education_course_categories' && courses.some((course) => course.category_id === item.id && course.is_active)) {
+      setError('Danh mục còn môn học đang hoạt động. Hãy chuyển hoặc ẩn các môn học trước khi ẩn danh mục.'); return;
+    }
+    if (!window.confirm(`Xác nhận ${active ? 'kích hoạt' : 'ẩn'} ${label} “${item.name || item.display_name}”?`)) return;
     setSaving(true); setError(''); setNotice('');
-    const payload = {
-      ...nodeForm,
-      education_level_id: selectedLevel,
-      parent_id: nodeForm.parent_id || null,
-      display_order: Number(nodeForm.display_order) || 0,
-    };
-    const result = nodeForm.id
-      ? await supabase.from('education_nodes').update(payload).eq('id', nodeForm.id)
-      : await supabase.from('education_nodes').insert(payload);
-    if (result.error) setError(result.error.message);
-    else { setNotice(nodeForm.id ? 'Đã cập nhật ngữ cảnh.' : 'Đã tạo ngữ cảnh.'); setNodeForm({ ...emptyNode, education_level_id: selectedLevel }); await load(); }
+    const { error: updateError } = await supabase.from(table).update({ is_active: active }).eq('id', item.id);
+    if (updateError) setError(updateError.message); else { setNotice(active ? 'Đã kích hoạt.' : 'Đã ẩn.'); await load(); }
     setSaving(false);
   };
 
-  const saveSubject = async (event) => {
-    event.preventDefault();
-    setSaving(true); setError(''); setNotice('');
-    const payload = { ...subjectForm, display_order: Number(subjectForm.display_order) || 0 };
-    const result = await supabase.from('subjects').insert(payload);
-    if (result.error) setError(result.error.message);
-    else { setNotice('Đã thêm môn học vào danh mục dùng chung.'); setSubjectForm(emptySubject); await load(); }
+  const deleteCategory = async (category) => {
+    setError(''); setNotice('');
+    if (category.code === 'unclassified') {
+      setError('Không thể xóa danh mục mặc định “Chưa phân loại” để bảo đảm mọi môn học Đại học luôn có danh mục hợp lệ.'); return;
+    }
+    if (courses.some((course) => course.category_id === category.id)) {
+      setError('Không thể xóa danh mục vì vẫn còn môn học thuộc danh mục này, kể cả môn học đang ẩn. Hãy chuyển môn học sang danh mục khác trước.'); return;
+    }
+    if (!window.confirm(`Xóa danh mục “${category.name}”? Thao tác này không thể hoàn tác.`)) return;
+    setSaving(true);
+    const { data: deletedCategory, error: deleteError } = await supabase.from('education_course_categories').delete().eq('id', category.id).select('id').maybeSingle();
+    if (deleteError) {
+      setError(deleteError.code === '23503'
+        ? 'Không thể xóa danh mục vì vẫn còn môn học tham chiếu. Hãy chuyển các môn học sang danh mục khác trước.'
+        : deleteError.message);
+    } else if (!deletedCategory) {
+      setError('Không xóa được danh mục. Hãy kiểm tra quyền Admin hoặc tải lại danh sách.');
+    } else {
+      setNotice('Đã xóa danh mục môn học.');
+      if (selectedCategory === category.id) { setSelectedCategory(''); setCourseForm(emptyCourse); }
+      await load();
+    }
     setSaving(false);
   };
 
-  const saveOffering = async (event) => {
-    event.preventDefault();
-    if (!selectedLevel || !offeringForm.subject_id) return setError('Hãy chọn cấp học và môn học.');
-    setSaving(true); setError(''); setNotice('');
-    const payload = {
-      ...offeringForm,
-      education_level_id: selectedLevel,
-      education_node_id: offeringForm.education_node_id || null,
-      local_code: offeringForm.local_code || null,
-      display_order: Number(offeringForm.display_order) || 0,
-    };
-    const result = offeringForm.id
-      ? await supabase.from('education_subjects').update(payload).eq('id', offeringForm.id)
-      : await supabase.from('education_subjects').insert(payload);
-    if (result.error) setError(result.error.message);
-    else { setNotice(offeringForm.id ? 'Đã cập nhật môn học trong ngữ cảnh.' : 'Đã thêm môn học vào cấp học/ngữ cảnh.'); setOfferingForm({ ...emptyOffering, education_level_id: selectedLevel }); await load(); }
+  const deleteCourse = async (course) => {
+    setError(''); setNotice(''); setSaving(true);
+    const dependencyCheck = await supabase.from('exams').select('id', { count: 'exact', head: true }).eq('education_subject_id', course.id);
+    if (dependencyCheck.error) {
+      setError('Không thể xác minh đề thi đang tham chiếu môn học này. Không xóa để bảo toàn dữ liệu.');
+      setSaving(false); return;
+    }
+    if (dependencyCheck.count > 0) {
+      setError(`Không thể xóa môn học vì có ${dependencyCheck.count} đề thi đang tham chiếu. Hãy giữ môn học và dùng chức năng Ẩn nếu không muốn tiếp tục hiển thị.`);
+      setSaving(false); return;
+    }
+    if (!window.confirm(`Xóa môn học “${course.display_name}”? Chỉ xóa được khi không còn đề thi tham chiếu.`)) {
+      setSaving(false); return;
+    }
+    const { data: deletedCourse, error: deleteError } = await supabase.from('education_subjects').delete().eq('id', course.id).select('id').maybeSingle();
+    if (deleteError) {
+      setError(deleteError.code === '23503'
+        ? 'Không thể xóa môn học vì có đề thi hoặc dữ liệu liên quan đang tham chiếu. Hãy giữ môn học và dùng chức năng Ẩn.'
+        : deleteError.message);
+    } else if (!deletedCourse) {
+      setError('Không xóa được môn học. Hãy kiểm tra quyền Admin hoặc tải lại danh sách.');
+    } else {
+      setNotice('Đã xóa môn học.');
+      if (courseForm.id === course.id) setCourseForm({ ...emptyCourse, category_id: selectedCategory });
+      await load();
+    }
     setSaving(false);
   };
 
-  const toggleActive = async (table, item, nextActive) => {
-    const label = table === 'education_levels' ? 'cấp học' : table === 'education_nodes' ? 'ngữ cảnh' : 'môn học';
-    if (!window.confirm(`Xác nhận ${nextActive ? 'kích hoạt' : 'ẩn'} ${label} "${item.name || item.display_name}"?`)) return;
-    setSaving(true); setError(''); setNotice('');
-    const result = await supabase.from(table).update({ is_active: nextActive }).eq('id', item.id);
-    if (result.error) setError(result.error.message);
-    else { setNotice(nextActive ? 'Đã kích hoạt.' : 'Đã ẩn.'); await load(); }
-    setSaving(false);
-  };
-
-  const editNode = (node) => setNodeForm({
-    id: node.id, education_level_id: node.education_level_id, parent_id: node.parent_id || '',
-    node_type: node.node_type, code: node.code, name: node.name, description: node.description || '',
-    display_order: node.display_order, is_active: node.is_active,
-  });
-
-  const editLevel = (level) => setLevelForm({
-    id: level.id, code: level.code, name: level.name, description: level.description || '',
-    display_order: level.display_order, is_active: level.is_active,
-  });
-
-  const editOffering = (item) => setOfferingForm({
-    id: item.id, education_level_id: item.education_level_id, education_node_id: item.education_node_id || '',
-    subject_id: item.subject_id, local_code: item.local_code || '', display_name: item.display_name,
-    description: item.description || '', display_order: item.display_order, is_active: item.is_active,
-  });
-
-  const levelName = levels.find((level) => level.id === selectedLevel)?.name || '';
+  const editCourse = (course) => { setCourseForm({ id: course.id, category_id: course.category_id || '', local_code: course.local_code || '', display_name: course.display_name, description: course.description || '', display_order: course.display_order, is_active: course.is_active }); setNotice(''); setError(''); };
+  const editCategory = (category) => { setCategoryForm({ id: category.id, code: category.code, name: category.name, description: category.description || '', display_order: category.display_order, is_active: category.is_active }); setNotice(''); setError(''); };
 
   return <AdminEducationFrame>
-    {error && <div className="alert" role="alert">{error}</div>}
-    {notice && <div className="form-message" role="status">{notice}</div>}
-    {loading ? <div className="loading-line"><span className="spinner" /> Đang tải cấu trúc học tập…</div> : <>
-      <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">LEVELS</p><h2>Cấp học</h2></div></div>
-        <div className="education-admin-levels">
-          {levels.map((level) => <article key={level.id} className={selectedLevel === level.id ? 'education-admin-level selected' : 'education-admin-level'}>
-            <button type="button" className="education-admin-level-select" onClick={() => { setSelectedLevel(level.id); setNodeForm({ ...emptyNode, education_level_id: level.id }); setOfferingForm({ ...emptyOffering, education_level_id: level.id }); }}>
-              <b>{level.name}</b><small>{level.code} · {level.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small>
-            </button>
-            <div className="user-actions">
-              <button type="button" className="button secondary" onClick={() => editLevel(level)}>Sửa</button>
-              <button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_levels', level, !level.is_active)}>{level.is_active ? 'Ẩn' : 'Kích hoạt'}</button>
-            </div>
-          </article>)}
-        </div>
-        <form className="category-form form-stack" onSubmit={saveLevel}>
-          <h3>{levelForm.id ? 'Chỉnh sửa cấp học' : 'Thêm cấp học'}</h3>
-          <div className="admin-form-grid">
-            <label>Mã cấp học<input required pattern="[a-z][a-z0-9_]{1,63}" value={levelForm.code} disabled={!!levelForm.id} onChange={(e) => setLevelForm({ ...levelForm, code: e.target.value })} placeholder="postgraduate" /></label>
-            <label>Tên hiển thị<input required maxLength={120} value={levelForm.name} onChange={(e) => setLevelForm({ ...levelForm, name: e.target.value })} placeholder="Sau đại học" /></label>
-          </div>
-          <label>Mô tả<textarea rows={2} value={levelForm.description} onChange={(e) => setLevelForm({ ...levelForm, description: e.target.value })} /></label>
-          <label>Thứ tự hiển thị<input type="number" min="0" value={levelForm.display_order} onChange={(e) => setLevelForm({ ...levelForm, display_order: e.target.value })} /></label>
-          <div className="user-actions"><button className="button primary" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu cấp học'}</button><button type="button" className="button secondary" onClick={() => setLevelForm(emptyLevel)}>Làm mới</button></div>
-        </form>
-      </section>
-
-      {selectedLevel && <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">OPTIONAL CONTEXT</p><h2>Ngữ cảnh · {levelName}</h2><p className="muted">Không bắt buộc. Có thể để trống để đi thẳng từ cấp học đến môn học.</p></div></div>
-        <form className="category-form form-stack" onSubmit={saveNode}>
-          <h3>{nodeForm.id ? 'Chỉnh sửa ngữ cảnh' : 'Thêm ngữ cảnh'}</h3>
-          <div className="admin-form-grid">
-            <label>Loại ngữ cảnh<select value={nodeForm.node_type} onChange={(e) => setNodeForm({ ...nodeForm, node_type: e.target.value })}>
-              <option value="grade">Lớp học</option><option value="institution">Trường / cơ sở</option><option value="program">Chương trình đào tạo</option><option value="major">Ngành học</option><option value="custom">Nhóm tùy chỉnh</option>
-            </select></label>
-            <label>Ngữ cảnh cha<select value={nodeForm.parent_id} onChange={(e) => setNodeForm({ ...nodeForm, parent_id: e.target.value })}>
-              <option value="">Không có · nằm trực tiếp dưới cấp học</option>
-              {levelNodes.filter((node) => node.id !== nodeForm.id).map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
-            </select></label>
-          </div>
-          <div className="admin-form-grid">
-            <label>Mã ngữ cảnh<input required maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}" value={nodeForm.code} onChange={(e) => setNodeForm({ ...nodeForm, code: e.target.value })} placeholder="grade-12" /></label>
-            <label>Tên hiển thị<input required maxLength={160} value={nodeForm.name} onChange={(e) => setNodeForm({ ...nodeForm, name: e.target.value })} placeholder="Lớp 12" /></label>
-          </div>
-          <label>Mô tả<textarea rows={2} value={nodeForm.description} onChange={(e) => setNodeForm({ ...nodeForm, description: e.target.value })} /></label>
-          <label>Thứ tự hiển thị<input type="number" min="0" value={nodeForm.display_order} onChange={(e) => setNodeForm({ ...nodeForm, display_order: e.target.value })} /></label>
-          <div className="user-actions"><button className="button primary" disabled={saving}>{saving ? 'Đang lưu…' : nodeForm.id ? 'Lưu ngữ cảnh' : 'Thêm ngữ cảnh'}</button><button type="button" className="button secondary" onClick={() => setNodeForm({ ...emptyNode, education_level_id: selectedLevel })}>Làm mới</button></div>
-        </form>
-        <div className="version-list">
-          {levelNodes.length ? levelNodes.map((node) => <article className="version-row" key={node.id}>
-            <div><b>{nodePath(node)}</b><small>{node.node_type} · {node.code} · {node.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
-            <div className="user-actions"><button type="button" className="button secondary" onClick={() => editNode(node)}>Sửa</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_nodes', node, !node.is_active)}>{node.is_active ? 'Ẩn' : 'Kích hoạt'}</button></div>
-          </article>) : <div className="empty-state">Chưa có ngữ cảnh. Có thể bỏ qua tầng này.</div>}
-        </div>
+    {error && <div className="alert" role="alert">{error}</div>}{notice && <div className="form-message" role="status">{notice}</div>}
+    {loading ? <div className="loading-line"><span className="spinner" /> Đang tải môn học…</div> : <>
+      <section className="section-block admin-education-section"><h2>Cấp học</h2><div className="education-admin-levels">{levels.map((item) => <button key={item.id} type="button" aria-pressed={selectedLevel === item.id} disabled={saving} className={`education-admin-level-select ${selectedLevel === item.id ? 'selected' : ''}`} onClick={() => { setSelectedLevel(item.id); setSelectedCategory(''); setCategoryForm(emptyCategory); setCourseForm(emptyCourse); setQuery(''); }}>{item.name}<small>{item.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></button>)}</div></section>
+      {university && <section className="section-block admin-education-section"><h2>Danh mục môn học · {level.name}</h2>
+        <form className="category-form form-stack" onSubmit={saveCategory}><h3>{categoryForm.id ? 'Chỉnh sửa danh mục' : 'Thêm danh mục'}</h3><div className="admin-form-grid"><label>Mã danh mục<input required disabled={saving || categoryForm.code === 'unclassified'} pattern={EDUCATION_CATEGORY_CODE_PATTERN} title={categoryForm.code === 'unclassified' ? 'Mã của danh mục mặc định không thể thay đổi.' : EDUCATION_CATEGORY_CODE_HELP} aria-describedby="education-category-code-help" value={categoryForm.code} onInvalid={(event) => { event.preventDefault(); setError(`Mã danh mục không hợp lệ. ${EDUCATION_CATEGORY_CODE_HELP}`); }} onChange={(e) => { setCategoryForm({ ...categoryForm, code: e.target.value }); setError(''); }} /><small id="education-category-code-help" className="education-category-code-help">{categoryForm.code === 'unclassified' ? 'Mã danh mục mặc định không thể thay đổi.' : EDUCATION_CATEGORY_CODE_HELP}</small></label><label>Tên danh mục<input required maxLength={160} value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} /></label></div><label>Mô tả<textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} /></label><label>Thứ tự hiển thị<input type="number" value={categoryForm.display_order} onChange={(e) => setCategoryForm({ ...categoryForm, display_order: e.target.value })} /></label><div className="user-actions"><button className="button primary" disabled={saving}>{categoryForm.id ? 'Lưu danh mục' : 'Tạo danh mục'}</button><button type="button" className="button secondary" disabled={saving} onClick={() => setCategoryForm(emptyCategory)}>Làm mới</button></div></form>
+        <div className="version-list">{levelCategories.map((category) => <article className="version-row" key={category.id}><button type="button" aria-pressed={selectedCategory === category.id} disabled={saving} className={`education-admin-level-select ${selectedCategory === category.id ? 'selected' : ''}`} onClick={() => { setSelectedCategory(category.id); setCourseForm({ ...emptyCourse, category_id: category.id }); }}>{category.name}<small>{category.code} · {courses.filter((item) => item.category_id === category.id).length} môn · {category.is_active ? 'Đang hoạt động' : 'Đã ẩn'}{category.code === 'unclassified' ? ' · Danh mục mặc định, không thể xóa' : ''}</small></button><div className="user-actions"><button type="button" className="button secondary" disabled={saving} onClick={() => editCategory(category)}>Sửa</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggle('education_course_categories', category, !category.is_active, 'danh mục')}>{category.is_active ? 'Ẩn' : 'Kích hoạt'}</button><button type="button" className="button danger" disabled={saving || category.code === 'unclassified'} title={category.code === 'unclassified' ? 'Danh mục mặc định không thể xóa' : 'Xóa danh mục'} onClick={() => deleteCategory(category)}>Xóa</button></div></article>)}</div>
       </section>}
-
-      <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">SUBJECT CATALOGUE</p><h2>Danh mục môn học dùng chung</h2></div></div>
-        <form className="category-form form-stack" onSubmit={saveSubject}>
-          <h3>Thêm môn học / học phần</h3>
-          <div className="admin-form-grid">
-            <label>Mã môn<input required pattern="[a-z][a-z0-9_]{1,63}" value={subjectForm.code} onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value })} placeholder="physics" /></label>
-            <label>Tên môn<input required maxLength={120} value={subjectForm.name} onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })} placeholder="Vật lý" /></label>
-          </div>
-          <label>Mô tả<textarea rows={2} value={subjectForm.description} onChange={(e) => setSubjectForm({ ...subjectForm, description: e.target.value })} /></label>
-          <label>Thứ tự hiển thị<input type="number" min="0" value={subjectForm.display_order} onChange={(e) => setSubjectForm({ ...subjectForm, display_order: e.target.value })} /></label>
-          <button className="button primary" disabled={saving}>Thêm vào danh mục</button>
-        </form>
-        <div className="education-admin-subjects">
-          {subjects.map((subject) => <article className="education-admin-subject" key={subject.id}>
-            <div><b>{subject.name}</b><small>{subject.code} · {subject.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
-            <button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('subjects', subject, !subject.is_active)}>{subject.is_active ? 'Ẩn' : 'Kích hoạt'}</button>
-          </article>)}
-        </div>
-      </section>
-
-      {selectedLevel && <section className="section-block admin-education-section">
-        <div className="section-heading"><div><p className="eyebrow">SUBJECT OFFERINGS</p><h2>Môn học thuộc {levelName}</h2><p className="muted">Mỗi dòng là một môn học được mở tại cấp học hoặc ngữ cảnh cụ thể.</p></div></div>
-        <form className="category-form form-stack" onSubmit={saveOffering}>
-          <h3>{offeringForm.id ? 'Chỉnh sửa môn học trong ngữ cảnh' : 'Gán môn học vào cấp học/ngữ cảnh'}</h3>
-          <div className="admin-form-grid">
-            <label>Môn học<select required value={offeringForm.subject_id} onChange={(e) => setOfferingForm({ ...offeringForm, subject_id: e.target.value })}>
-              <option value="">Chọn môn học trong danh mục</option>
-              {subjects.filter((subject) => subject.is_active).map((subject) => <option key={subject.id} value={subject.id}>{subject.name} · {subject.code}</option>)}
-            </select></label>
-            <label>Ngữ cảnh<select value={offeringForm.education_node_id} onChange={(e) => setOfferingForm({ ...offeringForm, education_node_id: e.target.value })}>
-              <option value="">Trực tiếp dưới cấp học</option>
-              {levelNodes.filter((node) => node.is_active).map((node) => <option key={node.id} value={node.id}>{nodePath(node)}</option>)}
-            </select></label>
-          </div>
-          <div className="admin-form-grid">
-            <label>Tên hiển thị<input required maxLength={160} value={offeringForm.display_name} onChange={(e) => setOfferingForm({ ...offeringForm, display_name: e.target.value })} placeholder="Toán / Giải tích 1" /></label>
-            <label>Mã học phần (nếu có)<input maxLength={64} value={offeringForm.local_code} onChange={(e) => setOfferingForm({ ...offeringForm, local_code: e.target.value })} placeholder="MATH-101" /></label>
-          </div>
-          <label>Mô tả<textarea rows={2} value={offeringForm.description} onChange={(e) => setOfferingForm({ ...offeringForm, description: e.target.value })} /></label>
-          <label>Thứ tự hiển thị<input type="number" min="0" value={offeringForm.display_order} onChange={(e) => setOfferingForm({ ...offeringForm, display_order: e.target.value })} /></label>
-          <div className="user-actions"><button className="button primary" disabled={saving || !offeringForm.subject_id}>{saving ? 'Đang lưu…' : offeringForm.id ? 'Lưu môn học' : 'Gán môn học'}</button><button type="button" className="button secondary" onClick={() => setOfferingForm({ ...emptyOffering, education_level_id: selectedLevel })}>Làm mới</button></div>
-        </form>
-        <div className="version-list">
-          {levelOfferings.length ? levelOfferings.map((item) => <article className="version-row" key={item.id}>
-            <div><b>{item.display_name}</b><small>{nodeMap.get(item.education_node_id)?.name ? nodePath(nodeMap.get(item.education_node_id)) + ' / ' : ''}{subjectMap.get(item.subject_id)?.code || '—'} · {item.local_code || 'Không có mã'} · {item.is_active ? 'Đang hoạt động' : 'Đã ẩn'}</small></div>
-            <div className="user-actions"><button type="button" className="button secondary" onClick={() => editOffering(item)}>Sửa</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggleActive('education_subjects', item, !item.is_active)}>{item.is_active ? 'Ẩn' : 'Kích hoạt'}</button></div>
-          </article>) : <div className="empty-state">Chưa có môn học được gán cho cấp học này.</div>}
-        </div>
+      {level && (!university || selectedCategory) && <section className="section-block admin-education-section"><h2>{university ? `Môn học trong ${levelCategories.find((item) => item.id === selectedCategory)?.name || ''}` : `Môn học · ${level.name}`}</h2>
+        <form className="category-form form-stack" onSubmit={saveCourse}><h3>{courseForm.id ? 'Chỉnh sửa môn học' : 'Thêm môn học'}</h3><div className="admin-form-grid">{university && <label>Danh mục môn học<select required value={courseForm.category_id} onChange={(e) => setCourseForm({ ...courseForm, category_id: e.target.value })}><option value="">Chọn danh mục</option>{levelCategories.filter((item) => item.is_active).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}<label>Mã môn học<input maxLength={64} value={courseForm.local_code} onChange={(e) => setCourseForm({ ...courseForm, local_code: e.target.value })} /></label><label>Tên môn học<input required maxLength={160} value={courseForm.display_name} onChange={(e) => setCourseForm({ ...courseForm, display_name: e.target.value })} /></label></div><label>Mô tả<textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} /></label><label>Thứ tự hiển thị<input type="number" value={courseForm.display_order} onChange={(e) => setCourseForm({ ...courseForm, display_order: e.target.value })} /></label><div className="user-actions"><button className="button primary" disabled={saving}>{courseForm.id ? 'Lưu môn học' : 'Tạo môn học'}</button><button type="button" className="button secondary" onClick={() => setCourseForm({ ...emptyCourse, category_id: selectedCategory })}>Làm mới</button></div></form>
+        <label>Tìm theo tên hoặc mã<input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tên môn hoặc mã môn" /></label><div className="version-list">{visibleCourses.map((course) => <article className="version-row" key={course.id}><div><b>{course.display_name}</b><small>{course.local_code || 'Không có mã'} · {course.is_active ? 'Đang hoạt động' : 'Đã ẩn'} · ID {course.id}</small></div><div className="user-actions"><button type="button" className="button secondary" disabled={saving} onClick={() => editCourse(course)}>Sửa / chuyển danh mục</button><button type="button" className="button secondary" disabled={saving} onClick={() => toggle('education_subjects', course, !course.is_active, 'môn học')}>{course.is_active ? 'Ẩn' : 'Kích hoạt'}</button><button type="button" className="button danger" disabled={saving} onClick={() => deleteCourse(course)}>Xóa</button></div></article>)}</div>{!visibleCourses.length && <div className="empty-state">Chưa có môn học trong mục này.</div>}
       </section>}
     </>}
   </AdminEducationFrame>;

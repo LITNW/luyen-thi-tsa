@@ -382,9 +382,9 @@ input::placeholder, textarea::placeholder {
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('/legacy/sw.js',{scope:'/legacy/'}).catch(()=>{}));
 }
-</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script id="app-js">
+</script><div id="app"></div><script type="application/json" id="data">{"exams":[]}</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script><script src="/legacy/supabase-config.js"></script><script src="/legacy/education-classification.js"></script><script id="app-js">
     const D={exams:[]},A=document.getElementById('app'),L='ABCDEF';
-    let editorCategories=[],editorEducationSubjects=[],editorEducationLevels=[],editorEducationNodes=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
+    let editorCategories=[],editorEducationSubjects=[],editorEducationLevels=[],editorEducationCategories=[],me=false,profile=null,view={n:'auth'},T=null,armed=null,sel=null,adminVersions=[],adminProfiles=[],adminAttempts=[],myHistory=[];
     const SB_CONFIG=window.__SUPABASE_CONFIG__||{};
     const SB_URL=SB_CONFIG.url||'';
     const SB_KEY=SB_CONFIG.publishableKey||'';
@@ -497,22 +497,21 @@ if('serviceWorker' in navigator){
       editorCategories=Array.isArray(data)?data:[];
     }
     async function loadEditorEducationSubjects(){
-      const [offerings,levels,nodes]=await Promise.all([
-        sb.from('education_subjects').select('id,education_level_id,education_node_id,subject_id,local_code,display_name,is_active'),
+      const [offerings,levels,categories]=await Promise.all([
+        sb.from('education_subjects').select('id,education_level_id,category_id,local_code,display_name,is_active'),
         sb.from('education_levels').select('id,name,code,is_active'),
-        sb.from('education_nodes').select('id,name,parent_id,education_level_id,is_active')
+        sb.from('education_course_categories').select('id,name,education_level_id,is_active,display_order')
       ]);
-      const failed=[offerings,levels,nodes].find(x=>x.error);if(failed)throw failed.error;
+      const failed=[offerings,levels,categories].find(x=>x.error);if(failed)throw failed.error;
       editorEducationSubjects=offerings.data||[];
       editorEducationLevels=levels.data||[];
-      editorEducationNodes=nodes.data||[];
+      editorEducationCategories=categories.data||[];
     }
     function editorEducationLabel(offering){
       if(!offering)return '';
       const level=editorEducationLevels.find(x=>x.id===offering.education_level_id);
-      const path=[];let node=offering.education_node_id?editorEducationNodes.find(x=>x.id===offering.education_node_id):null,guard=0;
-      while(node&&guard<12){path.unshift(node.name);node=node.parent_id?editorEducationNodes.find(x=>x.id===node.parent_id):null;guard++}
-      return [level?.name,...path,offering.display_name].filter(Boolean).join(' / ');
+      const category=editorEducationCategories.find(x=>x.id===offering.category_id);
+      return [level?.name,category?.name,offering.display_name].filter(Boolean).join(' / ');
     }
     async function openNewEditor(){
       try{
@@ -695,11 +694,17 @@ if('serviceWorker' in navigator){
       const categoryOptions=editorCategories.map(category=>'<option value="'+esc(category.id)+'"'+(category.id===view.category_id?' selected':'')+'>'+esc(category.name)+'</option>').join('');
       const archivedCategory=view.category_id&&!editorCategories.some(category=>category.id===view.category_id)?'<option value="'+esc(view.category_id)+'" selected disabled>'+esc(view.category_name||'Danh mục đã ẩn')+' (đã ẩn — giữ nguyên)</option>':'';
       const categoryField='<label for="f-category">Loại đề (tùy chọn)</label><select id="f-category"><option value="">Không phân loại</option>'+archivedCategory+categoryOptions+'</select><p class="m">Chỉ là metadata phụ, không quyết định cấp học hoặc môn học.</p>';
-      const activeEducationSubjects=editorEducationSubjects.filter(item=>item.is_active);
-      const educationOptions=activeEducationSubjects.map(item=>'<option value="'+esc(item.id)+'"'+(item.id===view.education_subject_id?' selected':'')+'>'+esc(editorEducationLabel(item))+'</option>').join('');
       const currentEducation=editorEducationSubjects.find(item=>item.id===view.education_subject_id);
-      const archivedEducation=view.education_subject_id&&!currentEducation?.is_active?'<option value="'+esc(view.education_subject_id)+'" selected disabled>'+esc(currentEducation?editorEducationLabel(currentEducation):'Vị trí học tập đã ẩn')+' (đã ẩn)</option>':'';
-      const educationField='<label for="f-education-subject">Cấp học và môn học *</label><select id="f-education-subject" required><option value="">Chọn cấp học / môn học</option>'+archivedEducation+educationOptions+'</select><p class="m">Bắt buộc. Nếu chưa thấy môn học, hãy tạo cấp học và môn học trong Quản trị → Cấu trúc học tập.</p>';
+      const selectedLevelId=currentEducation?.education_level_id||view.education_level_id||'';
+      const selectedLevel=editorEducationLevels.find(level=>level.id===selectedLevelId);
+      const selectedCategoryId=selectedLevel?.code==='university'?(currentEducation?.category_id||view.education_category_id||''):'';
+      const levelOptions=editorEducationLevels.filter(level=>level.is_active).map(level=>'<option value="'+esc(level.id)+'"'+(level.id===selectedLevelId?' selected':'')+'>'+esc(level.name)+'</option>').join('');
+      const educationCategoryOptions=editorEducationCategories.filter(category=>category.education_level_id===selectedLevelId&&category.is_active).map(category=>'<option value="'+esc(category.id)+'"'+(category.id===selectedCategoryId?' selected':'')+'>'+esc(category.name)+'</option>').join('');
+      const availableCourses=window.LITEducationClassification.filterCourses(editorEducationSubjects,selectedLevelId,selectedLevel?.code,selectedCategoryId);
+      const educationOptions=availableCourses.map(item=>'<option data-search="'+esc((item.display_name+' '+(item.local_code||'')).toLocaleLowerCase())+'" value="'+esc(item.id)+'"'+(item.id===view.education_subject_id?' selected':'')+'>'+esc(item.display_name+(item.local_code?' · '+item.local_code:''))+'</option>').join('');
+      const archivedEducation=view.education_subject_id&&!currentEducation?.is_active?'<option value="'+esc(view.education_subject_id)+'" selected disabled>'+esc(currentEducation?editorEducationLabel(currentEducation):'Môn học đã ẩn')+' (giữ nguyên)</option>':'';
+      const educationCategoryField=selectedLevel?.code==='university'?'<label for="f-education-category">Danh mục môn học *</label><select id="f-education-category" required><option value="">Chọn danh mục môn học</option>'+educationCategoryOptions+'</select>':'';
+      const educationField='<label for="f-education-level">Cấp học *</label><select id="f-education-level" required><option value="">Chọn cấp học</option>'+levelOptions+'</select>'+educationCategoryField+'<label for="f-education-search">Tìm môn học</label><input id="f-education-search" type="search" placeholder="Nhập tên hoặc mã môn học"><label for="f-education-subject">Môn học / học phần *</label><select id="f-education-subject" required><option value="">Chọn môn học</option>'+archivedEducation+educationOptions+'</select><p class="m">Đề sẽ được gắn trực tiếp với môn học cụ thể.</p>';
       return '<h1>'+(view.id?'Chỉnh sửa bản nháp':'Tạo đề mới')+'</h1><div class="c"><p class="m">Phiên bản đã xuất bản không bị sửa trực tiếp. Khi mở một đề đã xuất bản, hệ thống tạo bản nháp mới để chỉnh sửa.</p><label>Tên đề</label><input id="f-t" maxlength="240" value="'+esc(x.title)+'"><label>Mô tả</label><input id="f-d" value="'+esc(x.desc)+'"><label>Thời gian (phút)</label><input id="f-m" type="number" min="1" max="600" value="'+x.minutes+'">'+educationField+categoryField+'<label>Nội dung đề và đáp án</label><p class="m">Có thể nhập nội dung theo cấu trúc bên dưới hoặc trích xuất văn bản từ DOCX/PDF có lớp văn bản. Sau khi trích xuất, cần kiểm tra và sửa lại định dạng, đáp án, công thức trước khi lưu. Ảnh scan cần được chuyển thành văn bản trước.</p><input id="fi" type="file" multiple accept=".docx,.pdf,.txt"><button class="b" data-a="imp">Trích xuất văn bản từ tệp</button><p id="im" class="m"></p><p class="m re">Mỗi câu ngăn cách bằng dòng ---.\nMột đáp án: A. B. C. D. và dòng Đáp án: B\nNhiều đáp án: thêm dòng Loại: nhiều đáp án; Đáp án: A, C\nĐúng/Sai: a) b) c) d) và Đáp án: Đ, S, Đ, S\nĐiền số: Đáp án: 3,5\nGhép nối: câu có vị trí [1], [2], [3]; dòng Lựa chọn: ...; dòng Đáp án: 1: VALUE | 2: VALUE. Mỗi phương án chỉ dùng một lần.\nCó thể thêm Giải thích:, Chủ đề: và Điểm:.</p><textarea id="f-q" placeholder="Câu hỏi...">'+esc(view.draftQuestionText??ser(x.qs))+'</textarea>'+questionMediaEditorHtml()+stimulusMediaEditorHtml()+'<button class="b" data-a="saveDraft">Lưu bản nháp</button> <button class="b bp" data-a="publishDraft">Lưu và xuất bản</button> <button class="b" data-a="home">Hủy</button><p id="msg" class="m"></p></div><div class="c"><b>Kiểm tra công thức</b><p class="m tex2jax_ignore">Công thức LaTeX trong $...$ hoặc $$...$$ sẽ được kiểm tra cú pháp và hiển thị. Hãy đối chiếu nội dung với tài liệu gốc.</p><button class="b" data-a="fchk">Kiểm tra công thức</button><div id="fp"></div><div id="src"></div></div>';
     }
     function ensureAttemptReady(a){
@@ -1152,6 +1157,8 @@ if('serviceWorker' in navigator){
       const mi=parseInt(g('f-m')),title=g('f-t').trim(),description=g('f-d').trim(),educationSelect=document.getElementById('f-education-subject'),educationSubjectId=educationSelect?.value||view.education_subject_id||'';
       if(!title||!(mi>0)||mi>600){m.textContent='Cần nhập tên đề và thời lượng từ 1 đến 600 phút.';return}
       if(!educationSubjectId){m.textContent='Hãy chọn cấp học và môn học trước khi lưu hoặc xuất bản.';return}
+      const selectedCourse=editorEducationSubjects.find(item=>item.id===educationSubjectId),selectedLevelId=document.getElementById('f-education-level')?.value||'',selectedLevel=editorEducationLevels.find(item=>item.id===selectedLevelId),selectedCategoryId=document.getElementById('f-education-category')?.value||'';
+      if(!window.LITEducationClassification.isValidCourseSelection(selectedCourse,selectedLevelId,selectedLevel?.code,selectedCategoryId,view.education_subject_id)){m.textContent='Môn học không khớp với cấp học và danh mục môn học đã chọn, hoặc đã được ẩn.';return}
       m.textContent='Đang kiểm tra công thức…';const fe=await fcheck(qs);
       if(fe.length){m.textContent='Chưa lưu được: '+fe.length+' lỗi công thức. '+fe.slice(0,4).join(' | ');fpanel();return}
       captureActiveStimulusForm();
@@ -1180,7 +1187,7 @@ if('serviceWorker' in navigator){
         return {mapping_id:old.mapping_id||null,question_id:old.question_id||null,scope:old.scope||'exam',owner_exam_id:old.owner_exam_id||view.exam_id||null,type:q.k,content:{q:q.q,o:q.o||[],t:q.t||'',p:q.p||1,once:!!q.once,media:mediaForSave(questionMedia),...((stimulusIdsByQuestion.get(i+1)||[]).length?{stimulus_version_ids:stimulusIdsByQuestion.get(i+1)}:{})},answer_key:q.a,explanation:q.e||'',grading_config:gradingConfig(q.k),source_metadata:{...(old.source_metadata||{}),fm:q.fm||old.fm||old.source_metadata?.fm||[]},points:q.p||1};
       });
       m.textContent='Đang lưu bản nháp trên máy chủ…';
-      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_education',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_education_subject_id:educationSubjectId,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;view.education_subject_id=educationSubjectId;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
+      try{const selectedCategory=document.getElementById('f-category')?.value||'';const categoryId=selectedCategory||null;const saved=await sb.rpc('admin_save_exam_content_with_education',{p_exam_version_id:view.id||null,p_title:title,p_description:description,p_duration_minutes:mi,p_questions:payload,p_education_subject_id:educationSubjectId||null,p_category_id:categoryId,p_publish:!!publishNow});if(saved.error)throw saved.error;const data=saved.data;view.category_id=categoryId;view.education_subject_id=educationSubjectId||null;if(selectedCategory)view.category_name=editorCategories.find(category=>category.id===selectedCategory)?.name||null;
         let importLinkWarning='';
         const importMeta=view.importQuestionMeta||[];
         if(importMeta.length){
@@ -1497,8 +1504,8 @@ if('serviceWorker' in navigator){
         if(k==='sub'||k==='no')render();
       }catch(err){notify(err.message||String(err))}
     });
-    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='f-education-subject'&&view.n==='edit'){view.education_subject_id=t.value||null}if(t.id==='f-media-question'&&view.n==='edit'){view.mediaQuestionIndex=Math.max(0,Number(t.value||1)-1);view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';render();return}if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
-    A.addEventListener('input',e=>{const t=e.target;if(view.n!=='edit')return;if(t.id==='f-education-subject')view.education_subject_id=t.value||null;if(t.id==='f-q')view.draftQuestionText=t.value;if(t.id==='f-stimulus-title'||t.id==='f-stimulus-body'||t.id==='f-stimulus-type'||t.id==='f-stimulus-questions'){const group=activeStimulusGroup();if(group){captureActiveStimulusForm();group.dirty=true}}});
+    A.addEventListener('change',async e=>{const t=e.target;if(t.id==='f-education-level'&&view.n==='edit'){Object.assign(view,window.LITEducationClassification.resetForLevelChange(view,t.value));view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';render();return}if(t.id==='f-education-category'&&view.n==='edit'){Object.assign(view,window.LITEducationClassification.resetForCategoryChange(view,t.value));view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';render();return}if(t.id==='f-education-subject'&&view.n==='edit'){view.education_subject_id=t.value||null}if(t.id==='f-media-question'&&view.n==='edit'){view.mediaQuestionIndex=Math.max(0,Number(t.value||1)-1);view.draftQuestionText=document.getElementById('f-q')?.value||view.draftQuestionText||'';render();return}if(t.id==='nm'&&view.n==='take'){view.at.ans[view.at.cur]=t.value;try{await saveCurrentAnswer(view.at)}catch(err){notify('Không lưu được đáp án: '+err.message)}}if(t.classList&&t.classList.contains('fxi'))fedit(+t.dataset.k,t.value)});
+    A.addEventListener('input',e=>{const t=e.target;if(view.n!=='edit')return;if(t.id==='f-education-search'){const q=t.value.trim().toLocaleLowerCase(),select=document.getElementById('f-education-subject');if(select)[...select.options].forEach(option=>{if(option.value)option.hidden=!!q&&!(option.dataset.search||option.textContent.toLocaleLowerCase()).includes(q)});return}if(t.id==='f-education-subject')view.education_subject_id=t.value||null;if(t.id==='f-q')view.draftQuestionText=t.value;if(t.id==='f-stimulus-title'||t.id==='f-stimulus-body'||t.id==='f-stimulus-type'||t.id==='f-stimulus-questions'){const group=activeStimulusGroup();if(group){captureActiveStimulusForm();group.dirty=true}}});
     A.addEventListener('dragstart',e=>{const b=e.target.closest('[data-a="chip"]');if(b){sel=+b.dataset.i;e.dataTransfer.setData('text/plain','x')}});
     A.addEventListener('dragover',e=>{if(e.target.closest('[data-a="slot"]'))e.preventDefault()});
     A.addEventListener('drop',e=>{const s=e.target.closest('[data-a="slot"]');if(s){e.preventDefault();place(+s.dataset.i)}});

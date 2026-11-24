@@ -10,7 +10,7 @@ import HistoryPage from './pages/HistoryPage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
 import { AdminHomePage, AdminExamsPage, AdminCategoriesPage, AdminUsersPage, AdminAttemptsPage } from './pages/AdminPages.jsx';
 import AdminEducationPage from './pages/AdminEducationPage.jsx';
-import { EducationLevelPage, EducationNodePage, EducationSubjectPage } from './pages/EducationBrowsePages.jsx';
+import { EducationLevelPage, EducationNodePage, EducationCategoryPage, EducationSubjectPage } from './pages/EducationBrowsePages.jsx';
 function LegacyRedirect() {
   useEffect(() => { window.location.replace('/legacy/index.html'); }, []);
   return <main className="center-state"><p>Đang mở giao diện hiện tại…</p><a href="/legacy/index.html">Nếu trang không tự chuyển, bấm vào đây.</a></main>;
@@ -38,6 +38,7 @@ export default function App() {
         <Route path="/register" element={<AuthPage mode="register" />} />
         <Route path="/" element={<HomeRoute />} />
         <Route path="/education/:levelCode" element={<RouteGuard><EducationLevelPage /></RouteGuard>} />
+        <Route path="/education/:levelCode/category/:categoryId" element={<RouteGuard><EducationCategoryPage /></RouteGuard>} />
         <Route path="/education/:levelCode/context/:nodeId" element={<RouteGuard><EducationNodePage /></RouteGuard>} />
         <Route path="/education/:levelCode/subject/:offeringId" element={<RouteGuard><EducationSubjectPage /></RouteGuard>} />
         <Route path="/account" element={<RouteGuard><AccountPage /></RouteGuard>} />
