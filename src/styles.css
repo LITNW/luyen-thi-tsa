@@ -52,6 +52,7 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .button:hover { text-decoration: none; filter: brightness(1.08); }
 .button.primary { color: #06131d; background: var(--accent); border-color: var(--accent); }
 .button.secondary { background: #1c2a40; border-color: #52637c; }
+.button.danger { color: #fff; background: #512632; border-color: #c06a7b; }
 .full { width: 100%; }
 .form-message { margin: 18px 0 0; color: #fff; line-height: 1.6; }
 .auth-switch { margin: 24px 0; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
@@ -442,12 +443,21 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   display: grid;
   gap: 6px;
   width: 100%;
-  padding: 0;
-  border: 0;
+  min-height: 72px;
+  padding: 14px 16px;
+  border: 1px solid #52637c;
+  border-radius: 10px;
   color: #fff;
   text-align: left;
-  background: transparent;
+  background: #111a2b;
   cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
+.education-admin-level-select:hover:not(:disabled) { border-color: #8ca4c2; background: #1a2940; }
+.education-admin-level-select.selected { border: 2px solid var(--accent); padding: 13px 15px; background: #153449; box-shadow: inset 4px 0 0 var(--accent); }
+.education-admin-level-select.selected::after { content: 'Đang chọn'; width: fit-content; padding: 2px 7px; border: 1px solid #5dd6e899; border-radius: 999px; color: #d6fbff; background: #0c2635; font-size: 11px; font-weight: 700; }
+.education-admin-level-select:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.education-admin-level-select:disabled { cursor: not-allowed; opacity: .58; }
 .education-admin-level-select small { color: var(--muted); }
+.education-category-code-help { color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.55; }
 .education-admin-level .user-actions { margin-top: 12px; }

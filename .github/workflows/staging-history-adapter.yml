@@ -6,6 +6,8 @@ on:
     paths:
       - 'ops/staging-history/**'
       - 'supabase/migrations/20261119160000_education_course_categories.sql'
+      - 'supabase/migrations/20261124100000_education_structure_delete_guards.sql'
+      - 'supabase/migration-recovery-manifest.json'
       - 'tests/staging-history-adapter.test.js'
       - '.github/workflows/staging-history-adapter.yml'
   push:
@@ -13,6 +15,8 @@ on:
     paths:
       - 'ops/staging-history/**'
       - 'supabase/migrations/20261119160000_education_course_categories.sql'
+      - 'supabase/migrations/20261124100000_education_structure_delete_guards.sql'
+      - 'supabase/migration-recovery-manifest.json'
       - 'tests/staging-history-adapter.test.js'
       - '.github/workflows/staging-history-adapter.yml'
 

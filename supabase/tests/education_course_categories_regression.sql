@@ -8,6 +8,11 @@ declare
   v_category uuid;
   v_thpt_course uuid;
   v_course uuid;
+  v_empty_course uuid;
+  v_empty_category uuid;
+  v_code text;
+  v_invalid_code text;
+  v_code_rejected boolean;
   v_custom_category uuid;
   v_exam uuid := '69000000-0000-4000-8000-000000000001';
   v_editor_result jsonb;
@@ -29,9 +34,37 @@ declare
     }
   ]'::jsonb;
 begin
+  perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+  if not exists (
+    select 1 from pg_constraint where conname='education_subjects_category_same_level_fk' and confdeltype='r'
+  ) then raise exception 'Category deletion must retain the course dependency with ON DELETE RESTRICT.'; end if;
+  if not exists (
+    select 1 from pg_constraint where conname='exams_education_subject_fk' and confdeltype='r'
+  ) then raise exception 'Course deletion must retain exam references with ON DELETE RESTRICT.'; end if;
+  if has_function_privilege('anon','public.education_course_category_delete_guard()','execute')
+     or has_function_privilege('anon','public.education_subject_delete_guard()','execute') then
+    raise exception 'Anonymous users must not execute education deletion guard functions.';
+  end if;
   select id into v_thpt from public.education_levels where code='thpt';
   select id into v_university from public.education_levels where code='university';
   if v_thpt is null or v_university is null then raise exception 'Expected seeded education levels.'; end if;
+  foreach v_code in array array['classified','math_advanced','group01','toan_cao_cap',repeat('a',64)] loop
+    insert into public.education_course_categories(education_level_id,code,name)
+      values(v_university,v_code,'Valid code test '||v_code);
+  end loop;
+  foreach v_invalid_code in array array['Aclassified','1group','a','math-advanced','toán_cao_cap','math advanced',repeat('a',65)] loop
+    v_code_rejected := false;
+    begin
+      insert into public.education_course_categories(education_level_id,code,name)
+        values(v_university,v_invalid_code,'Invalid code test');
+    exception when check_violation then
+      v_code_rejected := true;
+    end;
+    if not v_code_rejected then
+      raise exception 'Invalid category code was accepted: %',v_invalid_code;
+    end if;
+  end loop;
+  delete from public.education_course_categories where code in ('classified','math_advanced','group01','toan_cao_cap',repeat('a',64));
   if (select count(*) from public.education_course_categories where education_level_id=v_university) <> 1 then
     raise exception 'Expected exactly one neutral default University category.';
   end if;
@@ -54,6 +87,21 @@ begin
     raise exception 'Pre-migration exam-to-course reference changed during backfill.';
   end if;
   select id into v_category from public.education_course_categories where education_level_id=v_university and code='unclassified';
+  begin
+    delete from public.education_course_categories where id=v_category;
+    raise exception 'The default unclassified category was deleted.';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.education_course_categories set code='classified' where id=v_category;
+    raise exception 'The default unclassified category code was changed.';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.education_course_categories set is_active=false where id=v_category;
+    raise exception 'The default unclassified category was deactivated.';
+  exception when check_violation then null;
+  end;
   insert into public.education_course_categories(education_level_id,code,name,display_order) values(v_university,'custom_category','Danh mục tự tạo',1) returning id into v_custom_category;
   insert into public.education_subjects(education_level_id,display_name,local_code)
     values(v_thpt,'Direct THPT course','TEST-THPT-1') returning id into v_thpt_course;
@@ -64,6 +112,15 @@ begin
     values(v_university,v_category,'TEST-CATEGORY-1','Category regression course') returning id into v_course;
   insert into public.exams(id,title,description,duration_minutes,created_by,education_subject_id)
     values(v_exam,'Course category regression','Disposable fixture',30,'00000000-0000-4000-8000-000000000001',v_course);
+  begin
+    delete from public.education_subjects where id=v_course;
+    raise exception 'A course referenced by an exam was deleted.';
+  exception when foreign_key_violation then null;
+  end;
+  if not exists (select 1 from public.education_subjects where id=v_course)
+     or (select education_subject_id from public.exams where id=v_exam) is distinct from v_course then
+    raise exception 'A blocked course deletion changed the course or exam reference.';
+  end if;
   update public.education_subjects set category_id=v_custom_category where id=v_course;
   if not exists (select 1 from public.education_subjects where id=v_course and category_id=v_custom_category and subject_id is null)
      or (select education_subject_id from public.exams where id=v_exam) is distinct from v_course then
@@ -91,6 +148,23 @@ begin
   exception when foreign_key_violation or check_violation then null;
   end;
   update public.education_subjects set is_active=false where id=v_course;
+  insert into public.education_subjects(education_level_id,category_id,display_name)
+    values(v_university,v_category,'Unreferenced disposable course') returning id into v_empty_course;
+  delete from public.education_subjects where id=v_empty_course;
+  if exists (select 1 from public.education_subjects where id=v_empty_course) then
+    raise exception 'An unreferenced course could not be deleted.';
+  end if;
+  insert into public.education_course_categories(education_level_id,code,name)
+    values(v_university,'empty_delete_test','Empty delete test') returning id into v_empty_category;
+  delete from public.education_course_categories where id=v_empty_category;
+  if exists (select 1 from public.education_course_categories where id=v_empty_category) then
+    raise exception 'An empty non-default category could not be deleted.';
+  end if;
+  begin
+    delete from public.education_course_categories where id=v_category;
+    raise exception 'A category referenced by an inactive course was deleted.';
+  exception when foreign_key_violation then null;
+  end;
   update public.education_course_categories set is_active=false where id=v_category;
   if not exists (select 1 from public.education_subjects where id=v_course and category_id=v_category and subject_id is null)
      or (select education_subject_id from public.exams where id=v_exam) is distinct from v_course then
@@ -137,6 +211,45 @@ begin
   update public.profiles set role='student',status='suspended' where id='00000000-0000-4000-8000-000000000005';
 end;
 $assert$;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+do $authenticated_admin_delete$
+declare
+  v_university uuid;
+  v_category uuid;
+  v_course uuid;
+begin
+  select id into v_university from public.education_levels where code='university';
+  insert into public.education_course_categories(education_level_id,code,name)
+    values(v_university,'authenticated_delete_test','Authenticated delete test') returning id into v_category;
+  insert into public.education_subjects(education_level_id,category_id,display_name)
+    values(v_university,v_category,'Authenticated delete test course') returning id into v_course;
+  delete from public.education_subjects where id=v_course;
+  delete from public.education_course_categories where id=v_category;
+  if exists (select 1 from public.education_subjects where id=v_course)
+     or exists (select 1 from public.education_course_categories where id=v_category) then
+    raise exception 'An authenticated Admin could not delete dependency-free education records.';
+  end if;
+end;
+$authenticated_admin_delete$;
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000004',true);
+delete from public.education_subjects where id='69000000-0000-4000-8000-000000000011';
+delete from public.education_course_categories where code='unclassified';
+reset role;
+do $non_admin_delete_rls$
+begin
+  if not exists (select 1 from public.education_subjects where id='69000000-0000-4000-8000-000000000011') then
+    raise exception 'A non-Admin profile deleted an education course.';
+  end if;
+  if not exists (select 1 from public.education_course_categories where code='unclassified') then
+    raise exception 'A non-Admin profile deleted the default course category.';
+  end if;
+end;
+$non_admin_delete_rls$;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000004',true);

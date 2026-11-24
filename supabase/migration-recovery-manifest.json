@@ -298,8 +298,19 @@
     {
       "version": "20261119160000",
       "name": "education_course_categories",
-      "status": "pending_in_pr_41",
+      "status": "applied_in_staging_verified_2026-11-24_production_pending",
       "source": "PR #41: replace active course classification with Admin-managed level-scoped University categories",
+      "fingerprint_scope": "not_part_of_recovered_statement_manifest",
+      "production_status": "not_applied",
+      "staging_status": "applied",
+      "staging_ledger_version": "20261119160000",
+      "verified_against_live_ledgers": "2026-11-24"
+    },
+    {
+      "version": "20261124100000",
+      "name": "education_structure_delete_guards",
+      "status": "pending_in_pr_41",
+      "source": "PR #41: protect default categories and reject course/category deletes with dependencies",
       "fingerprint_scope": "not_part_of_recovered_statement_manifest",
       "production_status": "not_applied",
       "staging_status": "not_applied"

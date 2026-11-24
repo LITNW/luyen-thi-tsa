@@ -1,12 +1,12 @@
 # Supabase migration drift reconciliation
 
-Snapshot verified read-only on 2026-11-19.
+Production snapshot verified read-only on 2026-11-19. Staging ledger and education constraints rechecked read-only on 2026-11-24.
 
 ## Live ledger overview
 
 | Environment | Project ref | Ledger rows | PostgreSQL |
 |---|---|---:|---|
-| Staging | `cppalwtdkditlhojpeyc` | 38 | 17.11.0.019 |
+| Staging | `cppalwtdkditlhojpeyc` | 39 | 17.11.0.019 |
 | Production | `hwqtsopvpucadgpkigqz` | 31 | 17.11.0.018 |
 
 The row-count difference is not a simple set of seven missing migrations.
@@ -28,6 +28,7 @@ The following migrations are recorded in Staging but absent from Production:
 - `20261115154958_multiple_stimulus_groups`
 - `20261116033209_archive_exam_versions_without_physical_deletion`
 - `20261118032350_exclude_archived_exam_media`
+- `20261119160000_education_course_categories` (confirmed on Staging 2026-11-24; Production state remains the previously recorded 2026-11-19 snapshot)
 
 The first four implement private question media and version-pinned stimulus groups. The fifth replaces the legacy exam-version deletion RPC with an archive-only operation and an atomic audit record. The sixth blocks archived exam versions from the published-exam payload and private-media authorization paths.
 
@@ -63,7 +64,7 @@ Do not merge PR #40 or deploy Production as part of this work. After repository 
 
 ## 2026-11-22 SQL fingerprint verification
 
-A read-only comparison of all 38 Staging rows was performed using `md5(statements[1])`, statement length, the remote `name`, and the corresponding repository/evidence file.
+A read-only comparison of all 38 pre-category Staging rows was performed using `md5(statements[1])`, statement length, the remote `name`, and the corresponding repository/evidence file.
 
 - 30 rows exactly match their mapped local SQL statement.
 - The reconstructed baseline row `20261113082626` exactly matches `supabase/tests/fixtures/pre_005_supabase_schema.sql`; it is a Staging baseline marker, not a shared migration.
@@ -77,10 +78,10 @@ A read-only comparison of all 38 Staging rows was performed using `md5(statement
 
 To avoid rewriting either hosted migration ledger, PR #41 now contains a fail-closed adapter under `ops/staging-history`:
 
-- 38 marker migrations match the existing Staging version set. Each marker raises an exception if it is ever treated as pending.
+- The 2026-11-22 adapter snapshot had 38 marker migrations; the live Staging ledger now has 39 rows after the category migration was applied.
 - `staging-history-manifest.json` records the remote version, name, statement MD5, length, source mapping, and classification.
-- `preflight.sql` verifies the exact version/name/statement-MD5 set and confirms the category schema has not been partially applied.
-- The adapter contains the real category migration as the sole pending version.
+- `preflight.sql` verifies the exact 39-row version/name/statement-MD5 set and confirms the category schema exists while the deletion guards remain unapplied.
+- The adapter contains the reviewed deletion-guard migration as the sole pending version.
 - The canonical `supabase/migrations` directory is unchanged for clean installs and Production.
 
-Use the adapter only against the existing Staging project and only after `preflight.sql` returns no mismatches. A CLI dry-run must list exactly `20261119160000_education_course_categories.sql`; if any fail-closed marker is pending, stop. This adapter does not modify the remote ledger and must never be used for Production or a fresh database.
+Use the adapter only against the existing Staging project and only after `preflight.sql` returns no mismatches. A CLI dry-run must list exactly `20261124100000_education_structure_delete_guards.sql`; if any fail-closed marker is pending, stop. This adapter does not modify the remote ledger and must never be used for Production or a fresh database.

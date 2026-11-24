@@ -37,7 +37,7 @@ The target migration is `20261119160000_education_course_categories.sql`.
 ## Hosted environment status
 
 - The old `education_subject_groups` migration was never applied and is superseded. Do not deploy it.
-- The new category migration is pending PR #41; it has not been applied to Staging or Production.
+- The category migration is applied on Staging (verified from its ledger on 2026-11-24) and remains unapplied to Production. The new delete-guard migration is pending PR #41 and has not been applied to either environment.
 - The Staging migration ledger has reconstructed and Staging-only versions that do not map one-to-one to local filenames. A normal `db push` dry-run failed on remote-only versions. Reconcile this history with SQL fingerprints and live schema evidence before any Staging migration. Do not use `migration repair`, `--include-all`, or manual ledger edits as a shortcut.
 - Staging's obsolete temporary University write-freeze policies are absent. Do not recreate them.
 - Production is reference-only and remains untouched. PR #41 must remain open and Draft until review and Staging verification are complete.

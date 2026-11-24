@@ -9,9 +9,9 @@ const migrationsDir = fileURLToPath(new URL('../ops/staging-history/supabase/mig
 test('Staging history adapter is scoped to the existing Staging project', () => {
   const manifest = JSON.parse(read('../ops/staging-history/staging-history-manifest.json'));
   assert.equal(manifest.project_ref, 'cppalwtdkditlhojpeyc');
-  assert.equal(manifest.expected_ledger_rows, 38);
-  assert.equal(manifest.applied_migrations.length, 38);
-  assert.equal(manifest.target_migration, '20261119160000_education_course_categories.sql');
+  assert.equal(manifest.expected_ledger_rows, 39);
+  assert.equal(manifest.applied_migrations.length, 39);
+  assert.equal(manifest.target_migration, '20261124100000_education_structure_delete_guards.sql');
   assert.doesNotMatch(JSON.stringify(manifest), /hwqtsopvpucadgpkigqz/);
 });
 
@@ -29,9 +29,9 @@ test('every already-applied Staging version has a fail-closed marker', () => {
   }
 });
 
-test('Staging adapter applies the same reviewed category migration as the canonical chain', () => {
-  const adapterMigration = read('../ops/staging-history/supabase/migrations/20261119160000_education_course_categories.sql');
-  const canonicalMigration = read('../supabase/migrations/20261119160000_education_course_categories.sql');
+test('Staging adapter applies the same reviewed deletion guard migration as the canonical chain', () => {
+  const adapterMigration = read('../ops/staging-history/supabase/migrations/20261124100000_education_structure_delete_guards.sql');
+  const canonicalMigration = read('../supabase/migrations/20261124100000_education_structure_delete_guards.sql');
   assert.equal(adapterMigration, canonicalMigration);
 });
 

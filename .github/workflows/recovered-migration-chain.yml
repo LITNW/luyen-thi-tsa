@@ -100,6 +100,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/education_course_categories_upgrade_fixture.sql
       - name: Apply editable Admin-managed course categories
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_course_categories.sql
+      - name: Apply Admin education deletion safeguards
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261124100000_education_structure_delete_guards.sql
       - name: Seed a test-only Admin identity
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'

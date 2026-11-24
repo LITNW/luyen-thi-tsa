@@ -127,11 +127,12 @@ test('legacy exam editor applies the tested selector model before both create an
 test('Staging cutover runbook has backup, migration-history reconciliation, deploy, and recovery gates', () => {
   const runbook = read('../docs/education-course-classification-staging-cutover.md');
   assert.match(runbook, /cppalwtdkditlhojpeyc/);
+  assert.match(runbook, /20261124100000_education_structure_delete_guards\.sql/);
   assert.match(runbook, /restore.*separate disposable Supabase project/i);
   assert.match(runbook, /Do not recreate the obsolete `staging_pause_university_course_insert`/);
   assert.match(runbook, /select policyname from pg_policies/);
   
-  assert.match(runbook, /Current blocker is now mapped, not repaired/i);
+  assert.match(runbook, /Current state verified read-only on 2026-11-24/i);
   assert.match(runbook, /migration repair/i);
   assert.match(runbook, /--include-all/);
   assert.match(runbook, /ops\/staging-history\/preflight\.sql/);

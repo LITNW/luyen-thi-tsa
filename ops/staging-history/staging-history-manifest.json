@@ -2,9 +2,9 @@
   "schema_version": 1,
   "purpose": "Existing Staging database migration-history adapter only. Marker migrations are already applied remotely and must never execute on a fresh database.",
   "project_ref": "cppalwtdkditlhojpeyc",
-  "verified_at": "2026-11-22",
-  "expected_ledger_rows": 38,
-  "target_migration": "20261119160000_education_course_categories.sql",
+  "verified_at": "2026-11-24",
+  "expected_ledger_rows": 39,
+  "target_migration": "20261124100000_education_structure_delete_guards.sql",
   "applied_migrations": [
     {
       "version": "20261113082626",
@@ -423,6 +423,17 @@
       "local_source": "supabase/migrations/20261118032350_exclude_archived_exam_media.sql",
       "classification": "comments_only",
       "comparison_note": "Remote omits the two leading comments; executable SQL matches."
+    },
+    {
+      "version": "20261119160000",
+      "name": "education_course_categories",
+      "statement_count": 19,
+      "statement_length": 305,
+      "statement_md5": "7ead7404c9af02fe5f412b15bf1c5e75",
+      "marker_file": "20261119160000_education_course_categories.sql",
+      "local_source": "supabase/migrations/20261119160000_education_course_categories.sql",
+      "classification": "remote_recorded_statement_fingerprint",
+      "comparison_note": "Captured read-only from the live Staging ledger on 2026-11-24; only the first recorded statement is fingerprinted by this adapter preflight."
     }
   ],
   "known_environment_differences": [

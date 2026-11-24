@@ -6,11 +6,12 @@ Status: **prepared, not executed**. This document does not authorize a Staging o
 
 - Repository: `LITNW/luyen-thi-tsa`
 - Branch: `fix/education-empty-uuid-payload`
-- Migration: `20261119160000_education_course_categories.sql`
+- Already applied on Staging: `20261119160000_education_course_categories.sql` (verified read-only 2026-11-24)
+- Pending in PR #41: `20261124100000_education_structure_delete_guards.sql`
 - Staging Supabase project ref: `cppalwtdkditlhojpeyc`
 - Production Supabase project ref: `hwqtsopvpucadgpkigqz` — **not a target in this runbook**
 
-The branch migration adds University categories and a category guard. The Staging application and migration must be cut over together: deploying the new UI before the schema makes its category queries fail; applying the schema while the old UI is writable blocks old-style University course inserts. The release is coordinated within a five-minute window; no temporary write-freeze policy is part of the target design.
+The category-aware Admin UI and category schema are already present on Staging. The pending migration adds database-level deletion safeguards. Do not apply it as part of Preview deployment; any future Staging application still requires the backup, dry-run, and explicit release gates below. No temporary write-freeze policy is part of the target design.
 
 ## Approval and credential gates
 
@@ -98,13 +99,13 @@ The target migration enforces the new University category relationship. Deploy t
 
 ## 4. Reconcile the Staging migration history with the fail-closed adapter
 
-**Current blocker is now mapped, not repaired.** Staging has 38 ledger rows. The remote SQL statement fingerprints were compared with the repository and environment-specific SQL evidence. The complete mapping is in `ops/staging-history/staging-history-manifest.json`; the read-only SQL check is `ops/staging-history/preflight.sql`.
+**Current state verified read-only on 2026-11-24.** Staging has 39 ledger rows, including `20261119160000_education_course_categories`. The remote SQL statement fingerprints were compared with the repository and environment-specific SQL evidence. The complete mapping is in `ops/staging-history/staging-history-manifest.json`; the read-only SQL check is `ops/staging-history/preflight.sql`.
 
 The adapter under `ops/staging-history/supabase/migrations` contains one marker file for each version already applied on Staging. Every marker intentionally raises an exception if executed. The canonical migration chain under `supabase/migrations` is unchanged and remains the source for clean installs and Production. Never use the adapter for a fresh database, local reset, Preview branch, or Production.
 
 Required sequence:
 
-1. Open `ops/staging-history/preflight.sql` and run it read-only against Staging project `cppalwtdkditlhojpeyc`. The first query must return zero rows; the ledger count must be 38; `education_course_categories` and `education_subjects.category_id` must be absent; obsolete temporary write-freeze policies must be absent. If any check differs, stop.
+1. Open `ops/staging-history/preflight.sql` and run it read-only against Staging project `cppalwtdkditlhojpeyc`. The first query must return zero rows; the ledger count must be 39; `education_course_categories` and `education_subjects.category_id` must exist; obsolete temporary write-freeze policies must be absent; and the new delete-guard triggers must not already exist without their migration ledger row. If any check differs, stop.
 2. Use Supabase CLI `3.2.0` and validate the adapter config locally, then use the adapter workdir, not the root migration folder:
 
    ```powershell
@@ -117,8 +118,8 @@ Required sequence:
    supabase --workdir ops/staging-history db push --remote=cppalwtdkditlhojpeyc --dry-run
    ```
 
-3. The dry-run must list exactly one pending migration: `20261119160000_education_course_categories.sql`. No marker file, historical migration, or other SQL may be pending. If any marker appears, stop; do not run the non-dry-run command.
-4. Reconfirm the backup/restore evidence and fresh course UUID/exam-reference baseline. Only then apply the one category migration:
+3. The dry-run must list exactly one pending migration: `20261124100000_education_structure_delete_guards.sql`. No marker file, historical migration, or other SQL may be pending. If any marker appears, stop; do not run the non-dry-run command.
+4. Reconfirm the backup/restore evidence and fresh course UUID/exam-reference baseline. Only then apply the one deletion-guard migration:
 
    ```powershell
    supabase --workdir ops/staging-history db push --remote=cppalwtdkditlhojpeyc

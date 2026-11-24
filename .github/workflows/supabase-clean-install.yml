@@ -171,6 +171,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261119160000_education_course_categories.sql
+      - name: Apply Admin education deletion safeguards
+        env:
+          PGPASSWORD: postgres
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/migrations/20261124100000_education_structure_delete_guards.sql
       - name: Seed isolated test admin and run answer-validation regression
         env:
           PGPASSWORD: postgres

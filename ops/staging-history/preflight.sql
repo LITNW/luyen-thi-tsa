@@ -1,5 +1,5 @@
 -- READ-ONLY preflight for the existing Staging migration ledger.
--- Expected values were captured from project cppalwtdkditlhojpeyc on 2026-11-22.
+-- Expected values were captured from project cppalwtdkditlhojpeyc on 2026-11-24.
 -- Zero rows from the first query and row_count_matches=true are required before db push.
 
 with expected(version,name,statement_md5) as (
@@ -41,7 +41,8 @@ with expected(version,name,statement_md5) as (
     ('20261115150559','question_media_validator_grants','80dee34e0d3671f4873222868eb6afb2'),
     ('20261115154958','multiple_stimulus_groups','df2758e9e52489723f57272dbfa3d4d6'),
     ('20261116033209','archive_exam_versions_without_physical_deletion','af047b7d66c69899175735f974fe7ff8'),
-    ('20261118032350','exclude_archived_exam_media','7487f0f74fe93dbdae0c28fb29d2edd2')
+    ('20261118032350','exclude_archived_exam_media','7487f0f74fe93dbdae0c28fb29d2edd2'),
+    ('20261119160000','education_course_categories','7ead7404c9af02fe5f412b15bf1c5e75')
 ),
 actual as (
   select version,name,md5(coalesce(statements[1],'')) as statement_md5
@@ -62,11 +63,11 @@ where e.version is null
 order by 1;
 
 select count(*) as actual_ledger_rows,
-       38::integer as expected_ledger_rows,
-       count(*)=38 as row_count_matches
+       39::integer as expected_ledger_rows,
+       count(*)=39 as row_count_matches
 from supabase_migrations.schema_migrations;
 
--- Confirm the category migration has not already been partially applied.
+-- Confirm the category migration is present and the new deletion guard is still pending.
 select
   to_regclass('public.education_course_categories') as category_table,
   to_regclass('public.education_subject_groups') as superseded_group_table,
@@ -83,5 +84,17 @@ select
     where schemaname='public' and tablename='education_subjects'
       and policyname in ('staging_pause_university_course_insert','staging_pause_university_course_update')
   ) as obsolete_write_freeze_exists,
+  exists (
+    select 1 from pg_trigger
+    where tgrelid='public.education_course_categories'::regclass
+      and tgname='education_course_categories_delete_guard_before_delete_or_protected_update'
+      and not tgisinternal
+  ) as category_delete_guard_already_applied,
+  exists (
+    select 1 from pg_trigger
+    where tgrelid='public.education_subjects'::regclass
+      and tgname='education_subjects_delete_guard_before_delete'
+      and not tgisinternal
+  ) as course_delete_guard_already_applied,
   position('v_existing_category_id' in pg_get_functiondef('public.admin_save_exam_content_with_category(uuid,text,text,integer,jsonb,uuid,boolean)'::regprocedure)) > 0 as archived_category_preservation_present,
   position('split_part(new.email' in pg_get_functiondef('public.handle_new_auth_user()'::regprocedure)) > 0 as staging_signup_fallback_present;
