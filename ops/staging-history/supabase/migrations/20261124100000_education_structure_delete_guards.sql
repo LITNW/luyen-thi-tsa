@@ -39,7 +39,7 @@ begin
 end;
 $function$;
 
-create trigger education_course_categories_delete_guard_before_delete_or_protected_update
+create trigger education_course_categories_delete_guard
 before delete or update of code,education_level_id,is_active
 on public.education_course_categories
 for each row execute function public.education_course_category_delete_guard();

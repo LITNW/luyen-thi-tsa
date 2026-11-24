@@ -87,7 +87,7 @@ select
   exists (
     select 1 from pg_trigger
     where tgrelid='public.education_course_categories'::regclass
-      and tgname='education_course_categories_delete_guard_before_delete_or_protected_update'
+      and tgname='education_course_categories_delete_guard'
       and not tgisinternal
   ) as category_delete_guard_already_applied,
   exists (

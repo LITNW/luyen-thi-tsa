@@ -33,6 +33,9 @@ test('Staging adapter applies the same reviewed deletion guard migration as the 
   const adapterMigration = read('../ops/staging-history/supabase/migrations/20261124100000_education_structure_delete_guards.sql');
   const canonicalMigration = read('../supabase/migrations/20261124100000_education_structure_delete_guards.sql');
   assert.equal(adapterMigration, canonicalMigration);
+  const preflight = read('../ops/staging-history/preflight.sql');
+  assert.match(preflight, /tgname='education_course_categories_delete_guard'/);
+  assert.doesNotMatch(preflight, /education_course_categories_delete_guard_before_delete_or_protected_update/);
 });
 
 test('Staging preflight covers every remote version and its SQL fingerprint', () => {
