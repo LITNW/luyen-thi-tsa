@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { answerText, formatDuration, summarizeResults } from '../utils/resultFormat.js';
 
@@ -94,12 +94,7 @@ export default function ResultsPage() {
   const summary = useMemo(() => summarizeResults(resultRows), [resultRows]);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>KẾT QUẢ LUYỆN TẬP</small></span></Link>
-        <nav className="top-links"><Link to="/history">Lịch sử</Link><Link to="/">Trang chủ</Link></nav>
-      </header>
-      <main className="narrow-page result-page">
+      <div className="narrow-page result-page">
         <p className="eyebrow">EXAM RESULTS</p>
         <h1>Kết quả bài làm</h1>
         {loading ? <div className="loading-line"><span className="spinner" /> Đang tải kết quả từ máy chủ…</div> :
@@ -140,8 +135,6 @@ export default function ResultsPage() {
             })}
           </>
         }
-      </main>
-      <footer className="footer">TSA PRACTICE PLATFORM</footer>
-    </div>
+      </div>
   );
 }

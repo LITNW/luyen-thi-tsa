@@ -18,11 +18,10 @@ test('LIT landing page exposes explicit login and registration routes without by
   assert.match(landing, /Learn|Practice|Grow/);
 });
 
-test('student and admin shell branding uses repository-managed LIT logo assets', () => {
-  const dashboard = read('../src/pages/DashboardPage.jsx');
-  const admin = read('../src/pages/AdminPages.jsx');
+test('shared authenticated shell and public auth screens use repository-managed LIT logo assets', () => {
+  const shell = read('../src/components/AppShell.jsx');
   const auth = read('../src/pages/AuthPage.jsx');
-  for (const source of [dashboard, admin, auth]) {
+  for (const source of [shell, auth]) {
     assert.match(source, /\/brand\/lit-horizontal\.svg/);
   }
 });

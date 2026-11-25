@@ -13,7 +13,7 @@ import AdminEducationPage from './pages/AdminEducationPage.jsx';
 import { EducationLevelPage, EducationNodePage, EducationCategoryPage, EducationSubjectPage } from './pages/EducationBrowsePages.jsx';
 function LegacyRedirect() {
   useEffect(() => { window.location.replace('/legacy/index.html'); }, []);
-  return <main className="center-state"><p>Đang mở giao diện hiện tại…</p><a href="/legacy/index.html">Nếu trang không tự chuyển, bấm vào đây.</a></main>;
+  return <div className="center-state"><p>Đang mở giao diện hiện tại…</p><a href="/legacy/index.html">Nếu trang không tự chuyển, bấm vào đây.</a></div>;
 }
 
 function LegacyExamRedirect() {
@@ -21,7 +21,7 @@ function LegacyExamRedirect() {
   useEffect(() => {
     window.location.replace('/legacy/index.html?start=' + encodeURIComponent(id));
   }, [id]);
-  return <main className="center-state"><p>Đang mở phòng thi…</p></main>;
+  return <div className="center-state"><p>Đang mở phòng thi…</p></div>;
 }
 
 function HomeRoute() {

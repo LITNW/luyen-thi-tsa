@@ -5,17 +5,10 @@ import { supabase } from '../lib/supabase.js';
 
 function AdminFrame({ eyebrow = 'ADMIN WORKSPACE', title, children }) {
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Khu vực quản trị" /></Link>
-        <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link><Link to="/admin/users">Tài khoản</Link><Link to="/admin/attempts">Lượt làm</Link><Link to="/">Trang chủ</Link></nav>
-      </header>
-      <main className="narrow-page">
+      <div className="narrow-page">
         <p className="eyebrow">{eyebrow}</p><h1>{title}</h1>
         {children}
-      </main>
-      <footer className="footer">LIT · ADMIN WORKSPACE</footer>
-    </div>
+      </div>
   );
 }
 

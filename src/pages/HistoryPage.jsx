@@ -35,12 +35,7 @@ export default function HistoryPage() {
   }, []);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></Link>
-        <nav className="top-links"><Link to="/">Trang chủ</Link><Link to="/account">Tài khoản</Link></nav>
-      </header>
-      <main className="narrow-page">
+      <div className="narrow-page">
         <p className="eyebrow">LEARNING HISTORY</p>
         <h1>Lịch sử làm bài</h1>
         <p className="muted">Danh sách lượt làm được lấy từ máy chủ. Kết quả và trạng thái gốc không bị thay đổi bởi giao diện React.</p>
@@ -59,8 +54,6 @@ export default function HistoryPage() {
           </article>)}</div> :
           <div className="empty-state"><b>Chưa có lượt làm bài nào</b><p>Khi bạn bắt đầu một đề thi, lịch sử sẽ xuất hiện tại đây.</p></div>
         }
-      </main>
-      <footer className="footer">TSA PRACTICE PLATFORM</footer>
-    </div>
+      </div>
   );
 }

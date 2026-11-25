@@ -8,14 +8,7 @@ const emptyCategory = { id: '', code: '', name: '', description: '', display_ord
 const emptyCourse = { id: '', category_id: '', local_code: '', display_name: '', description: '', display_order: 0, is_active: true };
 
 function AdminEducationFrame({ children }) {
-  return <div className="app-shell">
-    <header className="topbar">
-      <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT — Khu vực quản trị" /></Link>
-      <nav className="top-links"><Link to="/admin">Tổng quan</Link><Link to="/admin/education">Cấu trúc học tập</Link><Link to="/admin/exams">Đề thi</Link><Link to="/admin/categories">Loại đề</Link><Link to="/admin/users">Tài khoản</Link><Link to="/">Trang chủ</Link></nav>
-    </header>
-    <main className="narrow-page admin-education-page"><p className="eyebrow">EDUCATION STRUCTURE</p><h1>Quản lý môn học</h1><p className="muted">THPT quản lý môn học trực tiếp. Đại học quản lý danh mục môn học và các học phần trong từng danh mục.</p>{children}</main>
-    <footer className="footer">LIT · EDUCATION ADMIN</footer>
-  </div>;
+  return <div className="narrow-page admin-education-page"><p className="eyebrow">EDUCATION STRUCTURE</p><h1>Quản lý môn học</h1><p className="muted">THPT quản lý môn học trực tiếp. Đại học quản lý danh mục môn học và các học phần trong từng danh mục.</p>{children}</div>;
 }
 
 export default function AdminEducationPage() {

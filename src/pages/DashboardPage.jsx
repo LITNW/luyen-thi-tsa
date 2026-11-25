@@ -44,17 +44,7 @@ export default function DashboardPage() {
   }, [isAdmin]);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT" /></Link>
-        <nav className="top-links" aria-label="Điều hướng chính">
-          <Link to="/history">Lịch sử</Link>
-          <Link to="/account">Tài khoản</Link>
-          {isAdmin && <Link to="/admin">Quản trị</Link>}
-        </nav>
-      </header>
-
-      <main className="dashboard">
+      <div className="dashboard">
         <section className="hero">
           <div>
             <p className="eyebrow">KHÔNG GIAN HỌC TẬP CỦA BẠN</p>
@@ -104,8 +94,6 @@ export default function DashboardPage() {
             <div className="empty-state"><b>Chưa có cấp học khả dụng</b><p>Quản trị viên cần thiết lập cấp học trước khi thêm môn học và bài thi.</p></div>
           }
         </section>
-      </main>
-      <footer className="footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer>
-    </div>
+      </div>
   );
 }

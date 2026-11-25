@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function AccountPage() {
@@ -22,12 +22,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <Link to="/" className="brand-lockup"><span className="brand-mark small-mark">T</span><span><b>TSA Practice</b><small>LUYỆN THI ĐÁNH GIÁ TƯ DUY</small></span></Link>
-        <nav className="top-links"><Link to="/">Trang chủ</Link><a href="/legacy/index.html">Giao diện hiện tại</a></nav>
-      </header>
-      <main className="narrow-page">
+      <div className="narrow-page">
         <p className="eyebrow">TÀI KHOẢN</p>
         <h1>Thông tin học viên</h1>
         <section className="account-card">
@@ -42,8 +37,6 @@ export default function AccountPage() {
           {error && <div className="alert" role="alert">{error}</div>}
           <button className="button secondary full" onClick={logout} disabled={busy}>{busy ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
         </section>
-      </main>
-      <footer className="footer">TSA PRACTICE PLATFORM</footer>
-    </div>
+      </div>
   );
 }

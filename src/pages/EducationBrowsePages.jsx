@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 
 function EducationFrame({ children }) {
-  return <div className="app-shell"><header className="topbar"><Link to="/" className="brand-lockup" aria-label="LIT — Trang chủ"><img src="/brand/lit-horizontal.svg" alt="LIT" /></Link><nav className="top-links"><Link to="/history">Lịch sử</Link><Link to="/account">Tài khoản</Link></nav></header><main className="education-page">{children}</main><footer className="footer">LIT · LEARN · PRACTICE · GROW <span>Học tập có chiến lược · Tiến bộ mỗi ngày</span></footer></div>;
+  return <div className="education-page">{children}</div>;
 }
 function Breadcrumbs({ items }) { return <nav className="education-breadcrumbs" aria-label="Đường dẫn">{items.map((item, index) => <span key={item.to || item.label}>{index > 0 && <i aria-hidden="true">/</i>}{item.to && index < items.length - 1 ? <Link to={item.to}>{item.label}</Link> : <b>{item.label}</b>}</span>)}</nav>; }
 function State({ message, empty = false }) { return empty ? <div className="empty-state"><b>{message}</b><p>Quản trị viên chưa thiết lập nội dung học tập tại đây.</p></div> : <div className="alert" role="alert">{message}</div>; }

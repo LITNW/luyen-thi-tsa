@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import AppShell from './AppShell.jsx';
 
 export default function RouteGuard({ children, admin = false }) {
   const { session, profile, loading, error, isAdmin } = useAuth();
@@ -28,5 +29,5 @@ export default function RouteGuard({ children, admin = false }) {
     );
   }
   if (admin && !isAdmin) return <Navigate to="/" replace />;
-  return children;
+  return <AppShell isAdmin={isAdmin} profile={profile}>{children}</AppShell>;
 }
