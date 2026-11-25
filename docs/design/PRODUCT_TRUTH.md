@@ -1,6 +1,6 @@
 # LIT — Product Truth (Phase A specification)
 
-**Status:** Draft grounded in current repository context; review required before UI implementation.
+**Status:** Product context grounded in current repository and source review; unresolved questions remain open during partial implementation.
 **Baseline:** PR #41 branch current HEAD `ff934cd7a2704c5133180f3a4b703464eed72c41`.
 **Purpose:** Record product facts that should shape the redesign without inventing capabilities, users, metrics or business rules.
 
@@ -104,4 +104,4 @@ This document records current product behavior and known brand guidance. It does
 
 ## Verified implementation observation — 2026-11-25
 
-Source review on the redesign branch found that Legacy startup attempted to restore a saved exam session for any signed-in user before distinguishing an Admin from a student. The change now limits automatic restore to the student exam context. The Admin editor has a local draft-preview path that does not create a server attempt or start the student timer, and preview exit returns to the editor draft. A separate learner exit path leaves the active attempt unsubmitted and tells the learner that saved answers are retained and exam time continues. Contract tests cover these source-level conditions; no authenticated browser session was used, so the full user journey and persistence behavior still require direct verification. These observations describe the current implementation and are not new product guarantees.
+Source review on the redesign branch found that Legacy startup attempted to restore a saved exam session for any signed-in user before distinguishing an Admin from a student. The change now limits automatic restore to the verified student context, including offline fallbacks. Account switching or sign-out detaches the previous editor/exam view and retains that student's saved attempt cache. The Admin editor has a local draft-preview path that does not create a server attempt or start the student timer, and preview exit returns to the editor draft. A separate learner exit path leaves the active attempt unsubmitted and tells the learner that saved answers are retained and exam time continues. Contract tests cover these source-level conditions; no authenticated browser session was used, so the full user journey and persistence behavior still require direct verification. These observations describe the current implementation and are not new product guarantees.

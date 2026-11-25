@@ -1,6 +1,6 @@
 # LIT — Proposed Design System (Review Draft)
 
-**Status:** Proposal only; not implemented
+**Status:** Foundation tokens and shared theme consumption are implemented; full route/state acceptance remains outstanding.
 **Applies to:** Current PR #41 baseline and all React/legacy surfaces when separately approved
 **Visual direction:** Dark-first, Neo-brutalist × Editorial Tech × data-informed; strong hierarchy and angular geometry with restrained electric blue.
 

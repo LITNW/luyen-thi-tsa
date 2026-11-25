@@ -1,6 +1,6 @@
 # LIT — UI Audit (Phase A draft)
 
-**Status:** Draft for review; static source audit only
+**Status:** Static source audit with limited local browser verification; only the public landing page has been observed in a browser.
 **Baseline:** PR #41 current HEAD `ff934cd7a2704c5133180f3a4b703464eed72c41` (`fix/education-empty-uuid-payload`), selected by the user.
 **Repository:** `LITNW/luyen-thi-tsa`
 **Date:** 2026-11-25
@@ -138,9 +138,9 @@ A screenshot checklist item passes only after direct browser observation at the 
 
 ## Verification update — 2026-11-25
 
-The redesign branch now includes shared-token styling for React and Legacy surfaces, plus Legacy exam and Admin preview interaction changes. A browser was used against the locally generated static build at `http://127.0.0.1:8765/`; the public landing page loaded with its Vietnamese heading, navigation, account calls to action and three-step learning-flow presentation. This confirms the rendered desktop landing surface in that generated build only.
+The redesign branch now includes shared-token styling for React and Legacy surfaces, plus Legacy exam and Admin preview interaction changes. An initial browser look used the worktree's generated output after the accidental build. The final browser check used the clean isolated build from commit `31e91b2e7845681b62bee74b9977ffaf437a34bd` at `http://127.0.0.1:8766/`; the public landing page loaded with its Vietnamese heading, navigation, account calls to action and three-step learning-flow presentation.
 
-This check does not verify an authenticated React route, any Admin/Student workflow, the Legacy exam/editor interaction, responsive widths, keyboard behavior, console/network state, or Vercel Preview. It does not satisfy the route-group screenshot acceptance matrix. All other route descriptions and interaction findings remain source-derived until checked directly.
+The final check used a 1264×712 browser viewport. It does not verify an authenticated React route, any Admin/Student workflow, the Legacy exam/editor interaction, the requested responsive widths, keyboard behavior, console/network state, or Vercel Preview. It does not satisfy the route-group screenshot acceptance matrix. All other route descriptions and interaction findings remain source-derived until checked directly.
 
 ## Scope boundary
 
