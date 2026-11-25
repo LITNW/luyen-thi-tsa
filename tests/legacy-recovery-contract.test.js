@@ -16,6 +16,23 @@ test('an Admin opening the Legacy workspace does not restore a student exam sess
   assert.match(html, /profile=p;me=p\.role==='admin'&&p\.status==='active';[\s\S]*?if\(!me&&await restoreActiveAttempt\(user\.id\)\)return;/);
 });
 
+test('switching accounts detaches the prior editor or exam context but keeps its attempt cache', () => {
+  const refreshData = html.match(/async function refreshData\(user\)\{([\s\S]*?)\n    \}/)?.[1] || '';
+  const detachContext = html.match(/function detachAccountContext\(previousUserId\)\{([\s\S]*?)\n    \}/)?.[1] || '';
+  assert.match(refreshData, /const previousUserId=profile\?\.id/);
+  assert.match(refreshData, /previousUserId&&previousUserId!==p\.id\)detachAccountContext\(previousUserId\)/);
+  assert.match(detachContext, /lap\(activeAttempt\);persistAttempt\(activeAttempt\)/);
+  assert.match(detachContext, /clearInterval\(T\);T=null/);
+  assert.match(detachContext, /view=\{n:'home'\}/);
+  assert.doesNotMatch(detachContext, /clearAttemptCache/);
+});
+
+test('startup offline recovery is limited to a verified active student profile', () => {
+  const refreshData = html.match(/async function refreshData\(user\)\{([\s\S]*?)\n    \}/)?.[1] || '';
+  assert.doesNotMatch(refreshData, /if\(pe\|\|!p\)\{if\(restoreOfflineAttempt/);
+  assert.match(refreshData, /if\(ee\)\{D\.exams=\[\];if\(!me&&restoreOfflineAttempt\(user\.id\)\)return;/);
+});
+
 test('true/false statements render as compact independent radio groups', () => {
   assert.match(html, /<table class="tf-matrix"[\s\S]*?<th scope="col">Phát biểu<\/th>[\s\S]*?<th scope="col">ĐÚNG<\/th>[\s\S]*?<th scope="col">SAI<\/th>/);
   assert.match(html, /name="tf-'\+esc\(a\.qids\[a\.cur\]\)\+'-'\+i\+'/);
