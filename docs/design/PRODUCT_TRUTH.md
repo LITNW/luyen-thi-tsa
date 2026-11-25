@@ -101,3 +101,7 @@ Authenticated users can open history, resume an in-progress attempt where suppor
 ## Product-truth boundary
 
 This document records current product behavior and known brand guidance. It does not authorize changes to route structure, auth/access control, data model, API contracts, exam scoring, user roles, workflow semantics, marketing claims, database or production systems. Any unanswered item remains a design constraint or an explicit question, not permission to infer a capability.
+
+## Verified implementation observation — 2026-11-25
+
+Source review on the redesign branch found that Legacy startup attempted to restore a saved exam session for any signed-in user before distinguishing an Admin from a student. The change now limits automatic restore to the student exam context. The Admin editor has a local draft-preview path that does not create a server attempt or start the student timer, and preview exit returns to the editor draft. A separate learner exit path leaves the active attempt unsubmitted and tells the learner that saved answers are retained and exam time continues. Contract tests cover these source-level conditions; no authenticated browser session was used, so the full user journey and persistence behavior still require direct verification. These observations describe the current implementation and are not new product guarantees.

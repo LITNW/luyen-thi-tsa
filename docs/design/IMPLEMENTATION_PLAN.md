@@ -1,7 +1,7 @@
 # LIT — Redesign Implementation Plan (Review Draft)
 
 **Baseline:** PR #41 current HEAD `ff934cd7a2704c5133180f3a4b703464eed72c41`; include Education Structure changes.
-**Status:** Plan only. No source code, branch or deployment changed.
+**Status:** Partial implementation on the approved redesign branch; see execution status at the end. No push, merge or deployment.
 **Release boundary:** keep PR #41 OPEN and DRAFT; never merge or deploy Production as part of this plan.
 
 ## Gates
@@ -101,7 +101,7 @@ Database migration/application, Staging or Production changes, data edits, destr
 
 All shell and component work in this redesign is presentation-level. It may reorganize visual layout and shared presentation components, but must preserve the existing route table, URLs/redirects, authentication, authorization, Supabase calls, schemas, RPCs, persistence, validation contracts, exam behavior and education business rules. Do not use this effort to alter APIs, server behavior, database policy or data.
 
-Existing CI results may be read and reported for the exact commit. Do not initiate migration execution, SQL regression, database recovery, Supabase clean-install, or any other database work as part of redesign implementation. This restriction applies even when the workflow normally uses an isolated fixture. No Staging or Production access is part of this plan.
+Existing CI results may be read and reported for the exact commit. Do not initiate migration execution, SQL regression, database recovery, Supabase clean-install, or any other database work as part of redesign implementation. This restriction applies even when the workflow normally uses an isolated fixture. No Staging or Production database changes are part of redesign implementation. Read-only inspection may be used solely to diagnose the specifically authorized permission issue.
 
 React and Legacy remain separate, incremental visual migration tracks. Shared visual tokens may be documented once, but do not combine their implementation, entry points, test harnesses or cutovers into a big-bang rewrite.
 
@@ -121,4 +121,12 @@ A route group is accepted only after direct browser screenshots and interaction 
 
 ## Explicit exclusions
 
-No migration, SQL execution, database recovery, clean-install run, data edit, Staging/Production access, Supabase or Vercel configuration change, deployment, route/auth/authorization/business-contract change, PR update, merge or close. Existing CI outcomes may be observed, but the redesign does not trigger database workflows manually.
+No migration, SQL execution, database recovery, clean-install run, data edit, Staging/Production database change, Supabase or Vercel configuration change, deployment, route/auth/authorization/business-contract change, PR update, merge or close. Existing CI outcomes may be observed, but the redesign does not trigger database workflows manually.
+
+## Execution status — 2026-11-25
+
+Work is partial and is not release-ready. Implemented changes currently cover shared-token theme adoption in React and Legacy, a compact true/false matrix with independent radio groups, safe non-submitting exam exit, local Admin draft preview and the Admin-versus-student session restore guard. The focused Legacy contract tests and full test suite passed (7/7 focused; 82/82 total). A production build completed, but the command ran from the redesign worktree and replaced its pre-existing untracked `dist/` directory. The exact original generated files are not recoverable from the untouched PR worktree or temporary build. The current generated `dist/` has been left in place and is not included in source changes. No further build was run after the incident.
+
+The local browser check covered the generated public landing page on desktop only. Authenticated React pages, Admin editor/preview, student exam interactions, responsive widths and console/network checks remain unverified. The requested end-to-end redesign and accessibility acceptance matrix are incomplete.
+
+The `admin_delete_exam_version(uuid)` permission error is confirmed as an intentional Production revocation: Production grants EXECUTE to `service_role` but not `authenticated`, while Staging already grants authenticated EXECUTE and the function performs an Admin check. Staging has the unrelated pending Education Structure delete-guard migration `20261124100000_education_structure_delete_guards.sql`; applying the migration path would risk applying unrelated work. No migration was created or applied, and neither database was changed. The Production permission issue remains unresolved within the no-Production-write boundary.

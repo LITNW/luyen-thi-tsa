@@ -102,6 +102,109 @@
   .lit-button, .app-shell .button, .app-shell .admin-card, .app-shell .education-level-card, .app-shell .education-card { transition: none; }
 }
 
+/* Phase D foundation adoption: dark editorial surfaces and angular controls. */
+:root { color-scheme: dark; }
+.lit-landing {
+  --lit-navy: var(--lit-token-color-text);
+  --lit-blue: var(--lit-token-color-accent);
+  --lit-soft: var(--lit-token-color-raised);
+  --lit-cloud: var(--lit-token-color-canvas);
+  --lit-surface: var(--lit-token-color-surface);
+  --lit-text: var(--lit-token-color-text);
+  --lit-muted: var(--lit-token-color-text-secondary);
+  --lit-border: var(--lit-token-color-border-strong);
+  color: var(--lit-text);
+  background: var(--lit-cloud);
+}
+.lit-landing :where(button,a,input,select,textarea):focus-visible,
+.lit-app-shell :where(button,a,input,select,textarea,[tabindex]):focus-visible {
+  outline: var(--lit-token-focus-width) solid var(--lit-token-color-focus);
+  outline-offset: var(--lit-token-focus-offset);
+}
+.lit-landing .lit-public-header,
+.lit-landing .lit-public-footer,
+.lit-landing .lit-section { border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-surface); }
+.lit-landing .lit-public-nav a { color: var(--lit-token-color-text-secondary); }
+.lit-landing .lit-public-nav a:hover { color: var(--lit-token-color-accent-hover); }
+.lit-landing .lit-hero {
+  background: var(--lit-token-color-canvas);
+  border-block-end: 1px solid var(--lit-token-color-border-subtle);
+}
+.lit-landing :is(.lit-hero h1,.lit-section h2,.lit-hero-preview h2,.lit-feature-card h3) { color: var(--lit-token-color-text); }
+.lit-landing :is(.lit-lead,.lit-hero-note,.lit-preview-step small,.lit-feature-card p) { color: var(--lit-token-color-text-secondary); }
+.lit-landing .lit-hero-preview,
+.lit-landing .lit-feature-card {
+  border: 1px solid var(--lit-token-color-border-strong);
+  border-radius: var(--lit-token-radius-panel);
+  color: var(--lit-token-color-text);
+  background: var(--lit-token-color-surface);
+  box-shadow: none;
+}
+.lit-landing .lit-preview-step { border-color: var(--lit-token-color-border-subtle); }
+.lit-landing .lit-preview-step > span { border-radius: var(--lit-token-radius-control); color: var(--lit-token-color-accent-ink); background: var(--lit-token-color-accent); }
+.lit-landing .lit-chip { border: 1px solid var(--lit-token-color-border-strong); border-radius: var(--lit-token-radius-control); color: var(--lit-token-color-text); background: var(--lit-token-color-raised); }
+.lit-landing .lit-button,
+.lit-landing .lit-button-primary { border-radius: var(--lit-token-radius-control); }
+.lit-landing .lit-button-primary { color: var(--lit-token-color-accent-ink); background: var(--lit-token-color-accent); border-color: var(--lit-token-color-accent); }
+.lit-landing .lit-button-primary:hover { color: var(--lit-token-color-accent-ink); background: var(--lit-token-color-accent-hover); border-color: var(--lit-token-color-accent-hover); }
+.lit-landing .lit-button-secondary { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: transparent; }
+
+.auth-layout { color: var(--lit-token-color-text); background: var(--lit-token-color-canvas); }
+.auth-layout .auth-story { border-color: var(--lit-token-color-border-strong); color: var(--lit-token-color-text); background: var(--lit-token-color-surface); }
+.auth-layout .auth-panel { border-color: var(--lit-token-color-border-strong); color: var(--lit-token-color-text); background: var(--lit-token-color-surface); box-shadow: none; }
+.auth-layout .auth-panel h2,.auth-layout .form-stack label { color: var(--lit-token-color-text); }
+.auth-layout .muted,.auth-layout .auth-switch { color: var(--lit-token-color-text-secondary); }
+.auth-layout .form-stack input { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-canvas); }
+.auth-layout .form-stack input::placeholder { color: var(--lit-token-color-text-secondary); }
+.auth-layout .button.primary { color: var(--lit-token-color-accent-ink); border-color: var(--lit-token-color-accent); background: var(--lit-token-color-accent); }
+.auth-layout .button.secondary { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-raised); }
+.auth-layout a { color: var(--lit-token-color-accent-hover); }
+
+.lit-app-shell :is(.hero,.education-hero,.exam-card,.version-list,.account-card,.result-question,.education-exam-card,.admin-card,.metric,.empty-state,.loading-line,.notice-card) {
+  border-color: var(--lit-token-color-border-strong);
+  border-radius: var(--lit-token-radius-panel);
+  background: var(--lit-token-color-surface);
+  box-shadow: none;
+}
+.lit-app-shell :is(.hero,.education-hero) { background: var(--lit-token-color-surface); }
+.lit-app-shell :is(.hero h1,.education-hero h1,.section-heading h2,.exam-card h3,.education-exam-card h3,.account-card h2) { color: var(--lit-token-color-text); }
+.lit-app-shell :is(.hero p:not(.eyebrow),.education-hero p:last-child,.education-card > span:not(.education-card-kicker),.education-exam-card p,.version-row small,.category-row small,.muted) { color: var(--lit-token-color-text-secondary); }
+.lit-app-shell .hero-mark { border-radius: var(--lit-token-radius-control); border-color: var(--lit-token-color-border-strong); color: var(--lit-token-color-accent); box-shadow: none; }
+.lit-app-shell :is(.admin-card,.education-level-card,.education-card,.education-exam-card,.version-row,.category-row,.user-row,.result-question) { border-radius: var(--lit-token-radius-control); }
+.lit-app-shell :is(.education-level-card,.education-card,.admin-card) { color: var(--lit-token-color-text); background: var(--lit-token-color-surface); }
+.lit-app-shell :is(.education-level-card:hover,.education-card:hover,.admin-card:hover) { border-color: var(--lit-token-color-accent-hover); background: var(--lit-token-color-raised); }
+.lit-app-shell .education-level-mark { border-radius: var(--lit-token-radius-control); border-color: var(--lit-token-color-border-strong); color: var(--lit-token-color-accent-ink); background: var(--lit-token-color-accent); }
+.lit-app-shell .education-breadcrumbs b { color: var(--lit-token-color-text); }
+.lit-app-shell :is(.admin-card span,.metric small,.profile-details dt,.user-row small) { color: var(--lit-token-color-text-secondary); }
+.lit-app-shell :is(.button,.button.primary,.button.secondary,.button.danger,.role-chip,.status,.education-admin-level-select,.category-select) { border-radius: var(--lit-token-radius-control); }
+.lit-app-shell .button { min-height: 44px; color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-surface); }
+.lit-app-shell .button.primary { color: var(--lit-token-color-accent-ink); border-color: var(--lit-token-color-accent); background: var(--lit-token-color-accent); }
+.lit-app-shell .button.primary:hover:not(:disabled) { color: var(--lit-token-color-accent-ink); border-color: var(--lit-token-color-accent-hover); background: var(--lit-token-color-accent-hover); }
+.lit-app-shell .button.secondary { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-raised); }
+.lit-app-shell .button.danger { color: var(--lit-token-color-danger); border-color: var(--lit-token-color-danger); background: var(--lit-token-color-surface); }
+.lit-app-shell :is(.button,.lit-action):disabled { color: var(--lit-token-color-text-secondary); border-style: dashed; cursor: not-allowed; opacity: .8; }
+.lit-app-shell .role-chip { color: var(--lit-token-color-accent); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-raised); }
+.lit-app-shell .status { font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+.lit-app-shell .status.published { color: var(--lit-token-color-success); border-color: var(--lit-token-color-success); background: var(--lit-token-color-surface); }
+.lit-app-shell .status.draft { color: var(--lit-token-color-warning); border-color: var(--lit-token-color-warning); background: var(--lit-token-color-surface); }
+.lit-app-shell .education-admin-level-select { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); background: var(--lit-token-color-surface); }
+.lit-app-shell .education-admin-level-select:hover:not(:disabled) { border-color: var(--lit-token-color-accent-hover); background: var(--lit-token-color-raised); }
+.lit-app-shell .education-admin-level-select.selected { border-color: var(--lit-token-color-accent); background: var(--lit-token-color-raised); box-shadow: inset 4px 0 0 var(--lit-token-color-accent); }
+.lit-app-shell .education-admin-level-select.selected::after { border-color: var(--lit-token-color-accent); border-radius: var(--lit-token-radius-control); color: var(--lit-token-color-accent-ink); background: var(--lit-token-color-accent); }
+.lit-app-shell :is(.form-stack input,.form-stack textarea,.form-stack select,.category-select) { color: var(--lit-token-color-text); border-color: var(--lit-token-color-border-strong); border-radius: var(--lit-token-radius-control); background: var(--lit-token-color-canvas); }
+.lit-app-shell :is(.alert,.form-message[role="status"]) { border-radius: var(--lit-token-radius-control); }
+.lit-app-shell .alert { color: var(--lit-token-color-text); border-color: var(--lit-token-color-danger); background: #321821; }
+.lit-app-shell .form-message[role="status"] { color: var(--lit-token-color-success); }
+
+@media (max-width: 620px) {
+  .lit-app-shell .education-exam-card { align-items: stretch; }
+  .lit-app-shell .user-actions { width: 100%; }
+  .lit-app-shell .user-actions .button { flex: 1 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lit-app-shell *, .lit-landing * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
 /* Phase C authenticated application shell */
 .lit-app-shell {
   min-height: 100vh;

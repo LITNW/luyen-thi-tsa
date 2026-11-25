@@ -5,10 +5,38 @@ import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../public/legacy/index.html', import.meta.url), 'utf8');
 
 test('a browser reload restores the latest active attempt for the signed-in user', () => {
-  assert.match(html, /if\(await restoreActiveAttempt\(user\.id\)\)return;/);
+  assert.match(html, /if\(!me&&await restoreActiveAttempt\(user\.id\)\)return;/);
   assert.match(html, /async function restoreActiveAttempt\(userId\)/);
   assert.match(html, /get_my_attempt_state/);
   assert.match(html, /state\?\.status==='submitted'[\s\S]*?clearAttemptCache/);
+});
+
+test('an Admin opening the Legacy workspace does not restore a student exam session', () => {
+  assert.match(html, /if\(!me&&await restoreActiveAttempt\(user\.id\)\)return;/);
+  assert.match(html, /profile=p;me=p\.role==='admin'&&p\.status==='active';[\s\S]*?if\(!me&&await restoreActiveAttempt\(user\.id\)\)return;/);
+});
+
+test('true/false statements render as compact independent radio groups', () => {
+  assert.match(html, /<table class="tf-matrix"[\s\S]*?<th scope="col">Phát biểu<\/th>[\s\S]*?<th scope="col">ĐÚNG<\/th>[\s\S]*?<th scope="col">SAI<\/th>/);
+  assert.match(html, /name="tf-'\+esc\(a\.qids\[a\.cur\]\)\+'-'\+i\+'/);
+  assert.match(html, /type="radio"[\s\S]*?aria-label="Ý '\+\('abcd'\[i\]\)\+'\: Đúng"[\s\S]*?data-a="tf"/);
+  assert.match(html, /type="radio"[\s\S]*?aria-label="Ý '\+\('abcd'\[i\]\)\+'\: Sai"[\s\S]*?data-a="tf"/);
+});
+
+test('a learner can exit an exam without submitting or discarding saved answers', () => {
+  assert.match(html, /data-a="exitExam"/);
+  assert.match(html, /đáp án[\s\S]*?không nộp bài[\s\S]*?thời gian vẫn tiếp tục/i);
+  assert.match(html, /else if\(k==='confirmExit'\)[\s\S]*?view=\{n:'home'\}/);
+  assert.doesNotMatch(html, /confirmExit[\s\S]{0,500}finish\(/);
+});
+
+test('Admin draft preview is a local, non-attempt context with a direct exit back to the editor', () => {
+  assert.match(html, /data-a="previewDraft"/);
+  assert.match(html, /async function previewDraft\(/);
+  assert.match(html, /preview:true/);
+  assert.match(html, /else if\(k==='exitPreview'\)[\s\S]*?view\.previewReturn/);
+  assert.match(html, /a\.preview\?[\s\S]*?data-a="exitPreview"/);
+  assert.doesNotMatch(html, /function previewDraft\([\s\S]{0,1600}start_exam_attempt/);
 });
 
 test('tab resume checkpoints elapsed time and pauses the timer during reconciliation', () => {

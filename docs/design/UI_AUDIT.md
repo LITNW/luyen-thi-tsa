@@ -136,6 +136,12 @@ Capture full-page and focused screenshots at 360, 390, 768, 1024, and 1440 CSS p
 
 A screenshot checklist item passes only after direct browser observation at the named route/state/viewport. Static source inspection, a successful build, or workflow configuration alone does not count as visual acceptance. Record failures and retest after the fix.
 
+## Verification update — 2026-11-25
+
+The redesign branch now includes shared-token styling for React and Legacy surfaces, plus Legacy exam and Admin preview interaction changes. A browser was used against the locally generated static build at `http://127.0.0.1:8765/`; the public landing page loaded with its Vietnamese heading, navigation, account calls to action and three-step learning-flow presentation. This confirms the rendered desktop landing surface in that generated build only.
+
+This check does not verify an authenticated React route, any Admin/Student workflow, the Legacy exam/editor interaction, responsive widths, keyboard behavior, console/network state, or Vercel Preview. It does not satisfy the route-group screenshot acceptance matrix. All other route descriptions and interaction findings remain source-derived until checked directly.
+
 ## Scope boundary
 
 This is a planning deliverable. No app source, tests, PR, branches, Vercel deployment, Supabase project, migration ledger, or database records were changed.

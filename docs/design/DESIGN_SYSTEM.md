@@ -136,3 +136,7 @@ Inter remains a candidate, not a verified bundled font. Before implementation, i
 | Loading | Spinner/progress indicator plus explicit text; preserve panel geometry | Announce meaningful async status; disable duplicate submission; respect reduced motion. |
 
 These contracts apply to React and Legacy independently during their separate migrations. No pill-shaped controls: use angular/low-radius geometry and clear borders consistently.
+
+## Implementation evidence update — 2026-11-25
+
+The approved foundation tokens are implemented in `public/lit-design-tokens.css` and consumed by React theme rules in `src/lit-theme.css`; the Legacy entry also loads the shared token stylesheet and applies token-backed control and surface rules. The public landing page was visually observed in a local static browser preview. The token contrast matrix above is calculated from the declared sRGB values, including the failing `#FFFFFF` on `#168BFF` pairing; primary actions use dark ink on the blue fill. Authenticated route states, all viewport sizes and full interaction-state coverage remain unverified and must be checked by the route-group acceptance criteria before claiming the system complete.
