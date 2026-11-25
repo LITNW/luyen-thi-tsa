@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
         user: null,
         profile: null,
         loading: false,
-        error: 'Thiếu cấu hình Supabase cho bản Preview. Hãy kiểm tra biến VITE_SUPABASE_URL và VITE_SUPABASE_PUBLISHABLE_KEY.',
+        error: 'Dịch vụ đăng nhập hiện chưa sẵn sàng. Vui lòng thử lại sau.',
       });
       return () => { alive = false; };
     }

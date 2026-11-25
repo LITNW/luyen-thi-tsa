@@ -61,7 +61,6 @@ export default function AuthPage({ mode = 'login' }) {
         </form>
         {message && <p className="form-message" role="status">{message}</p>}
         <div className="auth-switch">{isRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'} <Link to={isRegister ? '/login' : '/register'}>{isRegister ? 'Đăng nhập' : 'Tạo tài khoản'}</Link></div>
-        <p className="muted small">Bản React đang được chuyển đổi theo từng module. Phòng thi và các công cụ quản trị hiện vẫn có thể mở từ giao diện hiện tại.</p>
       </section>
     </main>
   );

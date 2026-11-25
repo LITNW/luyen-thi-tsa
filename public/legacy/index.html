@@ -517,7 +517,7 @@ if('serviceWorker' in navigator){
     async function boot(){
       profile=null;me=false;view={n:'auth'};
       try{render()}catch(renderError){A.innerHTML='<div class="c"><h1>Luyện đề thi TSA</h1><p>Không thể khởi tạo giao diện. Hãy tải lại trang.</p><pre>'+esc(renderError.message||renderError)+'</pre></div>';return}
-      if(!sb){notify('Không tải được thư viện kết nối Supabase. Kiểm tra kết nối mạng rồi tải lại trang.');return}
+      if(!sb){notify('Dịch vụ đăng nhập hiện chưa sẵn sàng. Vui lòng thử lại sau.');return}
       try{
         const {data,error}=await sb.auth.getSession();
         if(error)throw error;
