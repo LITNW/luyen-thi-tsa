@@ -1,4 +1,4 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Luyện đề thi</title><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style id="app-style">
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Luyện đề thi</title><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="/lit-design-tokens.css"><style id="app-style">
     :root{--bg:#f6f7f9;--cd:#fff;--tx:#1a1d23;--mu:#667085;--bd:#dfe3e8;--pr:#2457d6;--ok:#15803d;--no:#b91c1c;--okb:#dcfce7;--nob:#fee2e2;--fl:#b45309;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
     @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12151a;--cd:#1c2027;--tx:#e8eaed;--mu:#9aa3b0;--bd:#323843;--pr:#6b95ff;--ok:#4ade80;--no:#f87171;--okb:#12301d;--nob:#3a1717;--fl:#fbbf24}}
     :root[data-theme="dark"]{color-scheme:dark;--bg:#12151a;--cd:#1c2027;--tx:#e8eaed;--mu:#9aa3b0;--bd:#323843;--pr:#6b95ff;--ok:#4ade80;--no:#f87171;--okb:#12301d;--nob:#3a1717;--fl:#fbbf24}
@@ -51,7 +51,7 @@ body.exam-active{overflow:hidden}
 .exam-question-card .q{font-size:1.12rem;line-height:1.8;color:#17233b;margin:0 0 26px;white-space:pre-wrap;overflow-wrap:anywhere}
 .exam-question-card .o{border:1px solid #e0e6f0;border-radius:12px;padding:13px 16px;margin:9px 0;background:#fff;transition:border-color .15s,background .15s;min-height:48px}
 .exam-question-card .o.on{border-color:#315ee8;background:#f3f6ff;box-shadow:inset 0 0 0 1px #315ee8}
-.exam-question-card .o:focus-visible,.exam-shell button:focus-visible{outline:3px solid rgba(49,94,232,.25);outline-offset:2px}
+.exam-question-card .o:focus-visible,.exam-shell button:focus-visible{outline:var(--lit-token-focus-width) solid var(--lit-token-color-focus);outline-offset:var(--lit-token-focus-offset)}
 .exam-question-card .chip{border-radius:9px;background:#f7f9fc}
 .exam-question-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #edf0f5;margin-top:28px;padding-top:18px}
 .exam-question-actions .b{margin:0}

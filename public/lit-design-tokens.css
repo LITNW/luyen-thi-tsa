@@ -1,0 +1,220 @@
+/*
+ * Shared LIT design foundation.
+ * React loads this file from index.html; Legacy can consume the same tokens
+ * from its standalone entry without requiring a simultaneous visual rewrite.
+ */
+:root {
+  --lit-token-color-canvas: #080d18;
+  --lit-token-color-surface: #111b2b;
+  --lit-token-color-raised: #172438;
+  --lit-token-color-border-subtle: #29384d;
+  --lit-token-color-border-strong: #60748f;
+  --lit-token-color-text: #f4f7ff;
+  --lit-token-color-text-secondary: #a8b8d0;
+  --lit-token-color-accent: #168bff;
+  --lit-token-color-accent-hover: #43a5ff;
+  --lit-token-color-accent-ink: #080d18;
+  --lit-token-color-focus: #7cc4ff;
+  --lit-token-color-success: #32d6a0;
+  --lit-token-color-warning: #ffc857;
+  --lit-token-color-danger: #ff5364;
+
+  --lit-token-font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --lit-token-font-display: var(--lit-token-font-sans);
+  --lit-token-font-math: "Cambria Math", "STIX Two Math", "Latin Modern Math",
+    "Times New Roman", serif;
+
+  --lit-token-type-home-size: clamp(2rem, 5vw, 2.5rem);
+  --lit-token-type-home-line: 1.2;
+  --lit-token-type-metric-size: 2rem;
+  --lit-token-type-exam-size: 1.5rem;
+  --lit-token-type-admin-size: 0.875rem;
+  --lit-token-type-body-size: 1rem;
+  --lit-token-type-math-size: 1.125rem;
+
+  --lit-token-space-0: 0;
+  --lit-token-space-1: 0.25rem;
+  --lit-token-space-2: 0.5rem;
+  --lit-token-space-3: 0.75rem;
+  --lit-token-space-4: 1rem;
+  --lit-token-space-6: 1.5rem;
+  --lit-token-space-8: 2rem;
+  --lit-token-space-12: 3rem;
+  --lit-token-space-16: 4rem;
+
+  --lit-token-radius-control: 0.25rem;
+  --lit-token-radius-panel: 0.25rem;
+  --lit-token-radius-overlay: 0.375rem;
+  --lit-token-focus-width: 3px;
+  --lit-token-focus-offset: 3px;
+  --lit-token-motion-fast: 160ms;
+
+  /* CSS custom properties cannot be used as media-query breakpoints. */
+  --lit-token-breakpoint-mobile: 600px;
+  --lit-token-breakpoint-tablet: 800px;
+  --lit-token-breakpoint-desktop: 1024px;
+  --lit-token-breakpoint-wide: 1280px;
+}
+
+/* Shared keyboard focus foundation. Component-specific rules may refine it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--lit-token-focus-width) solid var(--lit-token-color-focus);
+  outline-offset: var(--lit-token-focus-offset);
+}
+
+/* Reusable angular primitives for incremental React or Legacy adoption. */
+.lit-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lit-token-space-2);
+  padding: var(--lit-token-space-2) var(--lit-token-space-4);
+  border: 1px solid var(--lit-token-color-border-strong);
+  border-radius: var(--lit-token-radius-control);
+  color: var(--lit-token-color-text);
+  background: var(--lit-token-color-surface);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--lit-token-motion-fast) ease,
+    border-color var(--lit-token-motion-fast) ease;
+}
+
+.lit-action:hover:not(:disabled) {
+  border-color: var(--lit-token-color-accent-hover);
+  background: var(--lit-token-color-raised);
+}
+
+.lit-action--primary {
+  color: var(--lit-token-color-accent-ink);
+  border-color: var(--lit-token-color-accent);
+  background: var(--lit-token-color-accent);
+}
+
+.lit-action--primary:hover:not(:disabled) {
+  color: var(--lit-token-color-accent-ink);
+  border-color: var(--lit-token-color-accent-hover);
+  background: var(--lit-token-color-accent-hover);
+}
+
+.lit-action--secondary {
+  color: var(--lit-token-color-text);
+  border-color: var(--lit-token-color-border-strong);
+  background: transparent;
+}
+
+.lit-action--danger {
+  color: var(--lit-token-color-danger);
+  border-color: var(--lit-token-color-danger);
+  background: var(--lit-token-color-surface);
+}
+
+.lit-action:disabled,
+.lit-action[aria-disabled="true"] {
+  color: var(--lit-token-color-text-secondary);
+  border-color: var(--lit-token-color-border-strong);
+  border-style: dashed;
+  background: var(--lit-token-color-raised);
+  cursor: not-allowed;
+}
+
+.lit-selectable {
+  border: 1px solid var(--lit-token-color-border-strong);
+  border-radius: var(--lit-token-radius-control);
+  color: var(--lit-token-color-text);
+  background: var(--lit-token-color-surface);
+  cursor: pointer;
+}
+
+.lit-selectable:hover:not(:disabled) {
+  border-color: var(--lit-token-color-accent-hover);
+  background: var(--lit-token-color-raised);
+}
+
+.lit-selectable[aria-pressed="true"] {
+  border-color: var(--lit-token-color-accent);
+  box-shadow: inset 0 0 0 1px var(--lit-token-color-accent);
+  font-weight: 700;
+}
+
+.lit-field[aria-invalid="true"] {
+  border-color: var(--lit-token-color-danger);
+}
+
+.lit-error {
+  padding-inline-start: var(--lit-token-space-3);
+  border-inline-start: 3px solid var(--lit-token-color-danger);
+  color: var(--lit-token-color-danger);
+}
+
+.lit-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lit-token-space-2);
+  color: var(--lit-token-color-text-secondary);
+}
+
+.lit-loading::before {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--lit-token-color-border-strong);
+  border-block-start-color: var(--lit-token-color-accent);
+  content: "";
+  animation: lit-token-spin 700ms linear infinite;
+}
+
+@keyframes lit-token-spin {
+  to { transform: rotate(1turn); }
+}
+
+/* Typography specimens: apply to real content only; never imply sample data. */
+.lit-type-home-title {
+  font-family: var(--lit-token-font-display);
+  font-size: var(--lit-token-type-home-size);
+  font-weight: 700;
+  line-height: var(--lit-token-type-home-line);
+  letter-spacing: -0.035em;
+}
+
+.lit-type-dashboard-metric {
+  font-family: var(--lit-token-font-sans);
+  font-size: var(--lit-token-type-metric-size);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lit-type-exam-title {
+  font-family: var(--lit-token-font-sans);
+  font-size: var(--lit-token-type-exam-size);
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.lit-type-admin-table {
+  font-family: var(--lit-token-font-sans);
+  font-size: var(--lit-token-type-admin-size);
+  line-height: 1.45;
+}
+
+.lit-type-body-vi {
+  font-family: var(--lit-token-font-sans);
+  font-size: var(--lit-token-type-body-size);
+  line-height: 1.6;
+}
+
+.lit-type-math {
+  font-family: var(--lit-token-font-math);
+  font-size: var(--lit-token-type-math-size);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lit-action { transition: none; }
+  .lit-loading::before { animation: none; }
+}
